@@ -2,7 +2,7 @@
 
 # NostalgiaCore
 
-NostalgiaCore is a fork of Legacy PocketMine-MP 1.3.12, which fixes bugs of Legacy PocketMine-MP, and adds new content
+NostalgiaCore is a modified version of Legacy PocketMine-MP 1.3.12, which fixes bugs of Legacy PocketMine-MP, and adds new content
 
 Supported MCPE versions: 0.8.0, 0.8.1 (maybe 0.8.2)
 
