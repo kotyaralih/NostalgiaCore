@@ -32,7 +32,7 @@ class PlayerAPI{
 		$this->server->api->console->cmdWhitelist("ping");
 		$this->server->api->console->cmdWhitelist("spawn");
 		$this->server->api->console->cmdWhitelist("loc");
-		//$this->server->preparedSQL->selectPlayersToHeal = $this->server->database->prepare("SELECT EID FROM entities WHERE class = " . ENTITY_PLAYER . " AND health < 20;");
+		$this->server->preparedSQL->selectPlayersToHeal = $this->server->database->prepare("SELECT EID FROM entities WHERE class = " . ENTITY_PLAYER . " AND health < 20;");
 	}
 
 	public function registerCmd($cmd, $help = ""){
@@ -43,7 +43,7 @@ class PlayerAPI{
 		switch($event){
 			case "server.regeneration":
 				if($this->server->difficulty === 0){
-					//$result = $this->server->preparedSQL->selectPlayersToHeal->execute();
+					$result = $this->server->preparedSQL->selectPlayersToHeal->execute();
 					if($result !== false){
 						while(($player = $result->fetchArray()) !== false){
 							if(($player = $this->server->api->entity->get($player["EID"])) !== false){
