@@ -564,6 +564,18 @@ class Entity extends Position
 		}
 		
 	}
+
+	public function lookAt($position): array{
+		$angle = atan2($position->z - $this->z, $position->x - $this->x);
+		$yaw = (($angle * 180) / M_PI) - 90;
+		$angle = atan2((new Vector2($this->x, $this->z))->distance(new Vector2($position->x, $position->z)), $position->y - $this->y);
+                $pitch = (($angle * 180) / M_PI) - 90;
+
+                $this->yaw = $yaw;
+		$this->pitch = $pitch;
+
+                return [$yaw, $pitch];
+	}
 	
 	public function move($dx, $dy, $dz){
 		$movX = $this->x;
