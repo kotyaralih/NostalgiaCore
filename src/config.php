@@ -47,7 +47,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . FILE_PATH);
 ini_set("memory_limit", "256M"); //Default
 define("LOG", true);
 define("START_TIME", microtime(true));
-define("MAJOR_VERSION", "1.1.0dev");
+define("MAJOR_VERSION", "1.1.0_01");
 define("CODENAME", "懐かしさ (Nostalgia)"); //i'm not very creative - kotyaralih
 define("CURRENT_MINECRAFT_VERSION", "v0.8.1 alpha");
 define("CURRENT_API_VERSION", '12.1');
