@@ -22,7 +22,7 @@ class DandelionBlock extends FlowableBlock{
 	public static function neighborChanged(Level $level, $x, $y, $z, $nX, $nY, $nZ, $oldID){
 		$downId = $level->level->getBlockID($x, $y - 1, $z);
 		if(StaticBlock::getIsTransparent($downId) and $downId !== FARMLAND){ //Replace with common break method
-			ServerAPI::request()->api->entity->drop(new Position($x+0.5, $y, $z+0.5, $level), BlockAPI::getItem(CYAN_FLOWER));
+			ServerAPI::request()->api->entity->drop(new Position($x+0.5, $y, $z+0.5, $level), BlockAPI::getItem(DANDELION));
 			$level->fastSetBlockUpdate($x, $y, $z, 0, 0);
 		}
 	}

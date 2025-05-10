@@ -1467,6 +1467,7 @@ class Player{
 			$this->chunkCount = [];
 			$this->craftingItems = [];
 			$this->received = [];
+			unset($this->server->api->chat->lastTells[$this->iusername]);
 			//$this->entity->close();
 		}
 	}

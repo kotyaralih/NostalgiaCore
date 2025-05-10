@@ -3,18 +3,21 @@
 class ChatAPI{
 
 	private $server;
-
+	public $lastTells = [];
 	function __construct(){
 		$this->server = ServerAPI::request();
 	}
 
 	public function init(){
 		$this->server->api->console->register("tell", "<player> <private message ...>", [$this, "commandHandler"]);
+		$this->server->api->console->register("reply", "<private message ...>", [$this, "commandHandler"]);
 		$this->server->api->console->register("me", "<action ...>", [$this, "commandHandler"]);
 		$this->server->api->console->register("say", "<message ...>", [$this, "commandHandler"]);
 		$this->server->api->console->cmdWhitelist("tell");
+		$this->server->api->console->cmdWhitelist("reply");
 		$this->server->api->console->cmdWhitelist("me");
 		$this->server->api->console->alias("msg", "tell");
+		$this->server->api->console->alias("r", "reply");
 	}
 
 	/**
@@ -26,13 +29,11 @@ class ChatAPI{
 	 * @return string
 	 */
 	public function commandHandler($cmd, $params, $issuer, $alias){
-		$output = "";
 		switch($cmd){
 			case "say":
 				$s = implode(" ", $params);
 				if(trim($s) == ""){
-					$output .= "Usage: /say <message>\n";
-					break;
+					return "Usage: /say <message>";
 				}
 				$sender = ($issuer instanceof Player) ? "Server" : ucfirst($issuer);
 				if(Utils::hasEmoji($s)) return "Your message contains illegal characters!";
@@ -41,8 +42,7 @@ class ChatAPI{
 			case "me":
 				$s = implode(" ", $params);
 				if(trim($s) == ""){
-					$output .= "Usage: /me <message>\n";
-					break;
+					return "Usage: /me <message>";
 				}
 				if(!($issuer instanceof Player)){
 					if($issuer === "rcon"){
@@ -58,42 +58,58 @@ class ChatAPI{
 				$this->broadcast("* $sender $msg");
 				break;
 			case "tell":
-				if(!isset($params[0]) or !isset($params[1])){
-					$output .= "Usage: /$cmd <player> <message>\n";
-					break;
-				}
-				if(!($issuer instanceof Player)){
-					$sender = ucfirst($issuer);
-				}else{
-					$sender = $issuer->username;
-				}
+				if(!isset($params[0]) or !isset($params[1])) return "Usage: /$cmd <player> <message>\n";
+				
+				if(!($issuer instanceof Player)) $sender = ucfirst($issuer);
+				else $sender = $issuer->username;
+				
 				$n = array_shift($params);
 				$target = $this->server->api->player->get($n);
 				if($target instanceof Player){
 					$target = $target->username;
 				}else{
 					$target = strtolower($n);
-					if($target === "server" or $target === "console" or $target === "rcon"){
+					if($target === "server" || $target === "console" || $target === "rcon"){
 						$target = "Console";
 					}else{
-						return "The player is offline.";
+						return "$target is offline.";
 					}
 				}
-				if(strtolower($target) === strtolower($issuer)){
-					return "You can't send message to yourself.";
+				if(strtolower($target) === strtolower($sender)) return "You can't send message to yourself.";
+				
+				$mes = implode(" ", $params);
+				if(Utils::hasEmoji($mes)) return "Your message contains illegal characters!";
+				
+				if($target !== "Console" && $target !== "Rcon") $this->sendTo(false, "$sender whispers to you: $mes", $target);
+				if($target === "Console" || $sender === "Console") console("[INFO] $sender whispers to $target: $mes");
+				
+				
+				$this->lastTells[strtolower($target)] = strtolower($sender);
+				$this->lastTells[strtolower($sender)] = strtolower($target);
+				
+				return "You're whispering to $target: $mes";
+			case "reply":
+				if(!($issuer instanceof Player)) $sender = ucfirst($issuer);
+				else $sender = $issuer->username;
+				
+				if(!isset($this->lastTells[strtolower($sender)])) return "You have no one to reply to.";
+				$target = $this->lastTells[strtolower($sender)];
+				if($target !== "server" && $target !== "console" && $target !== "rcon"){
+					if(!($this->server->api->player->get($target) instanceof Player)){
+						return "$target is offline.";
+					}
 				}
 				$mes = implode(" ", $params);
 				if(Utils::hasEmoji($mes)) return "Your message contains illegal characters!";
-				$output .= "You're whispering to " . $target . ": " . $mes . "\n";
-				if($target !== "Console" and $target !== "Rcon"){
-					$this->sendTo(false, $sender . " whispers to you: " . $mes, $target);
-				}
-				if($target === "Console" or $sender === "Console"){
-					console("[INFO] " . $sender . " whispers to " . $target . ": " . $mes);
-				}
-				break;
+				
+				if($target !== "Console" && $target !== "Rcon") $this->sendTo(false, "$sender whispers to you: $mes", $target);
+				if($target === "Console" || $sender === "Console") console("[INFO] $sender whispers to $target: $mes");
+				
+				$this->lastTells[strtolower($target)] = strtolower($sender);
+				$this->lastTells[strtolower($sender)] = strtolower($target);
+				
+				return "You're whispering to $target: $mes";
 		}
-		return $output;
 	}
 
 	/**
