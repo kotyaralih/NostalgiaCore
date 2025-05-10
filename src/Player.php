@@ -2195,7 +2195,6 @@ class Player{
 				$this->craftingItems = [];
 				$this->toCraft = [];
 				$this->craftingType = CraftingRecipes::TYPE_INVENTORY;
-				
 				$packet->eid = $this->eid;
 				for($i = 0; $i < 4; ++$i){
 					$s = $packet->slots[$i];
@@ -2205,21 +2204,21 @@ class Player{
 						$s = BlockAPI::getItem($s + 256, 0, 1);
 					}
 					$slot = $this->armor[$i];
-					if($slot->getID() !== AIR and $s->getID() === AIR){
+					
+					if($slot->getID() !== AIR && $s->getID() === AIR){
 						$this->addItem($slot->getID(), $slot->getMetadata(), 1, false);
 						$this->armor[$i] = BlockAPI::getItem(AIR, 0, 0);
 						$packet->slots[$i] = 255;
 					}elseif($s->getID() !== AIR and $slot->getID() === AIR and ($sl = $this->hasItem($s->getID())) !== false){
 						$this->armor[$i] = $this->getSlot($sl);
 						$this->setSlot($sl, BlockAPI::getItem(AIR, 0, 0), false);
-					}elseif($s->getID() !== AIR and $slot->getID() !== AIR and ($slot->getID() !== $s->getID() or $slot->getMetadata() !== $s->getMetadata()) and ($sl = $this->hasItem($s->getID())) !== false){
+					}elseif($s->getID() !== AIR && $slot->getID() !== AIR and ($slot->getID() !== $s->getID() or $slot->getMetadata() !== $s->getMetadata()) and ($sl = $this->hasItem($s->getID())) !== false){
 						$item = $this->armor[$i];
 						$this->armor[$i] = $this->getSlot($sl);
 						$this->setSlot($sl, $item, false);
 					}else{
 						$packet->slots[$i] = 255;
 					}
-
 				}
 				$this->sendArmor();
 				if($this->entity->inAction === true){
@@ -2497,6 +2496,7 @@ class Player{
 					$this->craftingItems = [];
 					$this->craftingType = CraftingRecipes::TYPE_INVENTORY;
 				}
+				
 				if(!isset($this->windows[$packet->windowid])){
 					break;
 				}
@@ -2731,10 +2731,14 @@ class Player{
 
 		
 		$cc = CraftingRecipes::canCraft($results, $ingridients, $this->craftingType);
-		if(!is_array($cc) && $this->craftingType == CraftingRecipes::TYPE_CRAFTIGTABLE){
-			$cc = CraftingRecipes::canCraft($results, $ingridients, CraftingRecipes::TYPE_INVENTORY);
-			if(!is_array($cc)){
-				return; //recipe not found
+		if(!is_array($cc)){
+			if($this->craftingType == CraftingRecipes::TYPE_CRAFTIGTABLE){
+				$cc = CraftingRecipes::canCraft($results, $ingridients, CraftingRecipes::TYPE_INVENTORY);
+				if(!is_array($cc)){
+					return; //recipe not found
+				}
+			}else{
+				return;
 			}
 		}
 		
