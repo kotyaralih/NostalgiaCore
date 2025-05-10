@@ -101,7 +101,7 @@ class Player{
 	 */
 	public function __construct($clientID, $ip, $port, $MTU){
 		$this->bigCnt = 0;
-		$this->MTU = min($MTU, 1492);
+		$this->MTU = min($MTU, 1100);
 		$this->server = ServerAPI::request();
 		$this->lastBreak = microtime(true);
 		$this->clientID = $clientID;
