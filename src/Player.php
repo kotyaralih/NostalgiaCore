@@ -2722,15 +2722,18 @@ class Player{
 		
 		$results = [];
 		foreach($this->toCraft as $i => $slotz){
-			$results[$i >> 16] = [$i >> 16, $i & 0xffff, array_sum($slotz)];
+			if(!isset($results[$i])) $results[$i] = [];
+			$results[$i >> 16][] = [$i >> 16, $i & 0xffff, array_sum($slotz)];
 		}
 		$ingridients = [];
 		foreach($this->craftingItems as $i => $slotz){
-			$ingridients[$i >> 16] = [$i >> 16, $i & 0xffff, array_sum($slotz)];
+			if(!isset($ingridients[$i])) $ingridients[$i] = [];
+			$ingridients[$i >> 16][] = [$i >> 16, $i & 0xffff, array_sum($slotz)];
 		}
 
 		
 		$cc = CraftingRecipes::canCraft($results, $ingridients, $this->craftingType);
+		
 		if(!is_array($cc)){
 			if($this->craftingType == CraftingRecipes::TYPE_CRAFTIGTABLE){
 				$cc = CraftingRecipes::canCraft($results, $ingridients, CraftingRecipes::TYPE_INVENTORY);

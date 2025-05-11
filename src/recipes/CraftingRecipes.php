@@ -295,14 +295,31 @@ class CraftingRecipes{
 		
 		$recipeString = "";
 		$resultString = "";
-		foreach($recipeItems as $item){
-			$recipeString .= $item[0] . "x" . $item[2] . ",";
+		$recipeItemsIdCnt = [];
+		$craftItemsIdCnt = [];
+		
+		foreach($recipeItems as $id => $items){
+			foreach($items as $meta => $item){
+				if(!isset($recipeItemsIdCnt[$item[0]])) $recipeItemsIdCnt[$item[0]] = 0;
+				$recipeItemsIdCnt[$item[0]] += $item[2];
+			}
 		}
-		foreach($craftItems as $item){
-			$resultString .= "{$item[0]}x{$item[2]},";
+		foreach($craftItems as $id => $items){
+			foreach($items as $meta => $item){
+				if(!isset($craftItemsIdCnt[$item[0]])) $craftItemsIdCnt[$item[0]] = 0;
+				$craftItemsIdCnt[$item[0]] += $item[2];
+			}
+		}
+		
+		foreach($recipeItemsIdCnt as $id => $cnt){
+			$recipeString .= "{$id}x{$cnt},";
+		}
+		foreach($craftItemsIdCnt as $id => $cnt){
+			$resultString .= "{$id}x{$cnt},";
 		}
 		
 		$recipeString = substr($recipeString, 0, -1) . "=>" . substr($resultString, 0, -1);
+		
 		$server = ServerAPI::request();
 		$result = $server->query("SELECT id FROM recipes WHERE type == " . $type . " AND recipe == '" . $recipeString . "';");
 		if($result instanceof SQLite3Result){
@@ -310,16 +327,36 @@ class CraftingRecipes{
 			while(($r = $result->fetchArray(SQLITE3_NUM)) !== false){
 				$continue = true;
 				$recipe = CraftingRecipes::$recipes[$r[0]];
+				
 				foreach($recipe[0] as $item){ //check ingridients
-					if(!isset($recipeItems[$item[0]])){
+					if(!isset($recipeItems[$item[0]])){ //is item id in recipe
 						$continue = false;
 						break;
 					}
 					$oitem = $recipeItems[$item[0]];
 					
-					if(($oitem[1] !== $item[1] and $item[1] !== false) or $oitem[2] !== $item[2]){
-						$continue = false;
-						break;
+					if($item[1] === false){ //recipe allows to use any meta
+						$totalcnt = 0;
+						foreach($oitem as $it) $totalcnt += $it[2];
+						
+						if($item[2] !== $totalcnt){
+							$continue = false;
+							break;
+						}
+					}else{ //recipe expects specific meta
+						$matchfound = false;
+						$matchcnt = 0;
+						foreach($oitem as $it){
+							if($item[1] === $it[1]){
+								$matchfound = true;
+								$matchcnt = $it[2];
+								break;
+							}
+						}
+						if(!$matchfound || $item[2] !== $matchcnt){ //meta match not found or count is different
+							$continue = false;
+							break;
+						}
 					}
 				}
 				if($continue === false){
@@ -327,15 +364,34 @@ class CraftingRecipes{
 					continue;
 				}
 				foreach($recipe[1] as $item){ //check results
-					if(!isset($craftItems[$item[0]])){
+					if(!isset($craftItems[$item[0]])){ //is item id in recipe
 						$continue = false;
 						break;
 					}
 					$oitem = $craftItems[$item[0]];
 					
-					if(($oitem[1] !== $item[1] and $item[1] !== false) or $oitem[2] !== $item[2]){
-						$continue = false;
-						break;
+					if($item[1] === false){ //recipe allows to use any meta
+						$totalcnt = 0;
+						foreach($oitem as $it) $totalcnt += $it[2];
+						
+						if($item[2] !== $totalcnt){
+							$continue = false;
+							break;
+						}
+					}else{ //recipe expects specific meta
+						$matchfound = false;
+						$matchcnt = 0;
+						foreach($oitem as $it){
+							if($item[1] === $it[1]){
+								$matchfound = true;
+								$matchcnt = $it[2];
+								break;
+							}
+						}
+						if(!$matchfound || $item[2] !== $matchcnt){ //meta match not found or count is different
+							$continue = false;
+							break;
+						}
 					}
 				}
 				if($continue === false){
