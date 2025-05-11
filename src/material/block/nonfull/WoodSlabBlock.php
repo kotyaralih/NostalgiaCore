@@ -90,7 +90,9 @@ class WoodSlabBlock extends TransparentBlock{
 		if(($player->gamemode & 0x01) === 0x01){
 			return 0.20;
 		}
-		return match ($item->isAxe()) {
+		if(!$item->isAxe()) return 3;
+		
+		return match ($item->getLevel()) {
 			5 => 0.4,
 			4 => 0.5,
 			3 => 0.75,
