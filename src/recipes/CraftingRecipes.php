@@ -186,7 +186,7 @@ class CraftingRecipes{
 		"MOSSY_STONE:0x6=>STONE_WALL:1x6",
 		"NETHER_BRICK:?x4=>NETHER_BRICKS:0x1",
 		"NETHER_BRICKS:?x6=>NETHER_BRICKS_STAIRS:0x4",
-		"QUARTZ_BLOCK:0x2=>QUARTZ_BLOCK:2x2",
+		"QUARTZ_BLOCK:?x2=>QUARTZ_BLOCK:2x2",
 		"QUARTZ_BLOCK:?x3=>SLAB:6x6",
 		"SANDSTONE:0x6=>SANDSTONE_STAIRS:0x4",
 		"SAND:?x4=>SANDSTONE:0x1",
@@ -200,211 +200,141 @@ class CraftingRecipes{
 		"COBBLESTONE:?x6=>COBBLESTONE_STAIRS:0x4",
 	];
 
-	/**
-	 * Each element structure:
-	 * * 0 - ingridients <br>
-	 * * 1 - results <br>
-	 * * 2 - recipe string <br>
-	 * @var array[]
-	 */
-	private static $recipes = [];
-
+	private static $craftingTableRecipes = [];
+	private static $inventoryRecipes = [];
+	private static $stoneCutterRecipes = [];
+	
 	public static function init(){
-		$server = ServerAPI::request();
-		$id = 1;
+		
 		foreach(CraftingRecipes::$small as $recipe){
-			$recipe = CraftingRecipes::parseRecipe($recipe);
-			$recipe[3] = self::TYPE_INVENTORY; //Type
-			CraftingRecipes::$recipes[$id] = $recipe;
-			++$id;
+			CraftingRecipes::addRecipe($recipe, self::TYPE_INVENTORY);
+			CraftingRecipes::addRecipe($recipe, self::TYPE_CRAFTIGTABLE);
 		}
+		
 		foreach(CraftingRecipes::$big as $recipe){
-			$recipe = CraftingRecipes::parseRecipe($recipe);
-			$recipe[3] = self::TYPE_CRAFTIGTABLE;
-			CraftingRecipes::$recipes[$id] = $recipe;
-			++$id;
+			CraftingRecipes::addRecipe($recipe, self::TYPE_CRAFTIGTABLE);
 		}
+		
 		foreach(CraftingRecipes::$stone as $recipe){
-			$recipe = CraftingRecipes::parseRecipe($recipe);
-			$recipe[3] = self::TYPE_STONECUTTER;
-			CraftingRecipes::$recipes[$id] = $recipe;
-			++$id;
-		}
-
-		foreach(CraftingRecipes::$recipes as $id => $recipe){
-			$server->query("INSERT INTO recipes (id, type, recipe) VALUES (" . $id . ", " . $recipe[3] . ", '" . $recipe[2] . "');");
+			CraftingRecipes::addRecipe($recipe, self::TYPE_STONECUTTER);
 		}
 	}
 
-	private static function parseRecipe($recipe){
+	public static function fromString($str){
+		[$idm, $cnt] = explode("x", $str);
+		[$id, $meta] = explode(":", $idm);
+		$id = BlockAPI::blockIDFromString($id);
+		
+		return [$id, ($meta == "?") ? "?" : ((int)$meta), (int)$cnt];
+	}
+	
+	public static function addRecipe($recipe, $type){
 		[$ingridients, $results] = explode("=>", $recipe);
-		$recipeItems = [];
-		foreach(explode(",", $ingridients) as $item){
-			$item = explode("x", $item);
-			$id = explode(":", $item[0]);
-			$meta = array_pop($id);
-			$id = $id[0];
-
-			$it = BlockAPI::fromString($id);
-			if(!isset($recipeItems[$it->getID()])){
-				$recipeItems[$it->getID()] = [$it->getID(), $meta === "?" ? false : intval($meta) & 0xFFFF, intval($item[1])];
-			}else{
-				if($it->getMetadata() !== $recipeItems[$it->getID()][1]){
-					$recipeItems[$it->getID()][1] = false;
-				}
-				$recipeItems[$it->getID()][2] += $it->count;
-			}
+		$results_arr = []; //indexed by id, must be rewritten in case some recipe will craft 2 items with same id but different metadata
+		foreach(explode(",", $results) as $res){
+			[$id, $meta, $cnt] = self::fromString($res);
+			if($meta === "?") throw new RuntimeException("Unknown metadata in result when trying to add $recipe (type: $type)");
+			$results_arr[$id] = "{$id}:{$meta}x{$cnt}";
 		}
-		ksort($recipeItems);
+		ksort($results_arr);
+		$result_index = implode(",", $results_arr);
 		
-		$craftItems = [];
-		foreach(explode(",", $results) as $item){
-			$item = explode("x", $item);
-			$id = explode(":", $item[0]);
-			$meta = array_pop($id);
-			$id = $id[0];
-			$it = BlockAPI::fromString($id);
-			if(!isset($craftItems[$it->getID()])){
-				$craftItems[$it->getID()] = [$it->getID(), intval($meta) & 0xffff, intval($item[1])];
-			}else{
-				if($it->getMetadata() !== $craftItems[$it->getID()][1]){
-					$craftItems[$it->getID()][1] = false;
-				}
-				$craftItems[$it->getID()][2] += $it->count;
-			}
-		}
-		ksort($craftItems);
-
-		$recipeString = "";
-		$resultString = "";
-		foreach($recipeItems as $item){
-			$recipeString .= "{$item[0]}x{$item[2]},";
-		}
-		foreach($craftItems as $item){
-			$resultString .= "{$item[0]}x{$item[2]},";
+		$ingridients_arr = [];
+		foreach(explode(",", $ingridients) as $resultstr){
+			[$id, $meta, $cnt] = self::fromString($resultstr);
+			$ingridients_arr[] = [$id, $meta, $cnt]; 
 		}
 		
-		$recipeString = substr($recipeString, 0, -1) . "=>" . substr($resultString, 0, -1);
-
-		return [$recipeItems, $craftItems, $recipeString];
+		switch($type){
+			case self::TYPE_CRAFTIGTABLE:
+				$arr = &self::$craftingTableRecipes;
+				break;
+			case self::TYPE_INVENTORY:
+				$arr = &self::$inventoryRecipes;
+				break;
+			case self::TYPE_STONECUTTER:
+				$arr = &self::$stoneCutterRecipes;
+				break;
+			default:
+				throw new RuntimeException("Unknown type: {$type}");
+		}
+			
+		if(!isset($arr[$result_index])){
+			$arr[$result_index] = [];
+		}
+		$arr[$result_index][] = $ingridients_arr;
 	}
 
+	/**
+	 * Checks can craft some item
+	 * 
+	 * @param array $craftItems items that will be crafted
+	 * @param array $recipeItems items that will be consumed
+	 * @param int $type craft type (CraftingRecipes::TYPE_INVENTORY, CraftingRecipes::TYPE_CRAFTIGTABLE, CraftingRecipes::TYPE_STONECUTTER)
+	 * @return array|false recipe that will be used or false
+	 */
 	public static function canCraft(array $craftItems, array $recipeItems, $type){
-		ksort($recipeItems);
-		ksort($craftItems);
-		
-		$recipeString = "";
-		$resultString = "";
-		$recipeItemsIdCnt = [];
-		$craftItemsIdCnt = [];
-		
-		foreach($recipeItems as $id => $items){
-			foreach($items as $meta => $item){
-				if(!isset($recipeItemsIdCnt[$item[0]])) $recipeItemsIdCnt[$item[0]] = 0;
-				$recipeItemsIdCnt[$item[0]] += $item[2];
-			}
+		$craftIndexArr = [];
+		foreach($craftItems as $it){
+			$craftIndexArr[$it[0]] = "{$it[0]}:{$it[1]}x{$it[2]}";
 		}
-		foreach($craftItems as $id => $items){
-			foreach($items as $meta => $item){
-				if(!isset($craftItemsIdCnt[$item[0]])) $craftItemsIdCnt[$item[0]] = 0;
-				$craftItemsIdCnt[$item[0]] += $item[2];
-			}
-		}
+		ksort($craftIndexArr);
+		$craftIndex = implode(",", $craftIndexArr);
 		
-		foreach($recipeItemsIdCnt as $id => $cnt){
-			$recipeString .= "{$id}x{$cnt},";
-		}
-		foreach($craftItemsIdCnt as $id => $cnt){
-			$resultString .= "{$id}x{$cnt},";
-		}
-		
-		$recipeString = substr($recipeString, 0, -1) . "=>" . substr($resultString, 0, -1);
-		
-		$server = ServerAPI::request();
-		$result = $server->query("SELECT id FROM recipes WHERE type == " . $type . " AND recipe == '" . $recipeString . "';");
-		if($result instanceof SQLite3Result){
-			$continue = true;
-			while(($r = $result->fetchArray(SQLITE3_NUM)) !== false){
-				$continue = true;
-				$recipe = CraftingRecipes::$recipes[$r[0]];
-				
-				foreach($recipe[0] as $item){ //check ingridients
-					if(!isset($recipeItems[$item[0]])){ //is item id in recipe
-						$continue = false;
-						break;
-					}
-					$oitem = $recipeItems[$item[0]];
-					
-					if($item[1] === false){ //recipe allows to use any meta
-						$totalcnt = 0;
-						foreach($oitem as $it) $totalcnt += $it[2];
-						
-						if($item[2] !== $totalcnt){
-							$continue = false;
-							break;
-						}
-					}else{ //recipe expects specific meta
-						$matchfound = false;
-						$matchcnt = 0;
-						foreach($oitem as $it){
-							if($item[1] === $it[1]){
-								$matchfound = true;
-								$matchcnt = $it[2];
-								break;
-							}
-						}
-						if(!$matchfound || $item[2] !== $matchcnt){ //meta match not found or count is different
-							$continue = false;
-							break;
-						}
-					}
-				}
-				if($continue === false){
-					$continue = false;
-					continue;
-				}
-				foreach($recipe[1] as $item){ //check results
-					if(!isset($craftItems[$item[0]])){ //is item id in recipe
-						$continue = false;
-						break;
-					}
-					$oitem = $craftItems[$item[0]];
-					
-					if($item[1] === false){ //recipe allows to use any meta
-						$totalcnt = 0;
-						foreach($oitem as $it) $totalcnt += $it[2];
-						
-						if($item[2] !== $totalcnt){
-							$continue = false;
-							break;
-						}
-					}else{ //recipe expects specific meta
-						$matchfound = false;
-						$matchcnt = 0;
-						foreach($oitem as $it){
-							if($item[1] === $it[1]){
-								$matchfound = true;
-								$matchcnt = $it[2];
-								break;
-							}
-						}
-						if(!$matchfound || $item[2] !== $matchcnt){ //meta match not found or count is different
-							$continue = false;
-							break;
-						}
-					}
-				}
-				if($continue === false){
-					$continue = false;
-					continue;
-				}
-				$continue = $recipe;
+		switch($type){
+			case self::TYPE_CRAFTIGTABLE:
+				$arr = &self::$craftingTableRecipes;
 				break;
-			}
-		}else{
-			return true;
+			case self::TYPE_INVENTORY:
+				$arr = &self::$inventoryRecipes;
+				break;
+			case self::TYPE_STONECUTTER:
+				$arr = &self::$stoneCutterRecipes;
+				break;
+			default:
+				ConsoleAPI::error("Tried crafting recipe with unknown type {$type}!");
+				return false;
 		}
-		return $continue;
+		
+		if(!isset($arr[$craftIndex])) {
+			console("WAT $craftIndex");
+			return false; //recipe not found
+		}
+		
+		foreach($arr[$craftIndex] as $ingridients){
+			foreach($ingridients as $item){
+				if($item[1] === "?"){ // any metadata is allowed
+					$needcnt = $item[2];
+					foreach($recipeItems as $idmeta => $it){
+						$id = $idmeta >> 16;
+						if($id != $item[0]) continue;
+						$needcnt -= $it[2];
+					}
+					if($needcnt != 0) {
+						console("awa");
+						goto skip_recipe;
+					}
+				}else{
+					$exceptedIndex = ($item[0] << 16) | ($item[1] & 0xffff);
+					if(!isset($recipeItems[$exceptedIndex])) {
+						
+						console("awa1");
+						goto skip_recipe; //dont check count if no idmeta pair is in ingridients
+					}
+					$it = $recipeItems[$exceptedIndex];
+					if($it[0] != $item[0] || $it[1] != $item[1] || $it[2] != $item[2]) {
+						
+						console("awa2");
+						goto skip_recipe;
+					}
+				}
+			}
+			//recipe is correct
+			return [$craftItems, $ingridients];
+			
+			skip_recipe:
+		}
+		return false;
 	}
 
 }

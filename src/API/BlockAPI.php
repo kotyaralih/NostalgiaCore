@@ -341,6 +341,16 @@ class BlockAPI{
 		return $output;
 	}
 
+	public static function blockIDFromString($str){
+		if(defined(strtoupper($str))){
+			$ida = explode(":", constant(strtoupper($str)));
+			if(count($ida) === 2){}
+			return (int) $ida[0];
+		}else if(is_numeric($str)){
+			return (int) $str;
+		}
+	}
+	
 	public static function fromString($str, $multiple = false){
 		if($multiple === true){
 			$blocks = [];

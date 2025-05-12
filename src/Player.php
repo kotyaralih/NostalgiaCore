@@ -1997,7 +1997,7 @@ class Player{
 				//nc: check item desync
 				$heldItem = $this->getHeldItem();
 				if($heldItem->getID() != $packet->item || $heldItem->getMetadata() != $packet->meta){
-					ConsoleAPI::warn("{$this->username}'s heldItem doesnt match on clientside and serverside when using item. Resending inventory.");
+					ConsoleAPI::warn("{$this->username}'s heldItem doesnt match on clientside({$packet->item} {$packet->meta}) and serverside({$heldItem->getID()} {$heldItem->getMetadata()}) when using item. Resending inventory.");
 					$this->sendInventory();
 					if($packet->face >= 0 && $packet->face <= 5){
 						$target = $this->level->getBlock($blockVector);
@@ -2722,28 +2722,16 @@ class Player{
 		
 		$results = [];
 		foreach($this->toCraft as $i => $slotz){
-			if(!isset($results[$i])) $results[$i] = [];
-			$results[$i >> 16][] = [$i >> 16, $i & 0xffff, array_sum($slotz)];
+			$results[$i] = [$i >> 16, $i & 0xffff, array_sum($slotz)];
 		}
 		$ingridients = [];
 		foreach($this->craftingItems as $i => $slotz){
-			if(!isset($ingridients[$i])) $ingridients[$i] = [];
-			$ingridients[$i >> 16][] = [$i >> 16, $i & 0xffff, array_sum($slotz)];
+			$ingridients[$i] = [$i >> 16, $i & 0xffff, array_sum($slotz)];
 		}
 
 		
 		$cc = CraftingRecipes::canCraft($results, $ingridients, $this->craftingType);
-		
-		if(!is_array($cc)){
-			if($this->craftingType == CraftingRecipes::TYPE_CRAFTIGTABLE){
-				$cc = CraftingRecipes::canCraft($results, $ingridients, CraftingRecipes::TYPE_INVENTORY);
-				if(!is_array($cc)){
-					return; //recipe not found
-				}
-			}else{
-				return;
-			}
-		}
+		if(!is_array($cc)) return;
 		
 		if($this->server->api->dhandle("player.craft", ["player" => $this, "ingridients" => $this->craftingItems, "results" => $this->toCraft, "type" => $this->craftingType]) === false){
 			$this->toCraft = [];
