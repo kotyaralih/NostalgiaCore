@@ -72,9 +72,20 @@ class Level{
 	public function close(){
 		if(isset($this->level)){
 			$this->save(true, true, true, true);
+			$this->server->api->block->removeAllBlockUpdates($this);
+			foreach($this->server->api->player->getAll($this) as $player){
+				$player->teleport($this->server->spawn);
+			}
+			foreach($this->entityList as $entity){
+				if($entity->class !== ENTITY_PLAYER){
+					$entity->close();
+				}
+			}
+			foreach($this->server->api->tile->getAll($this) as $tile){
+				$tile->close();
+			}
 			$this->level->close();
 			unset($this->level);
-			$this->server->api->block->removeAllBlockUpdates($this);
 		}
 		unset($this->mobSpawner->level);
 	}

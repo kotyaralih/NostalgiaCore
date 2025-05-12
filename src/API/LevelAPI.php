@@ -225,19 +225,6 @@ class LevelAPI{
 			return false;
 		}
 		console("[INFO] Unloading level \"" . $name . "\"");
-		$level->nextSave = PHP_INT_MAX;
-		$level->save();
-		foreach($this->server->api->player->getAll($level) as $player){
-			$player->teleport($this->server->spawn);
-		}
-		foreach($this->server->api->entity->getAll($level) as $entity){
-			if($entity->class !== ENTITY_PLAYER){
-				$entity->close();
-			}
-		}
-		foreach($this->server->api->tile->getAll($level) as $tile){
-			$tile->close();
-		}
 		$level->close();
 		unset($this->levels[$name]);
 		return true;
