@@ -70,7 +70,13 @@ class Level{
 	}
 
 	public function close(){
-		$this->__destruct();
+		if(isset($this->level)){
+			$this->save(true, true, true, true);
+			$this->level->close();
+			unset($this->level);
+			$this->server->api->block->removeAllBlockUpdates($this);
+		}
+		unset($this->mobSpawner->level);
 	}
 	
 	public function isTopSolidBlocking($x, $y, $z){
@@ -269,12 +275,7 @@ class Level{
 	}
 	
 	public function __destruct(){
-		if(isset($this->level)){
-			$this->save(false, false, false, false);
-			$this->level->close();
-			unset($this->level);
-		}
-		unset($this->mobSpawner->level);
+		$this->close();
 	}
 	
 	public function isDay(){

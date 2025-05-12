@@ -430,7 +430,7 @@ class BlockAPI{
 		$pk->meta = $block->getMetadata();
 		$player->dataPacket($pk);
 		if($send === true){
-			$player->sendInventorySlot($player->slot);
+			$player->sendInventory();
 		}
 		return false;
 	}
@@ -571,6 +571,18 @@ class BlockAPI{
 			$this->blockUpdate($pos->getSide(5), $type);
 		}
 	}
+	
+	public function removeAllBlockUpdates(Level $level){
+		$update = $this->server->query("SELECT x,y,z,level,type FROM blockUpdates WHERE level = '{$level->getName()}';");
+		if($update instanceof SQLite3Result){
+			while(($up = $update->fetchArray(SQLITE3_ASSOC)) !== false){
+				$index = $up["x"] . "." . $up["y"] . "." . $up["z"] . "." . $up["level"] . "." . $up["type"];
+				unset($this->scheduledUpdates[$index]);
+			}
+			$this->server->query("DELETE FROM blockUpdates WHERE level = '{$level->getName()}';");
+		}
+	}
+	
 	public function scheduleBlockUpdateXYZ(Level $level, $x, $y, $z, $type = BLOCK_UPDATE_SCHEDULED, $delay = false){
 		$type = (int) $type;
 		if($delay < 0){
@@ -588,41 +600,9 @@ class BlockAPI{
 	}
 	
 	public function scheduleBlockUpdate(Position $pos, $delay, $type = BLOCK_UPDATE_SCHEDULED){
-		$type = (int) $type;
-		if($delay < 0){
-			return false;
-		}
-
-		$index = $pos->x . "." . $pos->y . "." . $pos->z . "." . $pos->level->getName() . "." . $type;
-		$delay = microtime(true) + $delay * 0.05;
-		if(!isset($this->scheduledUpdates[$index])){
-			$this->scheduledUpdates[$index] = $pos;
-			$this->server->query("INSERT INTO blockUpdates (x, y, z, level, type, delay) VALUES (" . $pos->x . ", " . $pos->y . ", " . $pos->z . ", '" . $pos->level->getName() . "', " . $type . ", " . $delay . ");");
-			return true;
-		}
-		return false;
+		return $this->scheduleBlockUpdateXYZ($pos->level, $pos->x, $pos->y, $pos->z, $type, $delay);
 	}
 
-	public function nextRandomUpdate(Position $pos){
-		if(!isset($this->scheduledUpdates[$pos->x . "." . $pos->y . "." . $pos->z . "." . $pos->level->getName() . "." . BLOCK_UPDATE_RANDOM])){
-			$time = microtime(true);
-			$offset = 0;
-			while(true){
-				$t = $offset + Utils::getRandomUpdateTicks() * 0.05;
-				$update = $this->server->query("SELECT COUNT(*) FROM blockUpdates WHERE level = '" . $pos->level->getName() . "' AND type = " . BLOCK_UPDATE_RANDOM . " AND delay >= " . ($time + $t - 1) . " AND delay <= " . ($time + $t + 1) . ";");
-				if($update instanceof SQLite3Result){
-					$update = $update->fetchArray(SQLITE3_NUM);
-					if($update[0] < 3){
-						break;
-					}
-				}else{
-					break;
-				}
-				$offset += mt_rand(25, 75);
-			}
-			$this->scheduleBlockUpdate($pos, $t / 0.05, BLOCK_UPDATE_RANDOM);
-		}
-	}
 
 	public function blockUpdateTick(){
 		$time = microtime(true);
@@ -643,5 +623,12 @@ class BlockAPI{
 				}
 			}
 		}
+	}
+	
+	/**
+	 * @deprecated random updates are handled differently now.
+	 */
+	public function nextRandomUpdate(Position $pos){
+		
 	}
 }
