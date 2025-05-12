@@ -1996,8 +1996,10 @@ class Player{
 
 				//nc: check item desync
 				$heldItem = $this->getHeldItem();
-				if($heldItem->getID() != $packet->item || $heldItem->getMetadata() != $packet->meta){
-					ConsoleAPI::warn("{$this->username}'s heldItem doesnt match on clientside({$packet->item} {$packet->meta}) and serverside({$heldItem->getID()} {$heldItem->getMetadata()}) when using item. Resending inventory.");
+				$pmeta = ($packet->meta & 0xff);
+				$hmeta = ($heldItem->getMetadata() & 0xff); //in 0.8.1 useitempacket uses byte for meta
+				if($heldItem->getID() != $packet->item || $hmeta != $pmeta){
+					ConsoleAPI::warn("{$this->username}'s heldItem doesnt match on clientside({$packet->item} {$pmeta}) and serverside({$heldItem->getID()} {$hmeta}) when using item. Resending inventory.");
 					$this->sendInventory();
 					if($packet->face >= 0 && $packet->face <= 5){
 						$target = $this->level->getBlock($blockVector);

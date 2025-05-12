@@ -311,20 +311,15 @@ class CraftingRecipes{
 						$needcnt -= $it[2];
 					}
 					if($needcnt != 0) {
-						console("awa");
 						goto skip_recipe;
 					}
 				}else{
 					$exceptedIndex = ($item[0] << 16) | ($item[1] & 0xffff);
 					if(!isset($recipeItems[$exceptedIndex])) {
-						
-						console("awa1");
 						goto skip_recipe; //dont check count if no idmeta pair is in ingridients
 					}
 					$it = $recipeItems[$exceptedIndex];
 					if($it[0] != $item[0] || $it[1] != $item[1] || $it[2] != $item[2]) {
-						
-						console("awa2");
 						goto skip_recipe;
 					}
 				}
