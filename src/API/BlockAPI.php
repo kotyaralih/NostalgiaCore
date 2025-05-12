@@ -467,7 +467,7 @@ class BlockAPI{
 
 		if(($player->gamemode & 0x02) === 0x02){ //Adventure mode!!
 			if($this->server->api->dhandle("player.block.place.bypass", ["player" => $player, "block" => $block, "target" => $target, "item" => $item]) !== true){
-				return $this->cancelAction($block, $player, false);
+				return $this->cancelAction($block, $player);
 			}
 		}
 
@@ -486,14 +486,14 @@ class BlockAPI{
 			$hand = $item->getBlock();
 			$hand->position($block);
 		}elseif($block->getID() === FIRE){
-			$player->level->setBlock($block, new AirBlock(), true, false, true);
+			$player->level->fastSetBlockUpdate($block->x, $block->y, $block->z, 0, 0, true, false);
 			return false;
 		}else{
-			return $this->cancelAction($block, $player, false);
+			return $this->cancelAction($block, $player);
 		}
 
 		if(!($block->isReplaceable === true or ($hand->getID() === SLAB and $block->getID() === SLAB))){
-			return $this->cancelAction($block, $player, false);
+			return $this->cancelAction($block, $player);
 		}
 
 		if($target->isReplaceable === true){
@@ -506,7 +506,7 @@ class BlockAPI{
 			$aabb = $hand->getAABB($block->level, $block->x, $block->y, $block->z);
 			$playerbb = $player->entity->boundingBox;
 			if(($aabb->maxX > $playerbb->minX && $aabb->minX < $playerbb->maxX) && ($aabb->maxY > ($playerbb->minY+0.21) && $aabb->minY < $playerbb->maxY) && ($aabb->maxZ > $playerbb->minZ && $aabb->minZ < $playerbb->maxZ)){
-				return $this->cancelAction($block, $player, false); //Entity in block
+				return $this->cancelAction($block, $player); //Entity in block
 			}
 			
 		}
@@ -514,7 +514,7 @@ class BlockAPI{
 		if($this->server->api->dhandle("player.block.place", ["player" => $player, "block" => $block, "target" => $target, "item" => $item]) === false){
 			return $this->cancelAction($block, $player);
 		}elseif($hand->place($item, $player, $block, $target, $face, $fx, $fy, $fz) === false){
-			return $this->cancelAction($block, $player, false);
+			return $this->cancelAction($block, $player);
 		}
 		if($hand->getID() === SIGN_POST or $hand->getID() === WALL_SIGN){
 			$t = $this->server->api->tile->addSign($player->level, $block->x, $block->y, $block->z);
