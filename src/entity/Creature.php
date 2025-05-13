@@ -72,7 +72,7 @@ abstract class Creature extends Living{
 		$pk->yaw = $this->yaw;
 		$pk->pitch = $this->pitch;
 		$pk->metadata = $this->getMetadata();				
-		$player->dataPacket($pk);
+		$player->dataPacketAlwaysRecover($pk);
 				
 		$pk = new SetEntityMotionPacket;
 		$pk->eid = $this->eid;

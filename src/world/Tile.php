@@ -375,7 +375,7 @@ class Tile extends Position{
 				$pk->y = $this->y;
 				$pk->z = $this->z;
 				$pk->namedtag = $nbt->binary;
-				$player->dataPacket($pk);
+				$player->dataPacketAlwaysRecover($pk);
 				break;
 			case TILE_SIGN:
 				$nbt = new NBT();
@@ -420,7 +420,7 @@ class Tile extends Position{
 				$pk->y = $this->y;
 				$pk->z = $this->z;
 				$pk->namedtag = $nbt->binary;
-				$player->dataPacket($pk);
+				$player->dataPacketAlwaysRecover($pk);
 				break;
 		}
 	}

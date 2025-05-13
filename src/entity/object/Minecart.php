@@ -435,8 +435,8 @@ class Minecart extends Vehicle{
 		$pk->z = $this->z;
 		$pk->yaw = $this->yaw;
 		$pk->pitch = $this->pitch;
-		$player->dataPacket($pk);
-					
+		$player->dataPacketAlwaysRecover($pk);
+		
 		$pk = new SetEntityMotionPacket;
 		$pk->eid = $this->eid;
 		$pk->speedX = $this->speedX;

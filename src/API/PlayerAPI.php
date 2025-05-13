@@ -404,7 +404,7 @@ class PlayerAPI{
 					$pk->z = -256;
 					$pk->yaw = 0;
 					$pk->pitch = 0;
-					$player->dataPacket($pk);
+					$player->dataPacketAlwaysRecover($pk);
 				}
 			}
 		}

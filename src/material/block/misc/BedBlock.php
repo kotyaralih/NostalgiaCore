@@ -76,9 +76,7 @@ class BedBlock extends TransparentBlock{
 	
 	public function onActivate(Item $item, Player $player){
 		if(ServerAPI::request()->api->time->getPhase($player->level) !== "night"){
-			$pk = new ChatPacket;
-			$pk->message = "You can only sleep at night";
-			$player->dataPacket($pk);
+			$player->sendChat("You can only sleep at night");
 			return true;
 		}
 		
@@ -98,17 +96,13 @@ class BedBlock extends TransparentBlock{
 			}elseif($blockWest->getID() === $this->id and ($blockWest->meta & 0x08) === 0x08){
 				$b = $blockWest;
 			}else{
-				$pk = new ChatPacket;
-				$pk->message = "This bed is incomplete";
-				$player->dataPacket($pk);
+				$player->sendChat("This bed is incomplete");
 				return true;
 			}
 		}
 
 		if($player->sleepOn($b) === false){
-			$pk = new ChatPacket;
-			$pk->message = "This bed is occupied";
-			$player->dataPacket($pk);
+			$player->sendChat("This bed is occupied");
 		}
 		return true;
 	}

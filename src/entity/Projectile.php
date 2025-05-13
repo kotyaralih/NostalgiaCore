@@ -210,7 +210,7 @@ abstract class Projectile extends Entity{
 		$pk->speedY = $this->speedY;
 		$pk->speedZ = $this->speedZ;
 		$pk->did = 0;
-		$player->dataPacket($pk);
+		$player->dataPacketAlwaysRecover($pk);
 	}
 	
 }

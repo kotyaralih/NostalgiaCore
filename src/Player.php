@@ -130,7 +130,7 @@ class Player{
 		//$this->server->schedule(20 * 60, [$this, "clearQueue"], [], true);
 		
 		$this->evid[] = $this->server->event("server.close", [$this, "close"]);
-		console("[DEBUG] New Session started with " . $ip . ":" . $port . ". MTU " . $this->MTU . ", Client ID " . $this->clientID, true, true, 2);
+		console("[DEBUG] New Session started with $ip:$port. MTU {$this->MTU}, Client ID {$this->clientID}", true, true, 2);
 	}
 
 	public function __get($name){
@@ -220,7 +220,7 @@ class Player{
 							$pk->yaw = 0;
 							$pk->pitch = 0;
 							$pk->bodyYaw = 0;
-							$e->player->dataPacket($pk);
+							$e->player->dataPacketAlwaysRecover($pk);
 							
 							$pk = new MovePlayerPacket();
 							$pk->eid = $e->eid;
@@ -230,7 +230,7 @@ class Player{
 							$pk->yaw = 0;
 							$pk->pitch = 0;
 							$pk->bodyYaw = 0;
-							$this->dataPacket($pk);
+							$this->dataPacketAlwaysRecover($pk);
 							
 						}else{
 							$pk = new MoveEntityPacket_PosRot();
@@ -240,7 +240,7 @@ class Player{
 							$pk->z = -256;
 							$pk->yaw = 0;
 							$pk->pitch = 0;
-							$this->dataPacket($pk);
+							$this->dataPacketAlwaysRecover($pk);
 						}
 					}
 				}
@@ -266,7 +266,7 @@ class Player{
 							$pk->z = $e->z;
 							$pk->yaw = $e->yaw;
 							$pk->pitch = $e->pitch;
-							$this->dataPacket($pk);
+							$this->dataPacketAlwaysRecover($pk);
 						}
 					}
 				}
@@ -284,7 +284,7 @@ class Player{
 						$pk->z = $player->entity->z;
 						$pk->yaw = $player->entity->yaw;
 						$pk->pitch = $player->entity->pitch;
-						$this->dataPacket($pk);
+						$this->dataPacketAlwaysRecover($pk);
 
 						$pk = new PlayerEquipmentPacket;
 						$pk->eid = $this->eid;
@@ -352,13 +352,8 @@ class Player{
 	 * @return array|bool
 	 */
 	public function dataPacket(RakNetDataPacket $packet){
-		if($this->connected === false){
-			return false;
-		}
-
-		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY){
-			return;
-		}
+		if($this->connected === false) return false;
+		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return;
 		
 		$packet->encode();
 		$len = strlen($packet->buffer) + 1;
@@ -378,6 +373,30 @@ class Player{
 		return [];
 	}
 
+	public function dataPacketAlwaysRecover(RakNetDataPacket $packet){
+		if($this->connected === false) return false;
+		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return;
+		
+		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
+		$pk->data[] = $packet;
+		$pk->seqNumber = $this->counter[0]++;
+		$pk->sendtime = microtime(true);
+		
+		$packet->encode();
+		$len = strlen($packet->buffer) + 1;
+		$MTU = $this->MTU - 24;
+		if($len > $MTU){
+			return $this->sendChunkDataPacket($packet);
+		}
+		
+		$packet->messageIndex = $this->counter[3]++;
+		$packet->reliability = 2;
+		
+		$this->send($pk);
+		$this->packetAlwaysRecoverQueue[$pk->seqNumber] = $pk;
+		return [$pk->seqNumber];
+	}
+	
 	public function sendChunkDataPacket(RakNetDataPacket $pk){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
@@ -617,6 +636,25 @@ class Player{
 		}
 	}
 	
+	public $currentChunk = false;
+	
+	public function onChunkReceived($blockX, $blockZ){
+		$minX = $blockX;
+		$maxX = $blockX + 15;
+		$minZ = $blockZ;
+		$maxZ = $blockZ + 15;
+		$tiles = $this->server->query("SELECT ID, x, y, z FROM tiles WHERE level = '{$this->level->getName()}' AND x >= $minX AND x <= $maxX AND z >= $minZ AND z <= $maxZ;");
+		$this->lastChunk = false;
+		if($tiles !== false and $tiles !== true){
+			while(($tile = $tiles->fetchArray(SQLITE3_ASSOC)) !== false){
+				$tile = $this->server->api->tile->getByID($tile["ID"]);
+				if($tile instanceof Tile){
+					$tile->spawn($this);
+				}
+			}
+		}
+	}
+	
 	public function getNextChunk($world){
 		if($this->connected === false or $world != $this->level){
 			return false;
@@ -632,20 +670,8 @@ class Player{
 		}
 
 		if(is_array($this->lastChunk)){
-			$minX = $this->lastChunk[0];
-			$maxX = $this->lastChunk[0] + 15;
-			$minZ = $this->lastChunk[1];
-			$maxZ = $this->lastChunk[1] + 15;
-			$tiles = $this->server->query("SELECT ID, x, y, z FROM tiles WHERE level = '{$this->level->getName()}' AND x >= $minX AND x <= $maxX AND z >= $minZ AND z <= $maxZ;");
+			$this->onChunkReceived($this->lastChunk[0], $this->lastChunk[1]);
 			$this->lastChunk = false;
-			if($tiles !== false and $tiles !== true){
-				while(($tile = $tiles->fetchArray(SQLITE3_ASSOC)) !== false){
-					$tile = $this->server->api->tile->getByID($tile["ID"]);
-					if($tile instanceof Tile){
-						$tile->spawn($this);
-					}
-				}
-			}
 		}
 
 		$c = key($this->chunksOrder);
@@ -681,6 +707,7 @@ class Player{
 		if($cnt === false){
 			return false;
 		}
+		
 		$this->chunkCount = [];
 		foreach($cnt as $i => $count){
 			$this->chunkCount[$count] = true;
@@ -1537,7 +1564,6 @@ class Player{
 	}
 	public function entityTick(){
 		if($this->isSleeping) ++$this->sleepingTime;
-		
 		if($this->server->difficulty == 0 && $this->entity->counter % (20 * 15) == 0){
 			if($this->entity->health < 20 && $this->entity->health > 0){
 				$this->entity->setHealth(min(20, $this->entity->health + 1), "regeneration");
@@ -2864,7 +2890,7 @@ class Player{
 				case RakNetInfo::NACK:
 					foreach($packet->packets as $count){
 						if(isset($this->packetAlwaysRecoverQueue[$count])){
-							$this->packetAlwaysRecoverQueue[$count]->sendtime = 0; //forces resend next time it will be checked
+							$this->resendQueue[$count] = $this->packetAlwaysRecoverQueue[$count];
 						}else if(isset($this->recoveryQueue[$count])){
 							$this->resendQueue[$count] =& $this->recoveryQueue[$count];
 							$this->lag[] = $time - $this->recoveryQueue[$count]->sendtime;

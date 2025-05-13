@@ -76,6 +76,6 @@ class PrimedTNT extends Entity{
 		$pk->speedX = $this->speedX;
 		$pk->speedY = $this->speedY;
 		$pk->speedZ = $this->speedZ;
-		$player->dataPacket($pk);
+		$player->dataPacketAlwaysRecover($pk);
 	}
 }

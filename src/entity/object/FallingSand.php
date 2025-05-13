@@ -19,6 +19,20 @@ class FallingSand extends Entity{
 	public function isPickable(){
 		return !$this->dead;
 	}
+	public function spawn($player)
+	{
+		$pk = new AddEntityPacket();
+		$pk->eid = $this->eid;
+		$pk->type = $this->type;
+		$pk->x = $this->x;
+		$pk->y = $this->y;
+		$pk->z = $this->z;
+		$pk->speedX = $this->speedX;
+		$pk->speedY = $this->speedY;
+		$pk->speedZ = $this->speedZ;
+		$pk->did = -$this->data["Tile"];
+		$player->dataPacketAlwaysRecover($pk);
+	}
 	
 	public function update($now){
 		if($this->closed) return;

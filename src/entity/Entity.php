@@ -1125,14 +1125,7 @@ class Entity extends Position
 				$pk->itemID = 0;
 				$pk->itemAuxValue = 0;
 				$pk->metadata = $this->getMetadata();
-				$player->directDataPacket($pk, 2, true);
-
-				$pk = new SetEntityMotionPacket();
-				$pk->eid = $this->eid;
-				$pk->speedX = $this->speedX;
-				$pk->speedY = $this->speedY;
-				$pk->speedZ = $this->speedZ;
-				$player->dataPacket($pk);
+				$player->dataPacketAlwaysRecover($pk, 2, true);
 
 				$pk = new PlayerEquipmentPacket();
 				$pk->eid = $this->eid;
@@ -1142,18 +1135,6 @@ class Entity extends Position
 				$player->dataPacket($pk);
 				$this->player->sendArmor($player);
 				break;
-			case ENTITY_FALLING:
-				$pk = new AddEntityPacket();
-				$pk->eid = $this->eid;
-				$pk->type = $this->type;
-				$pk->x = $this->x;
-				$pk->y = $this->y;
-				$pk->z = $this->z;
-				$pk->speedX = $this->speedX;
-				$pk->speedY = $this->speedY;
-				$pk->speedZ = $this->speedZ;
-				$pk->did = -$this->data["Tile"];
-				$player->dataPacket($pk);
 		}
 		
 		if($this->linkedEntity != 0 && $this->isRider){
@@ -1563,6 +1544,7 @@ class Entity extends Position
 			"health" => $health,
 			"cause" => $cause
 		)) !== false or $force === true){
+			
 			$this->health = min(127, max(- 127, $health));
 			if($harm === true && $allowHarm){
 				$pk = new EntityEventPacket;
@@ -1578,6 +1560,7 @@ class Entity extends Position
 					}
 				}
 			}
+			
 			if($this->player instanceof Player){
 				$pk = new SetHealthPacket();
 				$pk->health = $this->health;

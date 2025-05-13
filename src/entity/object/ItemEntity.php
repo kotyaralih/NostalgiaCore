@@ -54,7 +54,7 @@ class ItemEntity extends Entity{
 		$pk->roll = 0;
 		$pk->item = BlockAPI::getItem($this->itemID, $this->meta, $this->stack);
 		$pk->metadata = $this->getMetadata();
-		$player->dataPacket($pk);
+		$player->dataPacketAlwaysRecover($pk);
 		
 		$pk = new SetEntityMotionPacket();
 		$pk->eid = $this->eid;
