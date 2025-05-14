@@ -1421,7 +1421,7 @@ class Entity extends Position
 
 	public function heal($health, $cause = "generic")
 	{
-		return $this->setHealth(min(20, $this->getHealth() + ((int) $health)), $cause);
+		return $this->setHealth(min(20, $this->getHealth() + ((int) $health)), $cause, allowHarm: false);
 	}
 	
 	public function stopRiding(){
