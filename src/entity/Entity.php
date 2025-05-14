@@ -787,32 +787,84 @@ class Entity extends Position
 				$bbbottom->minZ = round($this->z, 3) - $this->radius;
 				$bbbottom->maxZ = round($this->z, 3) + $this->radius;
 				
-				$handleFire = false;
-				$handleCactus = false;
-				for($x = floor($this->boundingBox->minX); $x < ceil($this->boundingBox->maxX); ++$x){
-					for($z = floor($this->boundingBox->minZ); $z < ceil($this->boundingBox->maxZ); ++$z){
-						for($y = floor($this->boundingBox->minY - 1); $y < ceil($this->boundingBox->maxY); ++$y){
-							$intersects = 0;
+				$maxx = $this->x;
+				$minx = $this->lastX;
+				$maxy = $this->y;
+				$miny = $this->lastY;
+				$maxz = $this->z;
+				$minz = $this->lastZ;
+				
+				if($this->x < $this->lastX){
+					$minx = $this->x;
+					$maxx = $this->lastX;
+				}
+				
+				if($this->y < $this->lastY){
+					$miny = $this->y;
+					$maxy = $this->lastY;
+				}
+				
+				if($this->z < $this->lastZ){
+					$minz = $this->z;
+					$maxz = $this->lastZ;
+				}
+				
+				$useOldGroundCheck = false;
+				$distBetweenLastAndCurrent = sqrt(($this->lastX-$this->x)*($this->lastX-$this->x) + ($this->lastY-$this->y)*($this->lastY-$this->y) + ($this->lastZ-$this->z)*($this->lastZ-$this->z));
+				if($distBetweenLastAndCurrent > 10){
+					ConsoleAPI::warn("{$this->player} is moving too fast! (Old: {$this->lastX} {$this->lastY} {$this->lastZ}, New: {$this->x} {$this->y} {$this->z}). Skipping new onground check!");
+					$useOldGroundCheck = true;
+					goto skip_new_onground_check;
+				}
+				$bbGround = new AxisAlignedBB($minx - $this->radius, $miny, $minz - $this->radius, $maxx + $this->radius, $maxy, $maxz + $this->radius);
+				
+				for($x = floor($bbGround->minX); $x <= ceil($bbGround->maxX); ++$x){
+					for($z = floor($bbGround->minZ); $z <= ceil($bbGround->maxZ); ++$z){
+						for($y = floor($bbGround->minY-1); $y <= ceil($bbGround->maxY); ++$y){
 							$id = $this->level->level->getBlockID($x, $y, $z);
 							$bounds = StaticBlock::$prealloc[$id]::getCollisionBoundingBoxes($this->level, $x, $y, $z, $this);
 							foreach($bounds as $bb){
-								if($bbbottom->intersectsWith($bb)){
-									++$intersects;
+								if($bbGround->intersectsWith($bb)){
+									$this->onGround = true;
 								}
 							}
+						}
+					}
+				}
+				
+				skip_new_onground_check:
+				
+				$handleFire = false;
+				$handleCactus = false;
+				
+				for($x = floor($this->boundingBox->minX); $x < ceil($this->boundingBox->maxX); ++$x){
+					for($z = floor($this->boundingBox->minZ); $z < ceil($this->boundingBox->maxZ); ++$z){
+						for($y = floor($this->boundingBox->minY - 1); $y < ceil($this->boundingBox->maxY); ++$y){
+							[$id, $meta] = $this->level->level->getBlock($x, $y, $z);
+							
+							if($useOldGroundCheck){
+								$intersects = 0;
+								$bounds = StaticBlock::$prealloc[$id]::getCollisionBoundingBoxes($this->level, $x, $y, $z, $this);
+								foreach($bounds as $bb){
+									if($bbbottom->intersectsWith($bb)){
+										++$intersects;
+									}
+								}
+							}
+							
 							
 							if($id == WATER  || $id === STILL_WATER || $id === COBWEB || $id == LAVA  || $id === STILL_LAVA){
 								$this->notOnGroundTicks = 0;
 							}
 							
-							intersects:
-							if($y <= floor($this->boundingBox->minY) && !$this->onGround){
-								if($intersects > 0) $this->onGround = count($bounds) > 0;
+							if($useOldGroundCheck){
+								intersects:
+								if($y <= floor($this->boundingBox->minY) && !$this->onGround){
+									if($intersects > 0) $this->onGround = count($bounds) > 0;
+								}
 							}
+							
 							if($y >= floor($this->boundingBox->minY)){
-								$block = $this->level->level->getBlock($x, $y, $z);
-								$id = $block[0];
-								$meta = $block[1];
 								$handleFire = $handleFire || (($id == FIRE || $id == STILL_LAVA || $id == LAVA) && $x >= $fireMinX && $x < $fireMaxX && $y >= $fireMinY && $y < $fireMaxY && $z >= $fireMinZ && $z < $fireMaxZ);
 								$handleCactus = $handleCactus || ($id == CACTUS && $x >= $fireMinX && $x < $fireMaxX && $y >= $fireMinY && $y < $fireMaxY && $z >= $fireMinZ && $z < $fireMaxZ);
 								

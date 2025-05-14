@@ -729,7 +729,7 @@ class Player{
 		}else{
 			$level = $pos->level;
 		}
-		$this->spawnPosition = new Position($pos->x, $pos->y, $pos->z, $level);
+		$this->spawnPosition = new Position($pos->x, $pos->y + 1, $pos->z, $level);
 		$pk = new SetSpawnPositionPacket;
 		$pk->x = (int) $this->spawnPosition->x;
 		$pk->y = (int) $this->spawnPosition->y;
@@ -1731,7 +1731,7 @@ class Player{
 				$pk = new StartGamePacket;
 				$pk->seed = $this->level->getSeed();
 				$pk->x = $this->data->get("position")["x"];
-				$pk->y = ceil($this->data->get("position")["y"]);
+				$pk->y = $this->data->get("position")["y"]+1;
 				$pk->z = $this->data->get("position")["z"];
 				$pk->generator = 0;
 				$pk->gamemode = $this->gamemode & 0x01;
@@ -1857,7 +1857,7 @@ class Player{
 					break;
 				}
 				if($this->isSleeping) break;
-				if(($this->entity instanceof Entity) and $packet->messageIndex > $this->lastMovement){
+				if(($this->entity instanceof Entity) && $packet->messageIndex > $this->lastMovement){
 					$this->lastMovement = $packet->messageIndex;
 					$newPos = new Vector3($packet->x, $packet->y, $packet->z);
 					if($this->forceMovement instanceof Vector3){
@@ -1877,6 +1877,8 @@ class Player{
 						$this->entity->setPosition($newPos, $packet->yaw, $packet->pitch, $packet->bodyYaw);
 					}
 					$this->entity->updateAABB();
+				}else{
+					console("skipping movement packet");
 				}
 				break;
 			case ProtocolInfo::PLAYER_EQUIPMENT_PACKET:
