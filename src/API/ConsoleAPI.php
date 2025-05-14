@@ -202,24 +202,21 @@ class ConsoleAPI{
 					"v" => VIEW,
 				];
 				if(!isset($params[0]) or !isset($gms[strtolower($params[0])])){
-					$output .= "Usage: /$cmd <mode>\n";
-					break;
+					return "Usage: /$cmd <mode>";
 				}
 				$this->server->api->setProperty("gamemode", $gms[strtolower($params[0])]);
 				$output .= "Default Gamemode is now " . strtoupper($this->server->getGamemode()) . ".\n";
 				break;
 			case "status":
-				if(!($issuer instanceof Player) and $issuer === "console"){
-					$info = $this->server->debugInfo(true);
-				}else{
-					$info = $this->server->debugInfo();
+				$info = $this->server->debugInfo();
+				if(!($issuer instanceof Player) && $issuer === "console"){
+					return "TPS: {$info["tps"]}, Memory usage: {$info["memory_usage"]} (Peak {$info["memory_peak_usage"]}), Entities: {$info["entities"]}, Events: {$info["events"]}, Handlers: {$info["handlers"]}, Actions: {$info["actions"]}, Garbage: {$info["garbage"]}";
 				}
-				return "TPS: " . $info["tps"] . ", Memory usage: " . $info["memory_usage"] . " (Peak " . $info["memory_peak_usage"] . ")";
+				return "TPS: {$info["tps"]}, Memory usage: {$info["memory_usage"]} (Peak {$info["memory_peak_usage"]})";
 			case "stop":
 				self::$loop->stop = true;
-				$output .= "Stopping the server\n";
 				$this->server->close();
-				break;
+				return "Stopping the server\n";
 			case "difficulty":
 				$s = trim(array_shift($params));
 				if($s === "" or (((int) $s) > 3 and ((int) $s) < 0)){

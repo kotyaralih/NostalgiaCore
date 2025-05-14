@@ -774,7 +774,7 @@ class PocketMinecraftServer{
 		$info["garbage"] = gc_collect_cycles();
 		$this->handle("server.debug", $info);
 		if($console === true){
-			console("[INFO] TPS: " . $info["tps"] . ", Memory usage: " . $info["memory_usage"] . " (Peak " . $info["memory_peak_usage"] . "), Entities: " . $info["entities"] . ", Events: " . $info["events"] . ", Handlers: " . $info["handlers"] . ", Actions: " . $info["actions"] . ", Garbage: " . $info["garbage"], true, true);
+			console("[INFO] TPS: {$info["tps"]}, Memory usage: {$info["memory_usage"]} (Peak {$info["memory_peak_usage"]}), Entities: {$info["entities"]}, Events: {$info["events"]}, Handlers: {$info["handlers"]}, Actions: {$info["actions"]}, Garbage: {$info["garbage"]}", true, true);
 		}
 		return $info;
 	}
