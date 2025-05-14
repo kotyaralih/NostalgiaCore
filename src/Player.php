@@ -1877,9 +1877,8 @@ class Player{
 						$this->entity->setPosition($newPos, $packet->yaw, $packet->pitch, $packet->bodyYaw);
 					}
 					$this->entity->updateAABB();
-				}else{
-					console("skipping movement packet");
 				}
+				
 				break;
 			case ProtocolInfo::PLAYER_EQUIPMENT_PACKET:
 				if($this->spawned === false){

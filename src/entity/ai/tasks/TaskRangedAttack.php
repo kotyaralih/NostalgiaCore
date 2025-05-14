@@ -68,7 +68,7 @@ class TaskRangedAttack extends \TaskBase
 		$arrow = $this->server->api->entity->add($selfEntity->level, ENTITY_OBJECT, OBJECT_ARROW, $d);
 		$arrow->shotByEntity = true;
 		$arrow->shooterEID = $selfEntity->eid;
-		$posY = ($target->y + $target->getEyeHeight() - 0.1);
+		$posY = ($selfEntity->y + $selfEntity->getEyeHeight() - 0.1);
 		$diffX = $target->x - $selfEntity->x;
 		$diffY = ($target->boundingBox->minY + ($target->height / 3)) - $posY;
 		$diffZ = $target->z - $selfEntity->z;
