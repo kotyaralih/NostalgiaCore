@@ -76,6 +76,9 @@ class Entity extends Position
 	public $check = true;
 	public $width = 1;
 	public $height = 1;
+	/**
+	 * @var XorShift128Random
+	 */
 	public $random;
 	public $radius;
 	public $inAction = false;
@@ -113,7 +116,7 @@ class Entity extends Position
 	
 	function __construct(Level $level, $eid, $class, $type = 0, $data = [])
 	{
-		$this->random = new Random();
+		$this->random = new XorShift128Random();
 		$this->last = [&$this->lastX, &$this->lastY, &$this->lastZ, &$this->lastYaw, &$this->lastPitch, &$this->lastTime]; //pointers to variables
 		$this->canBeAttacked = false;
 		$this->hasKnockback = false;
