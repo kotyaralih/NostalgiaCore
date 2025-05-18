@@ -233,7 +233,7 @@ abstract class Block extends Position{
 	
 	public function __construct($id, $meta = 0, $name = "Unknown"){
 		$this->id = (int) $id;
-		$this->meta = (int) $meta;
+		$this->meta = ((int) $meta) & 0xf;
 		$this->name = $name;
 		$this->breakTime = 0.20;
 		$this->hardness = 10;

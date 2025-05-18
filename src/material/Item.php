@@ -144,10 +144,11 @@ class Item{
 	
 	public function __construct($id, $meta = 0, $count = 1, $name = "Unknown"){
 		$this->id = (int) $id;
-		$this->meta = (int) $meta;
+		$this->meta = ((int) $meta) & 0xffff;
 		$this->count = (int) $count;
 		$this->name = $name;
-		if(!isset($this->block) and $this->id <= 0xff and isset(Block::$class[$this->id])){
+		if(!isset($this->block) && $this->id <= 0xff && isset(Block::$class[$this->id])){
+			$this->meta &= 0xf;
 			$this->block = BlockAPI::get($this->id, $this->meta);
 			$this->name = $this->block->getName();
 		}
