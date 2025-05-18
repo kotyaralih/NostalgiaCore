@@ -1,6 +1,5 @@
 <?php
 
-
 class Player{
 	
 	public static $smallChunks = false, $experimentalHotbar = false;
@@ -1731,7 +1730,7 @@ class Player{
 				$pk = new StartGamePacket;
 				$pk->seed = $this->level->getSeed();
 				$pk->x = $this->data->get("position")["x"];
-				$pk->y = $this->data->get("position")["y"]+1;
+				$pk->y = ceil($this->data->get("position")["y"])+1;
 				$pk->z = $this->data->get("position")["z"];
 				$pk->generator = 0;
 				$pk->gamemode = $this->gamemode & 0x01;
@@ -1762,7 +1761,7 @@ class Player{
 				$this->eid = $this->entity->eid;
 				$this->server->query("UPDATE players SET EID = " . $this->eid . " WHERE CID = " . $this->CID . ";");
 				$this->entity->x = $pk->x;
-				$this->entity->y = $pk->y;
+				$this->entity->y = $pk->y-0.9;
 				$this->entity->z = $pk->z;
 				if(($level = $this->server->api->level->get($this->data->get("spawn")["level"])) !== false){
 					$this->spawnPosition = new Position($this->data->get("spawn")["x"], $this->data->get("spawn")["y"], $this->data->get("spawn")["z"], $level);
