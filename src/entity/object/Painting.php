@@ -41,14 +41,14 @@ class Painting extends Entity{
 		}
 	}
 	
-	public $counter = 0;
+	public $scounter = 0;
 	public function update($now){
 		if($this->closed === true){
 			return false;
 		}
 		
-		if(++$this->counter >= 100){
-			$this->counter = 0;
+		if(++$this->scounter >= 100){
+			$this->scounter = 0;
 			if(!$this->survives() && !$this->dead){ //maybe dont check entity collision?
 				$this->makeDead("nosurvive");
 			}

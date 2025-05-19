@@ -1,6 +1,7 @@
 <?php
 
 class Player{
+	const CHATMESSAGE_ORDER_CHANNEL = 1;
 	
 	public static $smallChunks = false, $experimentalHotbar = false;
 	/** @var Config */
@@ -32,10 +33,6 @@ class Player{
 	/** @var Level */
 	public $level;
 	private $server;
-	private $recoveryQueue = [];
-	private $receiveQueue = [];
-	private $resendQueue = [];
-	private $ackQueue = [];
 	private $receiveCount = -1;
 	private $buffer;
 	private $bufferLen = 0;
@@ -74,14 +71,26 @@ class Player{
 	 * @var array
 	 */
 	public $packetAlwaysRecoverQueue = [];
+	private $recoveryQueue = [];
+	private $receiveQueue = [];
+	private $resendQueue = [];
+	private $ackQueue = [];
 	
 	public $slotCount = 7;
 	
+	/**
+	 * DataPacket that is used as a buffer for all non-player entity movement packets
+	 * @var RakNetPacket
+	 */
 	public $entityMovementQueue;
 	public $entityMovementQueueLength = 0;
 	
 	public $blockUpdateQueue;
 	public $blockUpdateQueueLength = 0;
+	
+	public $chatMessagesQueue;
+	public $chatMessagesQueueLength = 0;
+	public $chatMessagesOrderIndex = 0;
 	
 	/**
 	 * Sent by a client while it is linked to some entity.
@@ -125,6 +134,9 @@ class Player{
 		
 		$this->blockUpdateQueue = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
 		$this->blockUpdateQueue->data = [];
+		
+		$this->chatMessagesQueue = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
+		$this->chatMessagesQueue->data = [];
 		
 		//$this->server->schedule(20 * 60, [$this, "clearQueue"], [], true);
 		
@@ -1038,7 +1050,7 @@ class Player{
 				$pk = new MessagePacket;
 				$pk->source = ($author instanceof Player) ? $author->username : $author;
 				$pk->message = TextFormat::clean($m); //Colors not implemented :(
-				$this->dataPacket($pk);
+				$this->sendChatMessagePacket($pk);
 			}
 		}
 	}
@@ -1293,6 +1305,10 @@ class Player{
 			}
 		}
 
+		if($this->chatMessagesQueueLength > 0 && $this->server->ticks % 5 == 0){ //send 4 times/second
+			$this->sendChatBuffer();
+		}
+		
 		if($this->bufferLen > 0){
 			$this->sendBuffer();
 		}
@@ -1322,6 +1338,20 @@ class Player{
 			}
 		}
 	}
+	
+	public function sendChatBuffer(){
+		if($this->chatMessagesQueueLength > 0 && $this->chatMessagesQueue instanceof RakNetPacket){
+			$this->chatMessagesQueue->seqNumber = $this->counter[0]++;
+			$this->packetAlwaysRecoverQueue[$this->chatMessagesQueue->seqNumber] = $this->chatMessagesQueue;
+			$this->chatMessagesQueue->sendtime = microtime(true);
+			$this->send($this->chatMessagesQueue);
+		}
+		
+		$this->chatMessagesQueueLength = 0;
+		$this->chatMessagesQueue = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
+		$this->chatMessagesQueue->data = [];
+	}
+	
 	public function sendEntityMovementUpdateQueue(){
 		if($this->entityMovementQueueLength > 0 && $this->entityMovementQueue instanceof RakNetPacket){
 			$this->entityMovementQueue->seqNumber = $this->counter[0]++;
@@ -1541,13 +1571,8 @@ class Player{
 	}
 
 	public function directDataPacket(RakNetDataPacket $packet, $reliability = 0, $recover = true){
-		if($this->connected === false){
-			return false;
-		}
-
-		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY){
-			return [];
-		}
+		if($this->connected === false) return false;
+		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return [];
 
 		$packet->encode();
 		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
@@ -1561,6 +1586,26 @@ class Player{
 		$this->send($pk);
 		return [$pk->seqNumber];
 	}
+	
+	public function sendChatMessagePacket(RakNetDataPacket $packet){
+		if($this->connected === false) return false;
+		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return false;
+		
+		$packet->encode();
+		$len = strlen($packet->buffer) + 1;
+		$MTU = $this->MTU - 24;
+		
+		if(($this->chatMessagesQueueLength + $len) >= $MTU) $this->sendChatBuffer();
+		
+		$packet->reliability = 3;
+		$packet->messageIndex = $this->counter[3]++;
+		$packet->orderChannel = Player::CHATMESSAGE_ORDER_CHANNEL;
+		$packet->orderIndex = $this->chatMessagesOrderIndex++;
+		$this->chatMessagesQueue->data[] = $packet;
+		$this->chatMessagesQueueLength += 10+$len; //reliability(1)+lenbits(2)+messageindex(3)+orderChannel(1)+orderIndex(3) = 10
+		return true;
+	}
+	
 	public function entityTick(){
 		if($this->isSleeping) ++$this->sleepingTime;
 		if($this->server->difficulty == 0 && $this->entity->counter % (20 * 15) == 0){
