@@ -2803,7 +2803,13 @@ class Player{
 
 		
 		$cc = CraftingRecipes::canCraft($results, $ingridients, $this->craftingType);
-		if(!is_array($cc)) return;
+		if(!is_array($cc)){
+			if(!$cc){
+				$this->toCraft = [];
+				$this->craftingItems = [];
+			}
+			return;
+		}
 		
 		if($this->server->api->dhandle("player.craft", ["player" => $this, "ingridients" => $this->craftingItems, "results" => $this->toCraft, "type" => $this->craftingType]) === false){
 			$this->toCraft = [];

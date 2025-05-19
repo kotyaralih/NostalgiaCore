@@ -204,6 +204,12 @@ class CraftingRecipes{
 	private static $inventoryRecipes = [];
 	private static $stoneCutterRecipes = [];
 	
+	private static $craftingTablePossibleResults = [];
+	private static $inventoryPossibleResults = [];
+	private static $stoneCutterPossibleResults = [];
+	
+	
+	
 	public static function init(){
 		
 		foreach(CraftingRecipes::$small as $recipe){
@@ -248,21 +254,32 @@ class CraftingRecipes{
 		switch($type){
 			case self::TYPE_CRAFTIGTABLE:
 				$arr = &self::$craftingTableRecipes;
+				$arr_c = &self::$craftingTablePossibleResults;
 				break;
 			case self::TYPE_INVENTORY:
 				$arr = &self::$inventoryRecipes;
+				$arr_c = &self::$inventoryPossibleResults;
 				break;
 			case self::TYPE_STONECUTTER:
 				$arr = &self::$stoneCutterRecipes;
+				$arr_c = &self::$stoneCutterPossibleResults;
 				break;
 			default:
 				throw new RuntimeException("Unknown type: {$type}");
 		}
 			
-		if(!isset($arr[$result_index])){
-			$arr[$result_index] = [];
-		}
+		if(!isset($arr[$result_index])) $arr[$result_index] = [];
 		$arr[$result_index][] = $ingridients_arr;
+		
+		foreach($results_arr as $resitem){
+			if(!isset($arr_c[$resitem])){
+				$arr_c[$resitem] = [];
+			}
+			foreach($results_arr as $resitem2){
+				$arr_c[$resitem][$resitem2] = true;
+			}
+		}
+		
 	}
 
 	/**
@@ -271,7 +288,7 @@ class CraftingRecipes{
 	 * @param array $craftItems items that will be crafted
 	 * @param array $recipeItems items that will be consumed
 	 * @param int $type craft type (CraftingRecipes::TYPE_INVENTORY, CraftingRecipes::TYPE_CRAFTIGTABLE, CraftingRecipes::TYPE_STONECUTTER)
-	 * @return array|false recipe that will be used or false
+	 * @return array|true|false recipe that will be used or bool. If returned false, crafting will be aborted. If returned true crafting wont be aborted
 	 */
 	public static function canCraft(array $craftItems, array $recipeItems, $type){
 		$craftIndexArr = [];
@@ -280,25 +297,34 @@ class CraftingRecipes{
 		}
 		ksort($craftIndexArr);
 		$craftIndex = implode(",", $craftIndexArr);
-		
 		switch($type){
 			case self::TYPE_CRAFTIGTABLE:
 				$arr = &self::$craftingTableRecipes;
+				$arr_c = &self::$craftingTablePossibleResults;
 				break;
 			case self::TYPE_INVENTORY:
 				$arr = &self::$inventoryRecipes;
+				$arr_c = &self::$inventoryPossibleResults;
 				break;
 			case self::TYPE_STONECUTTER:
 				$arr = &self::$stoneCutterRecipes;
+				$arr_c = &self::$stoneCutterPossibleResults;
 				break;
 			default:
 				ConsoleAPI::error("Tried crafting recipe with unknown type {$type}!");
 				return false;
 		}
 		
-		if(!isset($arr[$craftIndex])) {
-			console("WAT $craftIndex");
-			return false; //recipe not found
+		if(!isset($arr[$craftIndex])) { //recipe for those ingridients was not found
+			$allcombos = $arr_c[current($craftIndexArr)] ?? [];
+			foreach($craftIndexArr as $res){
+				if(!isset($allcombos[$res])){
+					ConsoleAPI::info("Recipe with $craftIndex is not found. Crafting aborted. $res");
+					return false;  //recipe not found and wont be found
+				}
+			}
+			ConsoleAPI::info("Recipe with $craftIndex is not found but it might be found later. Crafting continued.");
+			return true; //recipe might be found next time
 		}
 		
 		foreach($arr[$craftIndex] as $ingridients){
@@ -329,7 +355,7 @@ class CraftingRecipes{
 			
 			skip_recipe:
 		}
-		return false;
+		return true;
 	}
 
 }
