@@ -47,17 +47,17 @@ class GrassBlock extends SolidBlock{
 		if(!StaticBlock::getIsTransparent($level->level->getBlockID($x, $y + 1, $z)) && mt_rand(0, 2) == 1){
 			$level->fastSetBlockUpdate($x, $y, $z, DIRT, 0);
 		}else{
-			for($cnt = 0; $cnt < 4; ++$cnt){
-				$x = $x + mt_rand(0, 2) - 1;
-				$y = $y + mt_rand(0, 4) - 3;
-				$z = $z + mt_rand(0, 2) - 1;
-				
-				$blockUp = $level->level->getBlockID($x, $y + 1, $z);
-				if(StaticBlock::getIsTransparent($blockUp) && !StaticBlock::getIsLiquid($blockUp) && !($blockUp === 60) && $level->level->getBlockID($x, $y, $z) === DIRT){
-					$level->fastSetBlockUpdate($x, $y, $z, GRASS, 0);
-				}
-				
+			//for($cnt = 0; $cnt < 4; ++$cnt){
+			$x = $x + mt_rand(0, 2) - 1;
+			$y = $y + mt_rand(0, 4) - 3;
+			$z = $z + mt_rand(0, 2) - 1;
+			
+			$blockUp = $level->level->getBlockID($x, $y + 1, $z);
+			if(StaticBlock::getIsTransparent($blockUp) && !StaticBlock::getIsLiquid($blockUp) && !($blockUp == FARMLAND) && $level->level->getBlockID($x, $y, $z) === DIRT){
+				$level->fastSetBlockUpdate($x, $y, $z, GRASS, 0);
 			}
+				
+			//}
 		}
 	}
 
