@@ -58,17 +58,20 @@ class GenericBlock extends Block{
 	
 	public static function onUpdate(Level $level, $x, $y, $z, $type){
 		[$id, $meta] = $level->level->getBlock($x, $y, $z);
-		$down = $level->level->getBlockID($x, $y - 1, $z);
-		if($down == AIR || StaticBlock::getIsLiquid($down)){
-			$data = array(
-				"x" => $x + 0.5,
-				"y" => $y,
-				"z" => $z + 0.5,
-				"Tile" => $id,
-			);
-			$server = ServerAPI::request();
-			$e = $server->api->entity->add($level, ENTITY_FALLING, FALLING_SAND, $data);
-			$server->api->entity->spawnToAll($e);
+		if(StaticBlock::getHasPhysics($id)){
+			$down = $level->level->getBlockID($x, $y - 1, $z);
+			
+			if($down == AIR || StaticBlock::getIsLiquid($down)){
+				$data = array(
+					"x" => $x + 0.5,
+					"y" => $y,
+					"z" => $z + 0.5,
+					"Tile" => $id,
+				);
+				$server = ServerAPI::request();
+				$e = $server->api->entity->add($level, ENTITY_FALLING, FALLING_SAND, $data);
+				$server->api->entity->spawnToAll($e);
+			}
 		}
 	}
 	
