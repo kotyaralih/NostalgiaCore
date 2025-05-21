@@ -87,25 +87,26 @@ class ItemEntity extends Entity{
 		
 		$id = $this->level->level->getBlockID($xFloor, $yFloor, $zFloor);
 		
-		if(StaticBlock::getIsSolid($id)){
+		if(StaticBlock::getIsSolid($id) && StaticBlock::getIsFullBlock($id)){
 			$xDiff = $x - $xFloor;
 			
 			$id = $this->level->level->getBlockID($xFloor - 1, $yFloor, $zFloor);
-			$xNeg = StaticBlock::getIsSolid($id);
+			$xNeg = StaticBlock::getIsSolid($id) && StaticBlock::getIsFullBlock($id);
 			
 			$id = $this->level->level->getBlockID($xFloor + 1, $yFloor, $zFloor);
-			$xPos = StaticBlock::getIsSolid($id);
+			$xPos = StaticBlock::getIsSolid($id) && StaticBlock::getIsFullBlock($id);
 			
 			$id = $this->level->level->getBlockID($xFloor, $yFloor - 1, $zFloor);
-			$yNeg = StaticBlock::getIsSolid($id);
+			$yNeg = StaticBlock::getIsSolid($id) && StaticBlock::getIsFullBlock($id);
 			
 			$id = $this->level->level->getBlockID($xFloor, $yFloor + 1, $zFloor);
-			$yPos = StaticBlock::getIsSolid($id);
+			$yPos = StaticBlock::getIsSolid($id) && StaticBlock::getIsFullBlock($id);
 			
-			$id = $this->level->level->getBlockID($xFloor - 1, $yFloor, $zFloor - 1);
-			$zNeg = StaticBlock::getIsSolid($id);
+			$id = $this->level->level->getBlockID($xFloor, $yFloor, $zFloor - 1);
+			$zNeg = StaticBlock::getIsSolid($id) && StaticBlock::getIsFullBlock($id);
 			
-			$zPos = $this->level->level->getBlockID($xFloor + 1, $yFloor, $zFloor + 1);
+			$id = $this->level->level->getBlockID($xFloor, $yFloor, $zFloor + 1);
+			$zPos = StaticBlock::getIsSolid($id) && StaticBlock::getIsFullBlock($id);
 			
 			if($xNeg || $xDiff >= 9999.0){ //TODO not needed check?
 				$v15 = 9999.0;
@@ -144,7 +145,7 @@ class ItemEntity extends Entity{
 				$v16 = 4;
 			}
 			
-			if(!StaticBlock::getIsSolid($zPos) && ((1.0 - $zDiff) < $v15)){
+			if(!$zPos && ((1.0 - $zDiff) < $v15)){
 				$v16 = 5;
 			}
 			
