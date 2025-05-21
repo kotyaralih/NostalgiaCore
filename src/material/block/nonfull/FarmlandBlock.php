@@ -24,7 +24,7 @@ class FarmlandBlock extends TransparentBlock{
 	public static function fallOn(Level $level, $x, $y, $z, Entity $entity, $fallDistance){
 		$rv = lcg_value();
 		if($rv < ($fallDistance - 0.5)){
-			$level->fastSetBlockUpdate($x, $y, $z, DIRT, 0);
+			$level->fastSetBlockUpdate($x, $y, $z, DIRT, 0, true);
 		}
 	}
 	
