@@ -88,17 +88,17 @@ class PocketMinecraftServer{
 			"discord-bot-name" => "NostalgiaCore Logger",
 			"despawn-mobs" => true, 
 			"mob-despawn-ticks" => 18000,
-			"16x16x16_chunk_sending" => false,
 			"experimental-mob-ai" => false,	
 			"force-20-tps" => false,
 			"enable-mob-pushing" => Living::$entityPushing,
 			"keep-chunks-loaded" => self::$KEEP_CHUNKS_LOADED,
 			"use-experimental-hotbar" => Player::$experimentalHotbar,
-			"keep-items-on-death" => Entity::$keepInventory
+			"keep-items-on-death" => Entity::$keepInventory,
+			//"allow-dropping-single-items" => Player::$allowDroppingSingleItems
 		]);
 		Entity::$keepInventory = $this->extraprops->get("keep-items-on-death");
 		Player::$experimentalHotbar = $this->extraprops->get("use-experimental-hotbar");
-		Player::$smallChunks = $this->extraprops->get("16x16x16_chunk_sending");
+		//Player::$allowDroppingSingleItems = $this->extraprops->get("allow-dropping-single-items");
 		Living::$despawnMobs = $this->extraprops->get("despawn-mobs");
 		Living::$despawnTimer = $this->extraprops->get("mob-despawn-ticks");
 		Living::$entityPushing = $this->extraprops->get("enable-mob-pushing");

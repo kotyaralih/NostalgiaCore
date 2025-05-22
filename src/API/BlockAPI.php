@@ -432,13 +432,7 @@ class BlockAPI{
 	}
 
 	private function cancelAction(Block $block, Player $player, $send = true){
-		$pk = new UpdateBlockPacket;
-		$pk->x = $block->x;
-		$pk->y = $block->y;
-		$pk->z = $block->z;
-		$pk->block = $block->getID();
-		$pk->meta = $block->getMetadata();
-		$player->dataPacket($pk);
+		$player->addBlockUpdateIntoQueue($block->x, $block->y, $block->z, $block->getID(), $block->getMetadata());
 		if($send === true){
 			$player->sendInventory();
 		}

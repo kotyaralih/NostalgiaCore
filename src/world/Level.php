@@ -429,13 +429,14 @@ class Level{
 			if(count($this->changedBlocks) > 0){
 				foreach($this->changedBlocks as $i => $blocks){
 					foreach($blocks as $b){
-						$pk = new UpdateBlockPacket;
-						$pk->x = ($b >> 32) & 0xff;
-						$pk->y = ($b >> 24) & 0xff;
-						$pk->z = ($b >> 16) & 0xff;
-						$pk->block =($b >> 8) & 0xff;
-						$pk->meta = $b & 0xff;
-						$this->server->api->player->broadcastPacket($this->players, $pk);
+						$x = ($b >> 32) & 0xff;
+						$y = ($b >> 24) & 0xff;
+						$z = ($b >> 16) & 0xff;
+						$id =($b >> 8) & 0xff;
+						$meta = $b & 0xff;
+						foreach($this->players as $p){
+							$p->addBlockUpdateIntoQueue($x, $y, $z, $id, $meta);
+						}
 					}
 					unset($this->changedBlocks[$i]);
 				}

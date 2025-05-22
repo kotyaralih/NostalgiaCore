@@ -2,8 +2,10 @@
 
 class Player{
 	const CHATMESSAGE_ORDER_CHANNEL = 1;
+	const BLOCKUPDATE_ORDER_CHANNEL = 2;
 	
-	public static $smallChunks = false, $experimentalHotbar = false;
+	public static $experimentalHotbar = false;
+	public static $allowDroppingSingleItems = true;
 	/** @var Config */
 	public $data;
 	/** @var Entity */
@@ -87,10 +89,12 @@ class Player{
 	
 	public $blockUpdateQueue;
 	public $blockUpdateQueueLength = 0;
+	public $blockUpdateQueueOrderIndex = 0;
 	
 	public $chatMessagesQueue;
 	public $chatMessagesQueueLength = 0;
 	public $chatMessagesOrderIndex = 0;
+	public $chunkDataSent = [];
 	
 	/**
 	 * Sent by a client while it is linked to some entity.
@@ -397,7 +401,7 @@ class Player{
 		$len = strlen($packet->buffer) + 1;
 		$MTU = $this->MTU - 24;
 		if($len > $MTU){
-			return $this->sendChunkDataPacket($packet);
+			return $this->sendBigPacketAlwaysRecover($packet);
 		}
 		
 		$packet->messageIndex = $this->counter[3]++;
@@ -409,6 +413,48 @@ class Player{
 	}
 	
 	public function sendChunkDataPacket(RakNetDataPacket $pk){
+		if($this->connected === false) return false;
+		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
+		
+		$pk->encode();
+		$sendtime = microtime(true);
+		$size = $this->MTU - 34;
+		if($size <= 0) return false;
+		$buffer = str_split($pk->buffer, $size);
+		$bigCnt = $this->bigCnt;
+		$this->bigCnt = ($this->bigCnt + 1) % 0x10000;
+		$cnts = [];
+		$bufCount = count($buffer);
+		
+		$orderIndex = $this->blockUpdateQueueOrderIndex++;
+		foreach($buffer as $i => $buf){
+			$cnts[] = $count = $this->counter[0]++;
+			
+			$pk = new UnknownPacket;
+			$pk->packetID = $pk->pid();
+			$pk->reliability = 3;
+			
+			$pk->orderChannel = Player::BLOCKUPDATE_ORDER_CHANNEL;
+			$pk->orderIndex = $orderIndex;
+			
+			$pk->hasSplit = true;
+			$pk->splitCount = $bufCount;
+			$pk->splitID = $bigCnt;
+			$pk->splitIndex = $i;
+			$pk->buffer = $buf;
+			$pk->messageIndex = $this->counter[3]++;
+			
+			$rk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
+			$rk->data[] = $pk;
+			$rk->seqNumber = $count;
+			$rk->sendtime = $sendtime;
+			$this->packetAlwaysRecoverQueue[$count] = $rk;
+			$this->send($rk);
+		}
+		return $cnts;
+	}
+	
+	public function sendBigPacketAlwaysRecover(RakNetDataPacket $pk){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
 		
@@ -485,7 +531,11 @@ class Player{
 		if($this->connected === true){
 			$packet->ip = $this->ip;
 			$packet->port = $this->port;
-			$this->bandwidthRaw += $this->server->send($packet);
+			$len = $this->server->send($packet);
+			if($len > $this->MTU){
+				ConsoleAPI::warn("Packet length is more than {$this->iusername}'s mtu!($len > {$this->MTU})");
+			}
+			$this->bandwidthRaw += $len;
 		}
 	}
 
@@ -571,30 +621,15 @@ class Player{
 		$this->chunksOrder = [];
 		$this->lastOrderX = $X;
 		$this->lastOrderZ = $Z;
-		if(self::$smallChunks){
-			$Y = ((int)$this->entity->y) >> 4;
-			$v = new Vector3($X, $Y, $Z);
-			for($x = 0; $x < 16; ++$x){
-				for($z = 0; $z < 16; ++$z){
-					for($y = 0; $y < 8; ++$y){
-						$dist = $v->distance(new Vector3($x, $y, $z));
-						$d = $x . ":" . $y . ":" . $z;
-						if(!isset($this->chunksLoaded[$d])){
-							$this->chunksOrder[$d] = $dist;
-						}
-					}
-				}
-			}
-		}else{
-			$v = new Vector2($X, $Z);
-			for($x = 0; $x < 16; ++$x){
-				for($z = 0; $z < 16; ++$z){
-					$dist = $v->distance(new Vector2($x, $z));
-					for($y = 0; $y < 8; ++$y){
-						$d = $x . ":" . $y . ":" . $z;
-						if(!isset($this->chunksLoaded[$d])){
-							$this->chunksOrder[$d] = $dist;
-						}
+		
+		$v = new Vector2($X, $Z);
+		for($x = 0; $x < 16; ++$x){
+			for($z = 0; $z < 16; ++$z){
+				$dist = $v->distance(new Vector2($x, $z));
+				for($y = 0; $y < 8; ++$y){
+					$d = $x . ":" . $y . ":" . $z;
+					if(!isset($this->chunksLoaded[$d])){
+						$this->chunksOrder[$d] = $dist;
 					}
 				}
 			}
@@ -630,7 +665,8 @@ class Player{
 		$pk->chunkZ = $Z;
 		$pk->data = $this->level->getOrderedChunk($X, $Z, $Yndex);
 		$cnt = $this->sendChunkDataPacket($pk);
-
+		$this->chunkDataSent["$X:$Z"] = true;
+		
 		$tiles = $this->server->query("SELECT ID FROM tiles WHERE spawnable = 1 AND level = '{$this->level->getName()}' AND x >= $minX AND x <= $maxX AND z >= $minZ AND z <= $maxZ;");
 		$this->lastChunk = false;
 		if($tiles !== false and $tiles !== true){
@@ -715,6 +751,8 @@ class Player{
 		$pk->chunkZ = $Z;
 		$pk->data = $this->level->getOrderedChunk($X, $Z, $Yndex);
 		$cnt = $this->sendChunkDataPacket($pk);
+		$this->chunkDataSent["$X:$Z"] = true;
+		
 		if($cnt === false){
 			return false;
 		}
@@ -1365,7 +1403,7 @@ class Player{
 	public function sendBlockUpdateQueue(){
 		if($this->blockUpdateQueueLength > 0 && $this->blockUpdateQueue instanceof RakNetPacket){
 			$this->blockUpdateQueue->seqNumber = $this->counter[0]++;
-			$this->recoveryQueue[$this->blockUpdateQueue->seqNumber] = $this->blockUpdateQueue;
+			$this->packetAlwaysRecoverQueue[$this->blockUpdateQueue->seqNumber] = $this->blockUpdateQueue;
 			$this->blockUpdateQueue->sendtime = microtime(true);
 			$this->send($this->blockUpdateQueue);
 		}
@@ -1375,6 +1413,12 @@ class Player{
 	}
 	
 	public function addBlockUpdateIntoQueue($x, $y, $z, $id, $meta){
+		$xC = $x >> 4;
+		$zC = $z >> 4;
+		if(!isset($this->chunkDataSent["$xC:$zC"])){
+			ConsoleAPI::debug("Ignoring block update $x $y $z $id $meta: chunk data was not sent.");
+			return; //dont send updateblockpacket as it will be buffered and updated only after all chunks will load
+		}
 		$packet = new UpdateBlockPacket();
 		$packet->x = $x;
 		$packet->y = $y;
@@ -1391,9 +1435,11 @@ class Player{
 		}
 		
 		$packet->messageIndex = $this->counter[3]++;
-		$packet->reliability = 2;
+		$packet->reliability = 3;
+		$packet->orderChannel = Player::BLOCKUPDATE_ORDER_CHANNEL;
+		$packet->orderIndex = $this->blockUpdateQueueOrderIndex++;
 		@$this->blockUpdateQueue->data[] = $packet;
-		$this->blockUpdateQueueLength += 6 + $len;
+		$this->blockUpdateQueueLength += 10 + $len;
 	}
 	
 	public function addEntityMovementUpdateToQueue(Entity $e){
@@ -2027,22 +2073,8 @@ class Player{
 				if(($this->spawned === false or $this->blocked === true) and $packet->face >= 0 and $packet->face <= 5){
 					$target = $this->level->getBlock($blockVector);
 					$block = $target->getSide($packet->face);
-
-					$pk = new UpdateBlockPacket;
-					$pk->x = $target->x;
-					$pk->y = $target->y;
-					$pk->z = $target->z;
-					$pk->block = $target->getID();
-					$pk->meta = $target->getMetadata();
-					$this->dataPacket($pk);
-
-					$pk = new UpdateBlockPacket;
-					$pk->x = $block->x;
-					$pk->y = $block->y;
-					$pk->z = $block->z;
-					$pk->block = $block->getID();
-					$pk->meta = $block->getMetadata();
-					$this->dataPacket($pk);
+					$this->addBlockUpdateIntoQueue($target->x, $target->y, $target->z, $target->getID(), $target->getMetadata());
+					$this->addBlockUpdateIntoQueue($block->x, $block->y, $block->z, $block->getID(), $block->getMetadata());
 					break;
 				}
 				$this->craftingItems = [];
@@ -2098,22 +2130,9 @@ class Player{
 					}
 					$target = $this->level->getBlock($blockVector);
 					$block = $target->getSide($packet->face);
-
-					$pk = new UpdateBlockPacket;
-					$pk->x = $target->x;
-					$pk->y = $target->y;
-					$pk->z = $target->z;
-					$pk->block = $target->getID();
-					$pk->meta = $target->getMetadata();
-					$this->dataPacket($pk);
-
-					$pk = new UpdateBlockPacket;
-					$pk->x = $block->x;
-					$pk->y = $block->y;
-					$pk->z = $block->z;
-					$pk->block = $block->getID();
-					$pk->meta = $block->getMetadata();
-					$this->dataPacket($pk);
+					
+					$this->addBlockUpdateIntoQueue($target->x, $target->y, $target->z, $target->getID(), $target->getMetadata());
+					$this->addBlockUpdateIntoQueue($block->x, $block->y, $block->z, $block->getID(), $block->getMetadata());
 					break;
 				}elseif($packet->face === 0xff){
 					
@@ -2245,15 +2264,8 @@ class Player{
 			case ProtocolInfo::REMOVE_BLOCK_PACKET:
 				$blockVector = new Vector3($packet->x, $packet->y, $packet->z);
 				if($this->spawned === false or $this->blocked === true or $this->entity->distance($blockVector) > 8){
-					$target = $this->level->getBlock($blockVector);
-
-					$pk = new UpdateBlockPacket;
-					$pk->x = $target->x;
-					$pk->y = $target->y;
-					$pk->z = $target->z;
-					$pk->block = $target->getID();
-					$pk->meta = $target->getMetadata();
-					$this->dataPacket($pk);
+					[$id, $meta] = $this->level->level->getBlock($blockVector->x, $blockVector->y, $blockVector->z);
+					$this->addBlockUpdateIntoQueue($blockVector->x, $blockVector->y, $blockVector->z, $id, $meta);
 					break;
 				}
 				$this->craftingItems = [];
@@ -2418,7 +2430,14 @@ class Player{
 				
 				$packet->eid = $this->eid;
 				$prevItem = $packet->item;
-				$packet->item = $this->getSlot($this->slot);
+				$newItem = $this->getSlot($this->slot);
+				if($newItem->count < $prevItem->count){
+					ConsoleAPI::warn("{$this->username} tried dropping too many items(serverside stack has {$newItem->count}, tried dropping {$prevItem->count}.");
+					$this->sendInventory();
+					return;
+				}
+				
+				$packet->item = $newItem;
 				$sendOnDrop = false;
 				
 				if($prevItem->getID() != $packet->item->getID() || $prevItem->getMetadata() != $packet->item->getMetadata()){
@@ -3023,6 +3042,11 @@ class Player{
 	public function craftItems(array $craft, array $recipe, $type){
 		return false;
 	}
+	
+	/**
+	 * @deprecated 16x16x16 chunk sending was removed
+	 */
+	public static $smallChunks = false;
 
 }
 
