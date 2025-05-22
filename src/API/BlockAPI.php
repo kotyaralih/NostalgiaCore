@@ -508,10 +508,13 @@ class BlockAPI{
 		
 		if($hand->isSolid === true && ($hand->getID() != BED_BLOCK && $hand->getID() != CARPET)){
 			$aabb = $hand->getAABB($block->level, $block->x, $block->y, $block->z);
-			$playerbb = $player->entity->boundingBox;
-			if(($aabb->maxX > $playerbb->minX && $aabb->minX < $playerbb->maxX) && ($aabb->maxY > ($playerbb->minY+0.21) && $aabb->minY < $playerbb->maxY) && ($aabb->maxZ > $playerbb->minZ && $aabb->minZ < $playerbb->maxZ)){
-				return $this->cancelAction($block, $player); //Entity in block
+			foreach($block->level->players as $pl){
+				$playerbb = $pl->entity->boundingBox;
+				if(($aabb->maxX > $playerbb->minX && $aabb->minX < $playerbb->maxX) && ($aabb->maxY > ($playerbb->minY+0.21) && $aabb->minY < $playerbb->maxY) && ($aabb->maxZ > $playerbb->minZ && $aabb->minZ < $playerbb->maxZ)){
+					return $this->cancelAction($block, $player); //Entity in block
+				}
 			}
+			
 			
 		}
 
