@@ -22,28 +22,30 @@ class LeavesBlock extends TransparentBlock{
 	}
 	
 	public static function createIndex($x, $y, $z){
-		return $x.".".$y.".".$z;
+		return "$x.$y.$z";
 	}
-	public static function findLog(Level $level, $x, $y, $z, array $visited, $distance){ //port from newest pocketmine
+	public static function findLog(Level $level, $x, $y, $z, array &$visited, $distance){ //port from newest pocketmine
 		$index = self::createIndex($x, $y, $z);
 		if(isset($visited[$index])){
-			return false;
+			return $visited[$index];
 		}
-		$visited[$index] = true;
+		
 
 		$block = $level->level->getBlockID($x, $y, $z);
 		if($block === WOOD){ //type doesn't matter
-			return true;
+			return ($visited[$index] = true);
 		}
 
 		if($block === LEAVES && $distance <= 4){
-			if(self::findLog($level, $x - 1, $y, $z, $visited, $distance + 1)) return true;
-			if(self::findLog($level, $x + 1, $y, $z, $visited, $distance + 1)) return true;
-			if(self::findLog($level, $x, $y, $z - 1, $visited, $distance + 1)) return true;
-			if(self::findLog($level, $x, $y, $z + 1, $visited, $distance + 1)) return true;
+			if(self::findLog($level, $x - 1, $y, $z, $visited, $distance + 1)) return ($visited[$index] = true);
+			if(self::findLog($level, $x + 1, $y, $z, $visited, $distance + 1)) return ($visited[$index] = true);
+			if(self::findLog($level, $x, $y, $z - 1, $visited, $distance + 1)) return ($visited[$index] = true);
+			if(self::findLog($level, $x, $y, $z + 1, $visited, $distance + 1)) return ($visited[$index] = true);
 		}
-		return false;
+		
+		return ($visited[$index] = false);
 	}
+	
 	public static function onRandomTick(Level $level, $x, $y, $z){
 		$b = $level->level->getBlock($x, $y, $z);
 		$id = $b[0];
