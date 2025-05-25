@@ -429,6 +429,13 @@ class Tile extends Position{
 		if($this->class !== TILE_SIGN){
 			return false;
 		}
+		if(Level::$disableEmojisOnSigns){
+			$line1 = Utils::replaceEmoji($line1);
+			$line2 = Utils::replaceEmoji($line2);
+			$line3 = Utils::replaceEmoji($line3);
+			$line4 = Utils::replaceEmoji($line4);
+			
+		}
 		$this->data["Text1"] = $line1;
 		$this->data["Text2"] = $line2;
 		$this->data["Text3"] = $line3;

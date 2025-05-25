@@ -36,7 +36,7 @@ class ChatAPI{
 					return "Usage: /say <message>";
 				}
 				$sender = ($issuer instanceof Player) ? "Server" : ucfirst($issuer);
-				if(Utils::hasEmoji($s)) return "Your message contains illegal characters!";
+				if(Player::$disableEmojisInChat && Utils::hasEmoji($s)) return "Your message contains illegal characters!";
 				$this->server->api->chat->broadcast("[$sender] " . $s);
 				break;
 			case "me":
@@ -54,7 +54,7 @@ class ChatAPI{
 					$sender = $issuer->username;
 				}
 				$msg = implode(" ", $params);
-				if(Utils::hasEmoji($msg)) return "Your message contains illegal characters!";
+				if(Player::$disableEmojisInChat && Utils::hasEmoji($msg)) return "Your message contains illegal characters!";
 				$this->broadcast("* $sender $msg");
 				break;
 			case "tell":

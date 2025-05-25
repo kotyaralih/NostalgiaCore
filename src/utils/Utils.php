@@ -77,6 +77,10 @@ class Utils{
 		return preg_match(Utils::emojiRegex, $s);
 	}
 	
+	public static function replaceEmoji($s){
+		return preg_replace(Utils::emojiRegex, " ", $s);
+	}
+	
 	public static function getCallableIdentifier(callable $variable){
 		if(is_array($variable)){
 			return sha1(strtolower(get_class($variable[0])) . "::" . strtolower($variable[1]));

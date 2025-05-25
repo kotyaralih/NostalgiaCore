@@ -1,6 +1,7 @@
 <?php
 
 class Level{
+	public static $disableEmojisOnSigns = true;
 	/**
 	 * @var Config
 	 */

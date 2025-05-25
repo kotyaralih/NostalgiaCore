@@ -94,8 +94,12 @@ class PocketMinecraftServer{
 			"keep-chunks-loaded" => self::$KEEP_CHUNKS_LOADED,
 			"use-experimental-hotbar" => Player::$experimentalHotbar,
 			"keep-items-on-death" => Entity::$keepInventory,
+			"disable-emojis-in-chat" => Player::$disableEmojisInChat,
+			"disable-emojis-on-signs" => Level::$disableEmojisOnSigns,
 			//"allow-dropping-single-items" => Player::$allowDroppingSingleItems
 		]);
+		Player::$disableEmojisInChat = $this->extraprops->get("disable-emojis-in-chat");
+		Level::$disableEmojisOnSigns = $this->extraprops->get("disable-emojis-on-signs");
 		Entity::$keepInventory = $this->extraprops->get("keep-items-on-death");
 		Player::$experimentalHotbar = $this->extraprops->get("use-experimental-hotbar");
 		//Player::$allowDroppingSingleItems = $this->extraprops->get("allow-dropping-single-items");
