@@ -2828,6 +2828,7 @@ class Player{
 			if(!$cc){
 				$this->toCraft = [];
 				$this->craftingItems = [];
+				$this->sendInventory();
 			}
 			return;
 		}
