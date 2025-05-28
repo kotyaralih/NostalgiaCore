@@ -15,6 +15,10 @@ class Player{
 	public $CID;
 	public $MTU;
 	public $spawned = false;
+	/**
+	 * Stores player inventory. Should not be accessed directly: use Player::addItem/Player::removeItem/Player::setSlot for setting and Player::getSlot for getting.
+	 * @var array
+	 */
 	public $inventory;
 	public $slot;
 	public $hotbar;
@@ -104,6 +108,16 @@ class Player{
 	 */
 	public $isJumping, $isSneaking;
 
+	/**
+	 * should server send inventory to a client or not. Should not be changed directly: use Player::sendInventory() to change to true.
+	 * @var boolean
+	 */
+	public $sendingInventoryRequired = false;
+	
+	public $expectedSetSlotPackets = [];
+	public $expectedSetSlotIndex = -1;
+	public $lastExpectedSetSlotIndexReceived = -1;
+	
 	private $lastPing = -1;
 	
 	/**
@@ -148,14 +162,34 @@ class Player{
 		$this->evid[] = $this->server->event("server.close", [$this, "close"]);
 		console("[DEBUG] New Session started with $ip:$port. MTU {$this->MTU}, Client ID {$this->clientID}", true, true, 2);
 	}
-
+	
 	public function __get($name){
 		if(isset($this->{$name})){
 			return ($this->{$name});
 		}
 		return null;
 	}
-
+	
+	public function addExpectedSetSlotPacket(int $slot, int $id, int $meta, int $count){
+		$this->expectedSetSlotPackets[++$this->expectedSetSlotIndex]["$slot $id $meta $count"] = $this->server->ticks;
+	}
+	
+	public function isExpectedSetSlot(int $slot, Item $item){
+		$index = "$slot {$item->getID()} {$item->getMetadata()} {$item->count}";
+		foreach($this->expectedSetSlotPackets as $i => $stuff){
+			$a = key($stuff);
+			
+			if($index == $a){
+				return $i;
+			}
+		}
+		return false;
+	}
+	
+	public function removeExpectedSetSlot(int $index){
+		unset($this->expectedSetSlotPackets[$index]);
+	}
+	
 	public function getSpawn(){
 		return $this->spawnPosition;
 	}
@@ -271,7 +305,6 @@ class Player{
 				$this->level->players[$this->CID] = $this;
 				$this->chunksLoaded = [];
 				$this->server->api->entity->spawnToAll($this->entity);
-				//$this->server->api->entity->spawnAll($this);
 				foreach($this->level->entityList as $e){
 					if($e->eid !== $this->entity->eid){
 						if(!$e->isPlayer()){
@@ -561,7 +594,7 @@ class Player{
 	public function getSlot($slot){
 		return $this->inventory[(int)$slot] ?? BlockAPI::getItem(AIR, 0, 0);
 	}
-
+	
 	/**
 	 * @param integer $slot
 	 * @param Item $item
@@ -570,10 +603,19 @@ class Player{
 	 * @return boolean
 	 */
 	public function setSlot($slot, Item $item, $send = true){
-		$this->inventory[(int) $slot] = $item;
+		$slot = (int) $slot;
+		$old = $this->getSlot($slot);
+		
+		$this->inventory[$slot] = $item;
+		
 		if($send === true){
-			$this->sendInventorySlot((int) $slot);
+			$this->sendInventorySlot($slot);
 		}
+		
+		//if($old->getID() != $item->getID() || $old->getMetadata() != $item->getMetadata() || $old->count != $item->count){
+			$this->addExpectedSetSlotPacket($slot, $item->getID(), $item->getMetadata(), $item->count);
+		//}
+		
 		return true;
 	}
 
@@ -793,18 +835,7 @@ class Player{
 	}
 
 	public function sendInventory(){
-		if(($this->gamemode & 0x01) === CREATIVE){
-			return;
-		}
-		$hotbar = [];
-		foreach($this->hotbar as $slot){
-			$hotbar[] = $slot <= -1 ? -1 : $slot + 9;
-		}
-		$pk = new ContainerSetContentPacket;
-		$pk->windowid = 0;
-		$pk->slots = $this->inventory;
-		$pk->hotbar = $hotbar;
-		$this->dataPacket($pk);
+		$this->sendingInventoryRequired = true;
 	}
 
 	/**
@@ -924,6 +955,7 @@ class Player{
 					$pk->eid = 0;
 					$pk->target = $data["entity"]->eid;
 					$this->dataPacket($pk);
+					
 					if(($this->gamemode & 0x01) === 0x00){
 						$this->addItem($data["entity"]->itemID, $data["entity"]->meta, $data["entity"]->stack, false);
 					}
@@ -1041,6 +1073,7 @@ class Player{
 				}
 				$item->count += $add;
 				if($send) $this->sendInventorySlot($s);
+				$this->addExpectedSetSlotPacket($s, $item->getID(), $item->getMetadata(), $item->count);
 				
 				$count -= $add;
 				if($count <= 0) return true;
@@ -1051,7 +1084,10 @@ class Player{
 			if($item->getID() === AIR){
 				$add = min($toadd->getMaxStackSize(), $count);
 				$this->inventory[$s] = BlockAPI::getItem($type, $damage, $add);
+				
 				if($send) $this->sendInventorySlot($s);
+				
+				$this->addExpectedSetSlotPacket($s, $type, $damage, $add);
 				$count -= $add;
 				if($count <= 0) return true;
 			}
@@ -1311,6 +1347,23 @@ class Player{
 			$this->ackQueue = [];
 		}
 
+		
+		if($this->sendingInventoryRequired){
+			if(($this->gamemode & 0x01) !== CREATIVE){
+				$hotbar = [];
+				foreach($this->hotbar as $slot){
+					$hotbar[] = $slot <= -1 ? -1 : $slot + 9;
+				}
+				$pk = new ContainerSetContentPacket;
+				$pk->windowid = 0;
+				$pk->slots = $this->inventory;
+				$pk->hotbar = $hotbar;
+				$this->dataPacket($pk);
+			}
+			
+			$this->sendingInventoryRequired = false;
+		}
+		
 		if(($receiveCnt = count($this->receiveQueue)) > 0){
 			ksort($this->receiveQueue);
 			foreach($this->receiveQueue as $count => $packets){
@@ -1661,6 +1714,15 @@ class Player{
 			}
 		}
 		
+		$cnt = 0;
+		foreach($this->expectedSetSlotPackets as $s => $stuff){
+			$b = current($stuff);
+			if(($this->server->ticks - $b) > 10*20){ //keep slot as expected for 10 seconds, no idea how good will it work
+				++$cnt;
+				$this->removeExpectedSetSlot($s);
+			}
+		}
+		if($cnt > 0) ConsoleAPI::debug("$cnt slots were removed from {$this->iusername}'s expected queue due to timeout");
 	}
 
 	public function sendPing() {
@@ -2244,8 +2306,7 @@ class Player{
 											if(++$bow->meta >= $bow->getMaxDurability()){
 												$this->inventory[$this->slot] = BlockAPI::getItem(AIR, 0, 0);
 											}
-											$this->removeItem(ARROW, 0, 1, false);
-											$this->sendInventory();
+											$this->removeItem(ARROW, 0, 1, send: true);
 										}
 									}
 								}
@@ -2563,11 +2624,21 @@ class Player{
 				}
 				
 				if($packet->windowid === 0){ //crafting
-					
 					$slot = $this->getSlot($packet->slot);
 					$citem = $packet->item;
+					
+					if(($n = $this->isExpectedSetSlot($packet->slot, $packet->item)) !== false){
+						//ConsoleAPI::debug("Expected setslot at $n found {$packet->item}");
+						$this->removeExpectedSetSlot($n);
+						break;
+					}else{
+						//ConsoleAPI::info("unexpected setslot, assuming caused by crafting {$packet->slot} {$packet->item}");
+					}
+					
 					if($slot->getID() == $citem->getID() && $slot->getMetadata() == $citem->getMetadata()){
+						
 						if($citem->count > $slot->count){ //item added, result
+							console("{$citem->count} {$slot->count}");
 							$this->addCraftingResult($packet->slot, $slot->getID(), $slot->getMetadata(), $citem->count - $slot->count);
 						}else if($citem->count < $slot->count){ //item removed, ingridient
 							$this->addCraftingIngridient($packet->slot, $slot->getID(), $slot->getMetadata(), $slot->count - $citem->count);
@@ -2828,7 +2899,7 @@ class Player{
 			if(!$cc){
 				$this->toCraft = [];
 				$this->craftingItems = [];
-				$this->sendInventory();
+				return false;
 			}
 			return;
 		}
@@ -2899,7 +2970,7 @@ class Player{
 		if(!isset($this->toCraft[$index][$slot])) $this->toCraft[$index][$slot] = 0;
 		$this->toCraft[$index][$slot] += $count;
 		
-		//console("Result: $id, $meta, $count into $slot");
+		console("Result: $id, $meta, $count into $slot");
 		if($this->tryCraft() === false){
 			$this->sendInventory();
 		}
@@ -2935,14 +3006,19 @@ class Player{
 			foreach($this->inventory as $s => $item){
 				if($item->getID() === $type and $item->getMetadata() === $damage){
 					$remove = min($count, $item->count);
+					
 					if($remove < $item->count){
 						$item->count -= $remove;
+						$exid = $item->getID();
+						$exmeta = $item->getMetadata();
+						$excnt = $item->count;
 					}else{
 						$this->inventory[$s] = BlockAPI::getItem(AIR, 0, 0);
+						$exid = $exmeta = $excnt = 0;
 					}
-					if($send === true){
-						$this->sendInventorySlot($s);
-					}
+					if($send === true) $this->sendInventorySlot($s);
+					
+					$this->addExpectedSetSlotPacket($s, $exid, $exmeta, $excnt);
 					break;
 				}
 			}
