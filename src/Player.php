@@ -56,7 +56,7 @@ class Player{
 	private $ip;
 	private $port;
 	private $counter = [0, 0, 0, 0];
-	private $username;
+	public $username;
 	public $iusername;
 	private $eid = false;
 	private $startAction = false;
@@ -1132,6 +1132,7 @@ class Player{
 			}
 		}
 	}
+	
 	public function makeInvisibleForOnePlayer(Player $player){
 		$pk = new RemoveEntityPacket;
 		$pk->eid = $this->entity->eid;

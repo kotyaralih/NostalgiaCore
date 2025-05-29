@@ -123,10 +123,25 @@ class PlayerAPI{
 				$issuer->teleport($this->server->spawn);
 				return "You were teleported to the spawn.";
 			case "ping":
+				
 				if(!($issuer instanceof Player)){
-					return "Please run this command in-game.";
+					if(isset($args[0])){
+						goto get_ping_of_others;
+					}
+					return "Usage: /$cmd <username>.";
 				}
-				return "ping " . round($issuer->getLag(), 2) . "ms, packet loss " . round($issuer->getPacketLoss() * 100, 2) . "%, " . round($issuer->getBandwidth() / 1024, 2) . " KB/s\n";
+				
+				if(isset($args[0]) && $this->server->api->ban->isOp($issuer->iusername)){
+					get_ping_of_others:
+					$p = $this->get($args[0]);
+					if(!($p instanceof Player)){
+						return "Player with username '{$args[0]}' is not on server.";
+					}
+				}else{
+					$p = $issuer;
+				}
+				
+				return "{$p->username}'s ping: " . round($p->getLag(), 2) . "ms, packet loss " . round($p->getPacketLoss() * 100, 2) . "%, " . round($p->getBandwidth() / 1024, 2) . " KB/s\n";
 			case "gamemode":
 				$player = false;
 				$setgm = false;
@@ -228,18 +243,37 @@ class PlayerAPI{
 				}
 				return substr($output, 0, -2) . "\n";
 			case "loc":
-				if(!($issuer instanceof Player)) return "Please run this command in-game.";
-				$x = round($issuer->entity->x, 1, PHP_ROUND_HALF_UP);
-				$y = round($issuer->entity->y, 1, PHP_ROUND_HALF_UP);
-				$z = round($issuer->entity->z, 1, PHP_ROUND_HALF_UP);
-				$level = $issuer->entity->level->getName();
+				if(!($issuer instanceof Player)){
+					if(isset($args[0])){
+						goto get_coords_of_others;
+					}
+					return "Usage: /$cmd <username>.";
+				}
+				
+				if(isset($args[0]) && $this->server->api->ban->isOp($issuer->iusername)){
+					get_coords_of_others:
+					$p = $this->get($args[0]);
+					if(!($p instanceof Player)){
+						return "Player with username '{$args[0]}' is not on server.";
+					}
+					$ent = $p->entity;
+					$username = $p->username;
+				}else{
+					$ent = $issuer->entity;
+					$username = $issuer->username;
+				}
+				
+				$x = round($ent->x, 1, PHP_ROUND_HALF_UP);
+				$y = round($ent->y, 1, PHP_ROUND_HALF_UP);
+				$z = round($ent->z, 1, PHP_ROUND_HALF_UP);
+				$level = $ent->level->getName();
 				$compass = [0 => "X+", 1 => "Z+", 2 => "X-", 3 => "Z-", null => "null"];
-				$direction = $compass[$issuer->entity->getDirection()];
+				$direction = $compass[$ent->getDirection()];
 				
 				$xChunk = $x >> 4;
 				$zChunk = $z >> 4;
 				
-				return "Your coordinates: X: $x ($xChunk), Y: $y, Z: $z ($zChunk), world: $level.\nDirection: $direction";
+				return "$username's coordinates: X: $x ($xChunk), Y: $y, Z: $z ($zChunk), world: $level.\nDirection: $direction";
 		}
 		return $output;
 	}
