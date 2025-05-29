@@ -19,4 +19,9 @@ class PumpkinBlock extends SolidBlock{
 		return true;
 	}
 	
+	public function getDrops(Item $item, Player $player){
+		return [
+			[PUMPKIN, 0, 1]
+		];
+	}
 }
