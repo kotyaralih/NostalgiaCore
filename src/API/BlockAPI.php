@@ -415,9 +415,8 @@ class BlockAPI{
 			if($target->onBreak($item, $player) === false){
 				return $this->cancelAction($target, $player, false);
 			}
-			if(($player->gamemode & 0x01) === 0 and $item->useOn($target) and $item->getMetadata() >= $item->getMaxDurability()){
-				$player->setSlot($player->slot, new Item(AIR, 0, 0), false);
-			}
+			
+			$item->mineBlock($target, $player);
 		}else{
 			return $this->cancelAction($target, $player, false);
 		}
@@ -446,7 +445,7 @@ class BlockAPI{
 
 		$target = $player->level->getBlock($vector);
 		$block = $target->getSide($face);
-		$item = $player->getSlot($player->slot);
+		$item = $player->getHeldItem();
 
 		if($target->getID() === AIR and $this->server->api->dhandle("player.block.place.invalid", ["player" => $player, "block" => $block, "target" => $target, "item" => $item]) !== true){ //If no block exists or not allowed in CREATIVE
 			if($this->server->api->dhandle("player.block.place.bypass", ["player" => $player, "block" => $block, "target" => $target, "item" => $item]) !== true){
@@ -479,10 +478,7 @@ class BlockAPI{
 			return false;
 		}
 
-		if($item->isActivable === true and $item->onActivate($player->level, $player, $block, $target, $face, $fx, $fy, $fz) === true){
-			if($item->count <= 0){
-				$player->setSlot($player->slot, BlockAPI::getItem(AIR, 0, 0), false);
-			}
+		if($item->isActivable === true && $item->onActivate($player->level, $player, $block, $target, $face, $fx, $fy, $fz) === true){
 			return false;
 		}
 
@@ -528,12 +524,7 @@ class BlockAPI{
 			$t->data["creator"] = $player->username;
 		}
 
-		if(($player->gamemode & 0x01) === 0x00){
-			--$item->count;
-			if($item->count <= 0){
-				$player->setSlot($player->slot, BlockAPI::getItem(AIR, 0, 0), false);
-			}
-		}
+		$player->consumeSingleItem();
 
 		return false;
 	}

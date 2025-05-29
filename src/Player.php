@@ -23,6 +23,9 @@ class Player{
 	public $slot;
 	public $hotbar;
 	public $curHotbarIndex = 0;
+	/**
+	 * @var Item[]
+	 */
 	public $armor = [];
 	public $loggedIn = false;
 	public $gamemode;
@@ -193,7 +196,7 @@ class Player{
 	public function getSpawn(){
 		return $this->spawnPosition;
 	}
-
+	
 	/**
 	 * @param Vector3 $pos
 	 *
@@ -2302,10 +2305,7 @@ class Player{
 										$e->shoot($e->speedX, $e->speedY, $e->speedZ, ($power+$power) * 1.5, 1.0);
 										$this->server->api->entity->spawnToAll($e);
 										if(($this->gamemode & 0x01) == 0x0) {
-											$bow = $this->getSlot($this->slot);
-											if(++$bow->meta >= $bow->getMaxDurability()){
-												$this->inventory[$this->slot] = BlockAPI::getItem(AIR, 0, 0);
-											}
+											$this->getHeldItem()->hurtAndBreak(1, $this);
 											$this->removeItem(ARROW, 0, 1, send: true);
 										}
 									}
@@ -2652,7 +2652,6 @@ class Player{
 						$this->addCraftingIngridient($packet->slot, $slot->getID(), $slot->getMetadata(), $slot->count);
 						$this->addCraftingResult($packet->slot, $citem->getID(), $citem->getMetadata(), $citem->count);
 					}
-					
 				}else{
 					$this->toCraft = [];
 					$this->craftingItems = [];
@@ -2998,7 +2997,22 @@ class Player{
 		}
 		return false;
 	}
-
+	
+	/**
+	 * Removes a single item from whatever player is holding.
+	 * @param boolean $send Force send inventory to player.
+	 */
+	public function consumeSingleItem($send = false){
+		$it = $this->getHeldItem();
+		if(($this->gamemode & 0x01) === 0x00) --$it->count;
+		
+		if($it->count <= 0){
+			$this->setSlot($this->slot, BlockAPI::getItem(0, 0, 0), false);
+		}
+		
+		if($send) $this->sendInventory();
+	}
+	
 	public function removeItem($type, $damage, $count, $send = true){
 		while($count > 0){
 			$remove = 0;
@@ -3089,15 +3103,6 @@ class Player{
 		}
 	}
 
-	public function damageArmorPart($slot, $part){
-		$part->useOn($this->entity, true);
-		if($part->getMetadata() >= $part->getMaxDurability()){
-			$this->setArmor($slot, BlockAPI::getItem(AIR, 0, 0), false);
-			return;
-		}
-		$this->setArmor($slot, $part, false);
-	}
-
 	/**
 	 * @return string
 	 */
@@ -3120,6 +3125,11 @@ class Player{
 	public function craftItems(array $craft, array $recipe, $type){
 		return false;
 	}
+	
+	/**
+	 * @deprecated armor is damaged by Entity::hurtArmor and cant be damaged by singular pieces
+	 */
+	public function damageArmorPart($slot, $part){}
 	
 	/**
 	 * @deprecated 16x16x16 chunk sending was removed

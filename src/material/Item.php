@@ -220,17 +220,29 @@ class Item{
 		
 	}
 	
-	public function useOn($object, $force = false){
-		if($force){
-			if(($object instanceof Entity) and !$this->isSword()){
-				$this->meta += 2;
-			}else{
-				$this->meta++;
+	/**
+	 * @param int $dmg - damage dealt to item
+	 * @param Player $player - player who used the item
+	 */
+	public function hurtAndBreak($dmg, Player $player){
+		if(($player->gamemode & 1) !== 0) return; //dont break items in creative
+		
+		if($this->getMaxDurability() !== false){
+			$this->meta += $dmg;
+			if($this->meta > $this->getMaxDurability()){
+				$player->consumeSingleItem();
 			}
-			return true;
 		}
+	}
+	
+	public function hurtEnemy(Entity $target, Player $attacker){
+		
+	}
+	
+	public function mineBlock(Block $block, Player $player){
 		return false;
 	}
+	
 	
 	public function isTool(){
 		return false;
@@ -332,6 +344,13 @@ class Item{
 			
 			default => 0
 		};
+	}
+	
+	/**
+	 * @deprecated Item damaging changed. Use hurtAndBreak to damage the item and update it in the client's inventory correctly.
+	 */
+	public function useOn($object, $force = false){
+		return false;
 	}
 	
 }

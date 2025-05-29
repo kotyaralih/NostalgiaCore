@@ -11,11 +11,7 @@ class DirtBlock extends SolidBlock{
 	public function onActivate(Item $item, Player $player){
 		if($item->isHoe()){
 			if($this->getSide(1)->isTransparent === false) return false;
-			if(($player->gamemode & 0x01) === 0){
-				$item->useOn($this);
-				if($item->getMetadata() >= $item->getMaxDurability()) $player->setSlot($player->slot, new Item(AIR, 0, 0), false);
-				else $player->setSlot($player->slot, $item, true);
-			}
+			$item->hurtAndBreak(1, $player); //TODO move to ItemHoe
 			$this->level->fastSetBlockUpdate($this->x, $this->y, $this->z, FARMLAND, 0, true);
 			return true;
 		}

@@ -1047,11 +1047,7 @@ class Entity extends Position
 			$slot = $e->player->getHeldItem();
 			$damage = $slot->getDamageAgainstOf($this);
 			$this->harm($damage, $e->eid);
-			if($slot->isTool() && (!$this->isPlayer() || ($this->player->gamemode & 0x01) === 0)){
-				if($slot->useOn($this) and $slot->getMetadata() >= $slot->getMaxDurability()){
-					$e->player->removeItem($slot->getID(), $slot->getMetadata(), 1, true);
-				}
-			}
+			$slot->hurtEnemy($this, $e->player); //TODO dont try destroying if harm was cancelled?
 			return true;
 		}
 		return false;
@@ -1558,16 +1554,28 @@ class Entity extends Position
 			foreach($this->player->armor as $slot => $part){
 				if($part instanceof ArmorItem){
 					$pnts += $part->getDamageReduceAmount();
-					$this->player->damageArmorPart($slot, $part);
 				}
 			}
-			$this->player->sendArmor($this->player);
 		}
 		return $pnts;
 	}
+	
+	public function hurtArmor($dmg){
+		if($this->isPlayer()){
+			$v2 = (int)($dmg / 4);
+			if($v2 < 1) $v2 = 1;
+			
+			foreach($this->player->armor as $slot => $part){
+				$part->hurtAndBreak($v2, $this->player);
+			}
+			$this->player->sendArmor();
+		}
+	}
+	
 	public function applyArmor($damage, $cause){
 		if(is_numeric($cause) || $cause === "explosion"){
 			$var3 = 25 - $this->getArmorValue();
+			$this->hurtArmor($damage); //uses damage without armor affection
 			$var4 = $damage * $var3 + $this->carryoverDamage;
 			$damage = $var4 / 25;
 			$this->carryoverDamage = $var4 % 25;

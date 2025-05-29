@@ -11,16 +11,23 @@ abstract class ItemTool extends Item
 	public function isTool(){
 		return true;
 	}
-	public function useOn($object, $force = false){
-		
-		if($this->isSword() && !($object instanceof Entity)){
-			$this->meta += 2;
-		}else if(($object instanceof Entity) && !$this->isSword()){
-			$this->meta += 2;
-		}else{
-			$this->meta++;
+	
+	public function hurtEnemy(Entity $target, Player $attacker){
+		if($this->isPickaxe() || $this->isAxe() || $this->isShovel()){
+			$this->hurtAndBreak(2, $attacker);
+			return;
 		}
-		return true;
+		
+		parent::hurtEnemy($target, $attacker);
+	}
+	
+	public function mineBlock(Block $block, Player $player){
+		if($this->isPickaxe() || $this->isAxe() || $this->isShovel()){
+			$this->hurtAndBreak(1, $player);
+			return true;
+		}
+		
+		return parent::mineBlock($block, $player);
 	}
 }
 

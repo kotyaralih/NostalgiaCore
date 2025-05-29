@@ -38,7 +38,7 @@ class PaintingItem extends Item{
 	private static $right = array(4, 5, 3, 2);
 	
 	public function onActivate(Level $level, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){
-		if($target->isTransparent === false and $face > 1 and $block->isSolid === false){
+		if($target->isTransparent === false && $face > 1 and $block->isSolid === false){
 			$server = ServerAPI::request();
 			
 			if($face < 2 || $face > 5) return;
@@ -65,9 +65,8 @@ class PaintingItem extends Item{
 			$painting->eid = $server->api->entity->getNextEID();
 			$server->api->entity->addRaw($painting);
 			$server->api->entity->spawnToAll($painting);
-			if(($player->gamemode & 0x01) === 0x00){
-				$player->removeItem($this->getID(), $this->getMetadata(), 1, false);
-			}
+			
+			$player->consumeSingleItem();
 			return true;
 		}
 		return false;

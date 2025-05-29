@@ -75,25 +75,18 @@ class Sheep extends Animal{
 			$slot = $e->player->getHeldItem();
 			if($slot->getID() === SHEARS){
 				if(!$this->isSheared() && !$this->isBaby()){
-					if($e->player->gamemode != 1) $slot->useOn($this);
 					$this->setSheared(1);
 					$speedX = (lcg_value() * 0.2 - 0.1) + (lcg_value() - lcg_value()) * 0.1;
 					$speedZ = (lcg_value() * 0.2 - 0.1) + (lcg_value() - lcg_value()) * 0.1;
 					$speedY =  0.2 + (lcg_value()) * 0.05;
 					$this->server->api->entity->dropRawPos($this->level, $this->x, $this->y + 1, $this->z, BlockAPI::getItem(WOOL, $this->getColor(), mt_rand(1, 3)), $speedX, $speedY, $speedZ);
-					if($slot->getMetadata() >= $slot->getMaxDurability()){
-						$e->player->removeItem($slot->getID(), $slot->getMetadata(), $slot->count, true);
-					}else{
-						$e->player->setSlot($e->player->slot, $slot);
-					}
+					$slot->hurtAndBreak(1, $e->player);
 				}
 				return true;
 			}elseif($slot->getID() === DYE){
 				$this->setColor($this->switchColorMeta($slot->getMetadata()));
 				
-				if(($e->player->gamemode & 0x01) === SURVIVAL){
-					$e->player->removeItem($slot->getID(), $slot->getMetadata(), 1, true);
-				}
+				$e->player->consumeSingleItem();
 			}
 		}
 		return parent::interactWith($e, $action);

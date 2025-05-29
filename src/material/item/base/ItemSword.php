@@ -17,5 +17,15 @@ abstract class ItemSword extends ItemTool
 			default => false,
 		};
 	}
+	
+	public function hurtEnemy(Entity $target, Player $attacker){
+		$this->hurtAndBreak(1, $attacker);
+	}
+	
+	
+	public function mineBlock(Block $block, Player $player){
+		$this->hurtAndBreak(2, $player);
+		return true;
+	}
 }
 

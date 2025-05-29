@@ -29,9 +29,7 @@ class SugarcaneBlock extends FlowableBlock{
 				$this->level->fastSetBlockUpdateMeta($this->x, $this->y, $this->z, $this->meta, true);
 			}
 			
-			if(($player->gamemode & 0x01) === 0){
-				$player->removeItem(DYE,0x0F,1);
-			}
+			$player->consumeSingleItem();
 			return true;
 		}
 		return false;

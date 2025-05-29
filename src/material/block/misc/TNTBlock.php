@@ -10,9 +10,7 @@ class TNTBlock extends SolidBlock{
 	
 	public function onActivate(Item $item, Player $player){
 		if($item->getID() === FLINT_STEEL){
-			if(($player->gamemode & 0x01) === 0){
-				$item->useOn($this);
-			}
+			$item->hurtAndBreak(1, $player);
 			$data = array(
 				"x" => $this->x + 0.5,
 				"y" => $this->y,

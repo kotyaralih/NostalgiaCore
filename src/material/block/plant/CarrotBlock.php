@@ -25,9 +25,7 @@ class CarrotBlock extends FlowableBlock{
 				$this->meta = 7;
 			}
 			$this->level->setBlock($this, $this, true, false, true);
-			if(($player->gamemode & 0x01) === 0){
-				$player->removeItem(DYE,0x0F,1);
-			}
+			$player->consumeSingleItem();
 			return true;
 		}
 		return false;

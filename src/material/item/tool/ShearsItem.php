@@ -5,11 +5,11 @@ class ShearsItem extends ItemTool{
 		parent::__construct(SHEARS, $meta, $count, "Shears");
 	}
 	
-	public function useOn($object, $force = false){
-		if(($object instanceof Sheep) and $this->id === SHEARS){
-			$this->meta++;
+	public function mineBlock(Block $block, Player $player){
+		if($block->getID() === LEAVES || $block->getID() === COBWEB){
+			$this->hurtAndBreak(1, $player);
 			return true;
 		}
-		parent::useOn($object, $force);
+		return parent::mineBlock($block, $player);
 	}
 }

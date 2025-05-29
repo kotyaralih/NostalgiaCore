@@ -17,9 +17,7 @@ class SpawnEggItem extends Item{
 		);
 		$e = ServerAPI::request()->api->entity->add($block->level, ENTITY_MOB, $this->meta, $data);
 		ServerAPI::request()->api->entity->spawnToAll($e);
-		if(($player->gamemode & 0x01) === 0){
-			-- $this->count;
-		}
+		$player->consumeSingleItem();
 		return true;
 	}
 }

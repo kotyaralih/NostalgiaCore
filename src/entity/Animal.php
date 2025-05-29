@@ -140,9 +140,7 @@ abstract class Animal extends Creature implements Ageable, Breedable{
 		if($e->isPlayer() && $action === InteractPacket::ACTION_HOLD){
 			$slot = $e->player->getHeldItem();
 			if($this->isFood($slot->getID()) && $this->inLove <= 0 && !$this->isBaby() && $this->loveTimeout <= 0){
-				if(($e->player->gamemode & 0x01) === SURVIVAL){
-					$e->player->removeItem($slot->getID(), $slot->getMetadata(), 1);
-				}
+				$e->player->consumeSingleItem();
 				$this->inLove = 600;
 				return true;
 			}

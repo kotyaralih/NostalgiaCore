@@ -27,8 +27,6 @@ class Creeper extends Monster{
 		$this->setState($v === null ? !$this->getState() : $v);	
 	}
 	
-	
-	
 	/**
 	 * @return boolean
 	 */
@@ -40,11 +38,7 @@ class Creeper extends Monster{
 		if($e->isPlayer() && $action === InteractPacket::ACTION_HOLD){
 			$slot = $e->player->getHeldItem();
 			if($slot->getID() === FLINT_AND_STEEL && !$this->isIgnited()){
-				if($slot->useOn($this) && $slot->getMetadata() >= $slot->getMaxDurability()){
-					$e->player->removeItem($slot->getID(), $slot->getMetadata(), $slot->count, true);
-				}else{
-					$e->player->setSlot($e->player->slot, $slot);
-				}
+				$slot->hurtAndBreak(1, $e->player);
 				$this->ignite();
 				return true;
 			}

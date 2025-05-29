@@ -36,9 +36,7 @@ class SaplingBlock extends FlowableBlock{
 	public function onActivate(Item $item, Player $player){
 		if($item->getID() === DYE and $item->getMetadata() === 0x0F){ //Bonemeal
 			TreeObject::growTree($this->level, $this, new Random(), $this->meta & 0x03);
-			if(($player->gamemode & 0x01) === 0){
-				$player->removeItem(DYE,0x0F,1);
-			}
+			$player->consumeSingleItem();
 			return true;
 		}
 		return false;

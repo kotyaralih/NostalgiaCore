@@ -26,7 +26,7 @@ class Cow extends Animal{
 		if($e->isPlayer() && $action === InteractPacket::ACTION_HOLD){
 			$slot = $e->player->getHeldItem();
 			if($slot->getID() === BUCKET && $slot->getMetadata() === 0){
-				$e->player->removeItem($slot->getID(), $slot->getMetadata(), 1, true); //remove only 1 bucket
+				$e->player->consumeSingleItem();
 				$e->player->addItem(BUCKET, 1, 1, true);
 				return true;
 			}

@@ -29,11 +29,9 @@ class DandelionBlock extends FlowableBlock{
 
 	public function onActivate(Item $item, Player $player){
 		if($item->getID() === DYE and $item->getMetadata() === 0x0F){
-			if(($player->gamemode & 0x01) === 0){
-				$player->removeItem(DYE,0x0F,1);
-			}
 			$random = new Random();
 			self::placeFlowers($this->level, new Vector3($this->x, $this->y, $this->z), $random, $random->nextRange(2, 5), 2);
+			$player->consumeSingleItem();
 			return true;
 		}
 		return false;
