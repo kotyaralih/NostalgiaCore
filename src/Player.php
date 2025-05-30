@@ -2494,14 +2494,24 @@ class Player{
 				
 				$packet->eid = $this->eid;
 				$prevItem = $packet->item;
-				$newItem = $this->getSlot($this->slot);
+				$newItem = $this->getHeldItem();
+				//TODO it is possible to drop non-held item in vanilla, but in 99% cases it wouldnt happen
+				if($newItem->getID() != $prevItem->getID() || $newItem->getMetadata() != $prevItem->getMetadata()){
+					ConsoleAPI::debug("{$this->username} tried dropping item from non-held slot or inventory desynchronized.");
+					$this->sendInventory();
+					return;
+				}
+				
 				if($newItem->count < $prevItem->count){
 					ConsoleAPI::warn("{$this->username} tried dropping too many items(serverside stack has {$newItem->count}, tried dropping {$prevItem->count}.");
 					$this->sendInventory();
 					return;
 				}
-				
-				$packet->item = $newItem;
+				if(Player::$allowDroppingSingleItems){
+					$packet->item = BlockAPI::getItem($newItem->getID(), $newItem->getMetadata(), $prevItem->count);
+				}else{
+					$packet->item = $newItem;
+				}
 				$sendOnDrop = false;
 				
 				if($prevItem->getID() != $packet->item->getID() || $prevItem->getMetadata() != $packet->item->getMetadata()){
@@ -2538,7 +2548,10 @@ class Player{
 					$sY += ($this->entity->random->nextFloat() - $this->entity->random->nextFloat()) * 0.1;
 					$sZ += sin($f3) * $f1;
 					$this->server->api->entity->dropRawPos($this->level, $this->entity->x, $this->entity->y - 0.3 + $this->entity->height - 0.12, $this->entity->z, $packet->item, $sX, $sY, $sZ);
-					$this->setSlot($this->slot, BlockAPI::getItem(AIR, 0, 0), $sendOnDrop);
+					$newItem->count -= $packet->item->count; 
+					if($newItem->count <= 0){
+						$this->setSlot($this->slot, BlockAPI::getItem(0, 0, 0), false);
+					}
 				}else{
 					$this->sendInventory(); //send if blocked
 				}
