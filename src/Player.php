@@ -605,7 +605,7 @@ class Player{
 	 *
 	 * @return boolean
 	 */
-	public function setSlot($slot, Item $item, $send = true){
+	public function setSlot($slot, Item $item, $send = true, $addexpected = true){
 		$slot = (int) $slot;
 		$old = $this->getSlot($slot);
 		
@@ -615,9 +615,9 @@ class Player{
 			$this->sendInventorySlot($slot);
 		}
 		
-		//if($old->getID() != $item->getID() || $old->getMetadata() != $item->getMetadata() || $old->count != $item->count){
+		if($addexpected){
 			$this->addExpectedSetSlotPacket($slot, $item->getID(), $item->getMetadata(), $item->count);
-		//}
+		}
 		
 		return true;
 	}
@@ -1065,7 +1065,7 @@ class Player{
 	 *
 	 * @return boolean
 	 */
-	public function addItem($type, $damage, $count, $send = true){
+	public function addItem($type, $damage, $count, $send = true, $addexpected = true){
 		
 		foreach($this->inventory as $s => $item){ //force check the inventory for non-full stacks of this item first
 			if($item->getID() === $type and $item->getMetadata() === $damage){
@@ -1076,7 +1076,7 @@ class Player{
 				}
 				$item->count += $add;
 				if($send) $this->sendInventorySlot($s);
-				$this->addExpectedSetSlotPacket($s, $item->getID(), $item->getMetadata(), $item->count);
+				if($addexpected) $this->addExpectedSetSlotPacket($s, $item->getID(), $item->getMetadata(), $item->count);
 				
 				$count -= $add;
 				if($count <= 0) return true;
@@ -1090,7 +1090,7 @@ class Player{
 				
 				if($send) $this->sendInventorySlot($s);
 				
-				$this->addExpectedSetSlotPacket($s, $type, $damage, $add);
+				if($addexpected) $this->addExpectedSetSlotPacket($s, $type, $damage, $add);
 				$count -= $add;
 				if($count <= 0) return true;
 			}
@@ -1353,6 +1353,7 @@ class Player{
 
 		
 		if($this->sendingInventoryRequired){
+			//console("inv resent");
 			if(($this->gamemode & 0x01) !== CREATIVE){
 				$hotbar = [];
 				foreach($this->hotbar as $slot){
@@ -2637,7 +2638,6 @@ class Player{
 					}
 					
 					if($slot->getID() == $citem->getID() && $slot->getMetadata() == $citem->getMetadata()){
-						
 						if($citem->count > $slot->count){ //item added, result
 							$this->addCraftingResult($packet->slot, $slot->getID(), $slot->getMetadata(), $citem->count - $slot->count);
 						}else if($citem->count < $slot->count){ //item removed, ingridient
@@ -2909,6 +2909,7 @@ class Player{
 			return false;
 		}
 		
+		//ConsoleAPI::debug("crafted successfully");
 		foreach($this->craftingItems as $i => $slotz){
 			$id = $i >> 16;
 			$meta = $i & 0xffff;
@@ -2916,7 +2917,7 @@ class Player{
 				$slt = $this->getSlot($slot);
 				if($slt->getID() == $id && $slt->getMetadata() == $meta){
 					$slt->count -= $count;
-					if($slt->count <= 0) $this->setSlot($slot, BlockAPI::getItem(0, 0, 0), false);
+					if($slt->count <= 0) $this->setSlot($slot, BlockAPI::getItem(0, 0, 0), false, addexpected: false);
 				}else{
 					ConsoleAPI::warn("{$slt->getID()} != $id && {$slt->getMetadata()} != $meta!!!");
 				}
@@ -2946,7 +2947,7 @@ class Player{
 					if($slt->getID() == $id && $slt->getMetadata() == $meta){
 						$slt->count += $count;
 					}else if($slt->getID() == 0){
-						$this->setSlot($slot, BlockAPI::getItem($id, $meta, $count), false);
+						$this->setSlot($slot, BlockAPI::getItem($id, $meta, $count), false, addexpected: false);
 					}else{
 						ConsoleAPI::warn("{$slt->getID()} != $id || 0 !!!");
 					}
@@ -2954,7 +2955,6 @@ class Player{
 			}
 		}
 		
-		$this->sendInventory();
 		$this->toCraft = [];
 		$this->craftingItems = [];
 	}
@@ -3014,7 +3014,7 @@ class Player{
 		if($send) $this->sendInventory();
 	}
 	
-	public function removeItem($type, $damage, $count, $send = true){
+	public function removeItem($type, $damage, $count, $send = true, $addexpected = true){
 		while($count > 0){
 			$remove = 0;
 			foreach($this->inventory as $s => $item){
@@ -3032,7 +3032,7 @@ class Player{
 					}
 					if($send === true) $this->sendInventorySlot($s);
 					
-					$this->addExpectedSetSlotPacket($s, $exid, $exmeta, $excnt);
+					if($addexpected) $this->addExpectedSetSlotPacket($s, $exid, $exmeta, $excnt);
 					break;
 				}
 			}

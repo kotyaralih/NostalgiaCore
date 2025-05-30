@@ -489,7 +489,7 @@ class BlockAPI{
 			$player->level->fastSetBlockUpdate($block->x, $block->y, $block->z, 0, 0, true, false);
 			return false;
 		}else{
-			return $this->cancelAction($block, $player);
+			return $this->cancelAction($block, $player, false);
 		}
 
 		if(!($block->isReplaceable === true or ($hand->getID() === SLAB and $block->getID() === SLAB))){
