@@ -964,7 +964,7 @@ class Entity extends Position
 			$bid = $this->level->level->getBlockID($x, $y, $z);
 			if($bid > 0){
 				$clz = StaticBlock::getBlock($bid);
-				$clz::fallOn($this->level, $x, $y, $z, $this, ceil($this->fallStart - $this->y));
+				$clz::fallOn($this->level, $x, $y, $z, $this, $this->fallStart - $this->y);
 			}
 			
 			$dmg = ceil($this->fallStart - $this->y - 3);
