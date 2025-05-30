@@ -236,6 +236,10 @@ class Item{
 				if($this->meta > $this->getMaxDurability()){
 					$player->consumeSingleItem();
 				}
+			}else{
+				if($this->meta > $this->getMaxDurability()){
+					--$this->count;
+				}
 			}
 		}
 	}

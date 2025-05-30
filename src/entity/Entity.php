@@ -1567,6 +1567,7 @@ class Entity extends Position
 			
 			foreach($this->player->armor as $slot => $part){
 				$part->hurtAndBreak($v2, $this->player, helditem: false);
+				if($part->count <= 0) $this->player->setArmor($slot, BlockAPI::getItem(0, 0, 0), send: false);
 			}
 			$this->player->sendArmor();
 		}
