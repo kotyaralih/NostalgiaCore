@@ -223,14 +223,19 @@ class Item{
 	/**
 	 * @param int $dmg - damage dealt to item
 	 * @param Player $player - player who used the item
+	 * @param boolean $helditem - modify player's helditem state or not - should be false if using by non-held item(armor damaging for example)
 	 */
-	public function hurtAndBreak($dmg, Player $player){
+	public function hurtAndBreak($dmg, Player $player, $helditem = true){
 		if(($player->gamemode & 1) !== 0) return; //dont break items in creative
 		
 		if($this->getMaxDurability() !== false){
 			$this->meta += $dmg;
-			if($this->meta > $this->getMaxDurability()){
-				$player->consumeSingleItem();
+			
+			if($helditem){
+				$player->setSlot($player->slot, $this, send: false);
+				if($this->meta > $this->getMaxDurability()){
+					$player->consumeSingleItem();
+				}
 			}
 		}
 	}
