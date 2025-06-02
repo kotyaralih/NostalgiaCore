@@ -1,46 +1,39 @@
 <?php
 
 class RakNetCodec{
-
-	public $packet;
-	public $buffer;
-	public function __construct(RakNetPacket $packet){
-		$this->packet = $packet;
-		$this->buffer = &$this->packet->buffer;
-		$this->encode();
-	}
-
-	private function encode(){
-		if($this->packet->buffer != null && strlen($this->packet->buffer) > 0){
+	public static function encode(RakNetPacket $packet){
+		if($packet->buffer != null && strlen($packet->buffer) > 0){
 			return;
 		}
-		$this->buffer .= chr($this->packet->pid());
+		$packet->buffer .= chr($packet->pid());
 
-		switch($this->packet->pid()){
+		switch($packet->pid()){
 			case RakNetInfo::OPEN_CONNECTION_REPLY_1:
-				$this->buffer .= RakNetInfo::MAGIC;
-				$this->putLong($this->packet->serverID);
-				$this->putByte(0); //server security
-				$this->putShort($this->packet->mtuSize);
+				$packet->buffer .= RakNetInfo::MAGIC;
+				$packet->buffer .= Utils::writeLong($packet->serverID);
+				$packet->buffer .= chr(0); //server security
+				$packet->buffer .= Utils::writeShort($packet->mtuSize);
 				break;
 			case RakNetInfo::OPEN_CONNECTION_REPLY_2:
-				$this->buffer .= RakNetInfo::MAGIC;
-				$this->putLong($this->packet->serverID);
-				$this->putShort($this->packet->port);
-				$this->putShort($this->packet->mtuSize);
-				$this->putByte(0); //Server security
+				$packet->buffer .= RakNetInfo::MAGIC;
+				$packet->buffer .= Utils::writeLong($packet->serverID);
+				$packet->buffer .= Utils::writeShort($packet->port);
+				$packet->buffer .= Utils::writeShort($packet->mtuSize);
+				$packet->buffer .= chr(0); //Server security
 				break;
 			case RakNetInfo::INCOMPATIBLE_PROTOCOL_VERSION:
-				$this->putByte(RakNetInfo::STRUCTURE);
-				$this->buffer .= RakNetInfo::MAGIC;
-				$this->putLong($this->packet->serverID);
+				$packet->buffer .= chr(RakNetInfo::STRUCTURE);
+				$packet->buffer .= RakNetInfo::MAGIC;
+				$packet->buffer .= Utils::writeLong($packet->serverID);
 				break;
 			case RakNetInfo::UNCONNECTED_PONG:
 			case RakNetInfo::ADVERTISE_SYSTEM:
-				$this->putLong($this->packet->pingID);
-				$this->putLong($this->packet->serverID);
-				$this->buffer .= RakNetInfo::MAGIC;
-				$this->putString($this->packet->serverType);
+				$packet->buffer .= Utils::writeLong($packet->pingID);
+				$packet->buffer .= Utils::writeLong($packet->serverID);
+				$packet->buffer .= RakNetInfo::MAGIC;
+				
+				$packet->buffer .= Utils::writeShort(strlen($packet->serverType));
+				$packet->buffer .= $packet->serverType;
 				break;
 			case RakNetInfo::DATA_PACKET_0:
 			case RakNetInfo::DATA_PACKET_1:
@@ -58,9 +51,9 @@ class RakNetCodec{
 			case RakNetInfo::DATA_PACKET_D:
 			case RakNetInfo::DATA_PACKET_E:
 			case RakNetInfo::DATA_PACKET_F:
-				$this->putLTriad($this->packet->seqNumber);
-				foreach($this->packet->data as $pk){
-					$this->encodeDataPacket($pk);
+				$packet->buffer .= Utils::writeLTriad($packet->seqNumber);
+				foreach($packet->data as $pk){
+					static::encodeDataPacket($packet, $pk);
 				}
 				break;
 			case RakNetInfo::NACK:
@@ -68,14 +61,14 @@ class RakNetCodec{
 				$payload = b"";
 				$records = 0;
 				$pointer = 0;
-				sort($this->packet->packets, SORT_NUMERIC);
-				$max = count($this->packet->packets);
+				sort($packet->packets, SORT_NUMERIC);
+				$max = count($packet->packets);
 
 				while($pointer < $max){
 					$type = true;
-					$curr = $start = $this->packet->packets[$pointer];
+					$curr = $start = $packet->packets[$pointer];
 					for($i = $start + 1; $i < $max; ++$i){
-						$n = $this->packet->packets[$i];
+						$n = $packet->packets[$i];
 						if(($n - $curr) === 1){
 							$curr = $end = $n;
 							$type = false;
@@ -95,73 +88,58 @@ class RakNetCodec{
 					}
 					++$records;
 				}
-				$this->putShort($records);
-				$this->buffer .= $payload;
+				$packet->buffer .= Utils::writeShort($records);
+				$packet->buffer .= $payload;
 				break;
 			default:
 
 		}
-
 	}
 
-	protected function putLong($v){
-		$this->buffer .= Utils::writeLong($v);
-	}
-
-	protected function putByte($v){
-		$this->buffer .= chr($v);
-	}
-
-	protected function putShort($v){
-		$this->buffer .= Utils::writeShort($v);
-	}
-
-	protected function putString($v){
-		$this->putShort(strlen($v));
-		$this->put($v);
-	}
-
-	protected function put($str){
-		$this->buffer .= $str;
-	}
-
-	protected function putLTriad($v){
-		$this->buffer .= Utils::writeLTriad($v);
-	}
-
-	private function encodeDataPacket(RakNetDataPacket $pk){
-		$this->putByte(($pk->reliability << 5) | ($pk->hasSplit > 0 ? 0b00010000 : 0));
-		$this->putShort(strlen($pk->buffer) << 3);
+	public static function encodeDataPacket(RakNetPacket $packet, RakNetDataPacket $pk){
+		$packet->buffer .= chr(($pk->reliability << 5) | ($pk->hasSplit > 0 ? 0b00010000 : 0));
+		$packet->buffer .= Utils::writeShort(strlen($pk->buffer) << 3);
 		if($pk->reliability === 2
 			or $pk->reliability === 3
 			or $pk->reliability === 4
 			or $pk->reliability === 6
 			or $pk->reliability === 7){
-			$this->putLTriad($pk->messageIndex);
+			$packet->buffer .= Utils::writeLTriad($pk->messageIndex);
 		}
 
 		if($pk->reliability === 1
 			or $pk->reliability === 3
 			or $pk->reliability === 4
 			or $pk->reliability === 7){
-			$this->putLTriad($pk->orderIndex);
-			$this->putByte($pk->orderChannel);
+			$packet->buffer .= Utils::writeLTriad($pk->orderIndex);
+			$packet->buffer .= chr($pk->orderChannel);
 		}
 
 		if($pk->hasSplit === true){
-			$this->putInt($pk->splitCount);
-			$this->putShort($pk->splitID);
-			$this->putInt($pk->splitIndex);
+			$packet->buffer .= Utils::writeInt($pk->splitCount);
+			$packet->buffer .= Utils::writeShort($pk->splitID);
+			$packet->buffer .= Utils::writeInt($pk->splitIndex);
 		}
 
-		$this->buffer .= $pk->buffer;
+		$packet->buffer .= $pk->buffer;
 	}
-
-	protected function putInt($v){
-		$this->buffer .= Utils::writeInt($v);
+	
+	/**
+	 * @deprecated
+	 */
+	public $packet;
+	/**
+	 * @deprecated
+	 */
+	public $buffer;
+	/**
+	 * @deprecated use RakNetCodec::encode
+	 * @param RakNetPacket $packet
+	 */
+	public function __construct(RakNetPacket $packet){
+		$this->packet = $packet;
+		$this->buffer = &$packet->buffer;
+		static::encode($packet);
 	}
-
-	protected function putTriad($v){
-		$this->buffer .= Utils::writeTriad($v);
-	}
+	
 }

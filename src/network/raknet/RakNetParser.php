@@ -1,42 +1,35 @@
 <?php
 
 class RakNetParser{
-
-	public $packet;
-	private $buffer;
-	private $offset;
-
-	public function __construct(&$buffer){
-		$this->buffer =& $buffer;
-		$this->offset = 0;
-		if(strlen($this->buffer) > 0){
-			$this->parse();
-		}else{
-			$this->packet = false;
-		}
-	}
-
-	private function parse(){
-		$this->packet = new RakNetPacket(ord($this->get(1)));
-		$this->packet->buffer =& $this->buffer;
-		$this->packet->length = strlen($this->buffer);
-		switch($this->packet->pid()){
+	public static function parse(&$buffer){
+		$offset = 0;
+		++$offset;
+		$packet = new RakNetPacket(ord(substr($buffer, $offset - 1, 1)));
+		$packet->buffer = &$buffer;
+		$packet->length = strlen($buffer);
+		switch($packet->pid()){
 			case RakNetInfo::UNCONNECTED_PING:
 			case RakNetInfo::UNCONNECTED_PING_OPEN_CONNECTIONS:
-				$this->packet->pingID = $this->getLong();
-				$this->offset += 16; //Magic
+				$offset += 8;
+				$packet->pingID = Utils::readLong(substr($buffer, $offset - 8, 8), false);
+				$offset += 16; //Magic
 				break;
 			case RakNetInfo::OPEN_CONNECTION_REQUEST_1:
-				$this->offset += 16; //Magic
-				$this->packet->structure = $this->getByte();
-				$this->packet->mtuSize = strlen($this->get(true));
+				$offset += 16; //Magic
+				++$offset;
+				$packet->structure = ord(substr($buffer, $offset - 1, 1));
+				$packet->mtuSize = strlen(substr($buffer, $offset));
 				break;
 			case RakNetInfo::OPEN_CONNECTION_REQUEST_2:
-				$this->offset += 16; //Magic
-				$this->packet->security = $this->get(5);
-				$this->packet->port = $this->getShort(false);
-				$this->packet->mtuSize = $this->getShort(false);
-				$this->packet->clientID = $this->getLong();
+				$offset += 16; //Magic
+				$offset += 5;
+				$packet->security = Utils::readLong(substr($buffer, $offset - 5, 5), false);
+				$offset += 2;
+				$packet->port = Utils::readShort(substr($buffer, $offset - 2, 2), false);
+				$offset += 2;
+				$packet->mtuSize = Utils::readShort(substr($buffer, $offset - 2, 2), false);
+				$offset += 8;
+				$packet->clientID = Utils::readLong(substr($buffer, $offset - 8, 8), false);
 				break;
 			case RakNetInfo::DATA_PACKET_0:
 			case RakNetInfo::DATA_PACKET_1:
@@ -54,36 +47,43 @@ class RakNetParser{
 			case RakNetInfo::DATA_PACKET_D:
 			case RakNetInfo::DATA_PACKET_E:
 			case RakNetInfo::DATA_PACKET_F:
-				$this->packet->seqNumber = $this->getLTriad();
-				$this->packet->data = [];
+				$offset += 3;
+				$packet->seqNumber = Utils::readTriad(strrev(substr($buffer, $offset - 3, 3)));
+				$packet->data = [];
 				
-				while(!$this->feof() and ($pk = $this->parseDataPacket()) instanceof RakNetDataPacket){
-					$this->packet->data[] = $pk;
+				while(isset($buffer[$offset]) and ($pk = static::parseDataPacket($offset, $buffer)) instanceof RakNetDataPacket){
+					$packet->data[] = $pk;
 				}
 				break;
 			case RakNetInfo::NACK:
 			case RakNetInfo::ACK:
-				$count = $this->getShort();
-				$this->packet->packets = [];
-				for($i = 0; $i < $count and !$this->feof(); ++$i){
-					if($this->getByte() === 0){
-						$start = $this->getLTriad();
-						$end = $this->getLTriad();
+				$offset += 2;
+				$count = Utils::readShort(substr($buffer, $offset - 2, 2), false);
+				$packet->packets = [];
+				for($i = 0; $i < $count && isset($buffer[$offset]); ++$i){
+					++$offset;
+					if(ord(substr($buffer, $offset - 1, 1)) === 0){
+						$offset += 3;
+						$start = Utils::readTriad(strrev(substr($buffer, $offset - 3, 3)));
+						$offset += 3;
+						$end = Utils::readTriad(strrev(substr($buffer, $offset - 3, 3)));
 						if(($end - $start) > 4096){
 							$end = $start + 4096;
 						}
 						for($c = $start; $c <= $end; ++$c){
-							$this->packet->packets[] = $c;
+							$packet->packets[] = $c;
 						}
 					}else{
-						$this->packet->packets[] = $this->getLTriad();
+						$offset += 3;
+						$packet->packets[] = Utils::readTriad(strrev(substr($buffer, $offset - 3, 3)));
 					}
 				}
 				break;
 			default:
-				$this->packet = false;
+				$packet = false;
 				break;
 		}
+		return $packet;
 	}
 
 	private function get($len){
@@ -98,57 +98,50 @@ class RakNetParser{
 		return substr($this->buffer, $this->offset - $len, $len);
 	}
 
-	private function getLong($unsigned = false){
-		return Utils::readLong($this->get(8), $unsigned);
-	}
-
 	private function getByte(){
 		return ord($this->get(1));
 	}
 
 	private function getShort($unsigned = false){
-		return Utils::readShort($this->get(2), $unsigned);
+		return ;
 	}
 
 	private function getLTriad(){
 		return Utils::readTriad(strrev($this->get(3)));
 	}
 
-	private function feof(){
-		return !isset($this->buffer[$this->offset]);
-	}
-
-	private function parseDataPacket(){
-		$packetFlags = $this->getByte();
+	private static function parseDataPacket(&$offset, &$buffer){
+		++$offset;
+		$packetFlags = ord(substr($buffer, $offset - 1, 1));
 		$reliability = ($packetFlags & 0b11100000) >> 5;
 		$hasSplit = ($packetFlags & 0b00010000) > 0;
-		$length = (int) ceil($this->getShort() / 8);
+		$offset += 2;
+		$length = (int) ceil(Utils::readShort(substr($buffer, $offset - 2, 2), false) / 8);
 		
-		if($reliability === 2
-			or $reliability === 3
-			or $reliability === 4
-			or $reliability === 6
-			or $reliability === 7){
-			$messageIndex = $this->getLTriad();
+		if($reliability == 2 ||$reliability == 3 || $reliability == 4 || $reliability == 6 || $reliability == 7){
+			$offset += 3;
+			$messageIndex = Utils::readTriad(strrev(substr($buffer, $offset - 3, 3)));
 		}else{
 			$messageIndex = false;
 		}
 
-		if($reliability === 1
-			or $reliability === 3
-			or $reliability === 4
-			or $reliability === 7){
-			$orderIndex = $this->getLTriad();
-			$orderChannel = $this->getByte();
+		if($reliability == 1 ||$reliability == 3 || $reliability == 4 || $reliability == 7){
+			$offset += 3;
+			$orderIndex = Utils::readTriad(strrev(substr($buffer, $offset - 3, 3)));
+			++$offset;
+			$orderChannel = ord(substr($buffer, $offset - 1, 1));
 		}else{
 			$orderIndex = false;
 			$orderChannel = false;
 		}
 
 		if($hasSplit){
-			$splitCount = $this->getInt();
-			$splitID = $this->getShort();
-			$splitIndex = $this->getInt();
+			$offset += 4;
+			$splitCount = Utils::readInt(substr($buffer, $offset - 4, 4), false);
+			$offset += 2;
+			$splitID = Utils::readShort(substr($buffer, $offset - 2, 2), false);
+			$offset += 4;
+			$splitIndex = Utils::readInt(substr($buffer, $offset - 4, 4), false);
 		}else{
 			$splitCount = false;
 			$splitID = false;
@@ -160,9 +153,11 @@ class RakNetParser{
 			or ($hasSplit === true and $splitIndex >= $splitCount)){
 			return false;
 		}else{
-			$pid = $this->getByte();
-			$buffer = $this->get($length - 1);
-			if(strlen($buffer) < ($length - 1)){
+			++$offset;
+			$pid = ord(substr($buffer, $offset - 1, 1));
+			$offset += $length-1;
+			$buf = substr($buffer, $offset - ($length - 1), ($length - 1));
+			if(strlen($buf) < ($length - 1)){
 				return false;
 			}
 			
@@ -233,13 +228,23 @@ class RakNetParser{
 			$data->splitCount = $splitCount;
 			$data->splitID = $splitID;
 			$data->splitIndex = $splitIndex;
-			$data->setBuffer($buffer);
+			$data->setBuffer($buf);
 		}
 		return $data;
 	}
-
-	private function getInt($unsigned = false){
-		return Utils::readInt($this->get(4), $unsigned);
+	
+	/**
+	 * @deprecated
+	 */
+	public $packet;
+	/**
+	 * @deprecated use RakNetParser::parse
+	 */
+	public function __construct(&$buffer){
+		if(strlen($buffer) > 0){
+			$this->packet = static::parse($buffer);
+		}else{
+			$this->packet = false;
+		}
 	}
-
 }
