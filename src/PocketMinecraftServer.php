@@ -592,7 +592,10 @@ class PocketMinecraftServer{
 					if($this->invisible === true){
 						break;
 					}
-
+					
+					if($packet->mtuSize > 2048) $packet->mtuSize = 2048;
+					if($packet->mtuSize <= 512) $packet->mtuSize = 512;
+					
 					$this->clients[$CID] = $c = new Player($packet->clientID, $packet->ip, $packet->port, $packet->mtuSize); //New Session!
 					$pk = new RakNetPacket(RakNetInfo::OPEN_CONNECTION_REPLY_2);
 					$pk->serverID = $this->serverID;
