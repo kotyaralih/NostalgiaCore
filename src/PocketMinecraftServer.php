@@ -610,7 +610,6 @@ class PocketMinecraftServer{
 
 	public static function clientID($ip, $port){
 		return crc32($ip . $port) ^ crc32($port . $ip . BOOTUP_RANDOM);
-		//return $ip . ":" . $port;
 	}
 
 	public function send(Packet $packet){
