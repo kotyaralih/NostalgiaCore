@@ -1968,7 +1968,7 @@ class Player{
 						
 						$pos = new Position($this->entity->x, $this->entity->y, $this->entity->z, $this->level);
 						$pData = $this->data->get("position");
-						$this->entity->setHealth($this->data->get("health"), "spawn", true, false);
+						$this->entity->setHealth($this->data->get("health"), "spawn", true, allowHarm: false);
 						$this->spawned = true;
 						$this->teleport($pos, $pData["yaw"] ?? false, $pData["pitch"] ?? false, true, true);
 						$this->server->api->player->spawnAllPlayers($this);
@@ -2802,35 +2802,24 @@ class Player{
 					}
 				}
 				break;
+			case ProtocolInfo::SET_ENTITY_LINK_PACKET:
+				if($this->entity->linkedEntity != 0){
+					$this->entity->stopRiding();
+				}
+				break;
 			case ProtocolInfo::PLAYER_INPUT_PACKET:
 				$this->isJumping = $packet->isJumping;
 				$this->isSneaking = $packet->isSneaking;
 				$this->entity->moveForward = $packet->moveForward;
 				$this->entity->moveStrafing = $packet->moveStrafe;
 				
-				if(strlen(bin2hex($packet->buffer)) === 24 && $this->entity->linkedEntity != 0){
-					$this->entity->stopRiding();
-					break;
-				}
-				if($this->entity->linkedEntity != 0){ //TODO better riding
+				if($this->entity->linkedEntity != 0){
 					$e = $this->entity->level->entityList[$this->entity->linkedEntity] ?? false;
 					if($e === false) {
 						ConsoleAPI::warn("Player is riding on entity that doesnt exist in world! ({$this->iusername}, {$this->entity->linkedEntity})");
 						$this->entity->stopRiding();
 						break;
 					}
-					/*$pk = new SetEntityMotionPacket;
-					$pk->eid = $e->eid;
-					$pk->speedX = ($this->entity->x - $e->x)*1.2;
-					$pk->speedY = ($this->entity->y - $e->y)*1.2;
-					$pk->speedZ = ($this->entity->z - $e->z)*1.2;
-					foreach($this->level->players as $p){
-						if($p->entity->eid != $this->entity->eid){
-							$p->dataPacket(clone $pk);
-						}
-					}
-					console("{$e} {$this->entity}");
-					//$this->entity->linkedEntity->moveFlying($packet->moveStrafe, $packet->moveForward, 1);*/
 				}
 				
 				break;

@@ -12,7 +12,9 @@ class SetEntityLinkPacket extends RakNetDataPacket{
 	public $riding;
 	public $type;
 	public function decode() {
-
+		$this->rider = $this->getInt();
+		$this->riding = $this->getInt();
+		$this->type = $this->getInt();
 	}
 	public function encode() {
 		$this->reset();
