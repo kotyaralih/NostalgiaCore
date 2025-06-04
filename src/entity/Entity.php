@@ -170,7 +170,7 @@ class Entity extends Position
 		switch($this->class) {
 			case ENTITY_PLAYER:
 				$this->player = $this->data["player"];
-				$this->setHealth($this->health, "generic");
+				$this->setHealth($this->health, "generic", allowHarm: false);
 				$this->speedModifer = 1;
 				$this->width = 0.6;
 				$this->height = 1.8;
@@ -185,7 +185,7 @@ class Entity extends Position
 				$this->x = $this->data["TileX"] ?? $this->x;
 				$this->y = $this->data["TileY"] ?? $this->y;
 				$this->z = $this->data["TileZ"] ?? $this->z;
-				$this->setHealth(1, "generic");
+				$this->setHealth(1, "generic", allowHarm: false);
 				$this->stepHeight = false;
 				$this->setSize(1, 1);
 				break;
@@ -1478,11 +1478,11 @@ class Entity extends Position
 		if(isset($this->level->entityList[$this->linkedEntity])){
 			$e = $this->level->entityList[$this->linkedEntity];
 			if(!$e->dead && !$e->closed){
-				$this->linkedEntity = 0;
-				$e->linkedEntity = 0;
 				$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => -1, "type" => 1]);
 				$this->server->api->dhandle("entity.link", ["rider" => $this->linkedEntity, "riding" => -1, "type" => 1]);
 				$this->isRider = false;
+				$this->linkedEntity = 0;
+				$e->linkedEntity = 0;
 			}
 		}else{
 			$this->linkedEntity = 0;
