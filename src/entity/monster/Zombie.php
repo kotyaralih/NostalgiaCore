@@ -4,7 +4,7 @@ class Zombie extends Monster{
 	function __construct(Level $level, $eid, $class, $type = 0, $data = array()){
 		$this->setSize(0.6, 1.85);
 		parent::__construct($level, $eid, $class, $type, $data);
-		$this->setHealth($this->data["Health"] ?? 12, "generic");
+		$this->setHealth($this->data["Health"] ?? 12, "generic", allowHarm: false);
 		$this->setName("Zombie");
 		$this->setSpeed(0.23);
 		

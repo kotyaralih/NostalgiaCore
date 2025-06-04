@@ -4,7 +4,7 @@ class PigZombie extends Monster{ //TODO extends zombie
 	function __construct(Level $level, $eid, $class, $type = 0, $data = []){
 		$this->setSize(0.3, 1.95);
 		parent::__construct($level, $eid, $class, $type, $data);
-		$this->setHealth($this->data["Health"] ?? 12, "generic");
+		$this->setHealth($this->data["Health"] ?? 12, "generic", allowHarm: false);
 		$this->setName("Pigman");
 		$this->setSpeed(0.25);
 		$this->isImmuneToFire = true;

@@ -7,7 +7,7 @@ class Sheep extends Animal{
 	function __construct(Level $level, $eid, $class, $type = 0, $data = []){
 		$this->setSize(0.9, 1.3);
 		parent::__construct($level, $eid, $class, $type, $data);
-		$this->setHealth($this->data["Health"] ?? 8, "generic");
+		$this->setHealth($this->data["Health"] ?? 8, "generic", allowHarm: false);
 		$this->setName("Sheep");
 		$this->data["Sheared"] = $this->data["Sheared"] ?? 0;
 		$this->data["Color"] = $this->data["Color"] ?? $this->sheepColor();

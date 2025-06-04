@@ -8,7 +8,7 @@ class FallingSand extends Entity{
 	
 	public function __construct($level, $eid, $class, $type = 0, $data = []){
 		parent::__construct($level, $eid, $class, $type, $data);
-		$this->setHealth(PHP_INT_MAX, "generic");
+		$this->setHealth(PHP_INT_MAX, "generic", allowHarm: false);
 		$this->height = 0.98;
 		$this->width = 0.98;
 		$this->yOffset = $this->height / 2;

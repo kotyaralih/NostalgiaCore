@@ -22,7 +22,7 @@ class ItemEntity extends Entity{
 			$this->itemID = (int) $data["itemID"];
 		}
 		$this->hasGravity = true;
-		$this->setHealth(5, "generic");
+		$this->setHealth(5, "generic", allowHarm: false);
 		$this->gravity = 0.04;
 		$this->delayBeforePickup = 40; //in vanilla it is 0 by default
 		$this->stepHeight = 0;

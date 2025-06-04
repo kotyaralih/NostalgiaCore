@@ -12,7 +12,7 @@ class PrimedTNT extends Entity{
 		$this->gravity = 0.04;
 		$this->setSize(0.98, 0.98);
 		$this->yOffset = $this->height / 2;
-		$this->setHealth(10000000, "generic");
+		$this->setHealth(10000000, "generic", allowHarm: false);
 	}
 	
 	public function isPickable(){

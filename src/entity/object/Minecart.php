@@ -62,7 +62,7 @@ class Minecart extends Vehicle{
 		$this->x = $this->data["TileX"] ?? $this->x;
 		$this->y = $this->data["TileY"] ?? $this->y;
 		$this->z = $this->data["TileZ"] ?? $this->z;
-		$this->setHealth(1, "generic"); //orig: 3
+		$this->setHealth(1, "generic", allowHarm: false); //orig: 3
 		$this->setSize(0.98, 0.7);
 		$this->yOffset = $this->height / 2;
 		$this->stepHeight = 0;

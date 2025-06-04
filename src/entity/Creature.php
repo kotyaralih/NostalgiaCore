@@ -11,7 +11,7 @@ abstract class Creature extends Living{
 	public function __construct(Level $level, $eid, $class, $type = 0, $data = []){
 		$this->inPanic = false; //force for now
 		parent::__construct($level, $eid, $class, $type, $data);
-		$this->setHealth($this->data["Health"] ?? 1, "generic");
+		$this->setHealth($this->data["Health"] ?? 1, "generic", allowHarm: false);
 		$this->enableAutojump = true;
 		$this->searchForClosestPlayers = true;
 	}

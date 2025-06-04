@@ -5,7 +5,7 @@ class Cow extends Animal{
 	function __construct(Level $level, $eid, $class, $type = 0, $data = []){
 		$this->setSize(0.9, 1.3);
 		parent::__construct($level, $eid, $class, $type, $data);
-		$this->setHealth($this->data["Health"] ?? 10, "generic");
+		$this->setHealth($this->data["Health"] ?? 10, "generic", allowHarm: false);
 		$this->setName("Cow");
 		$this->setSpeed(0.2);
 		$this->ai->addTask(new TaskRandomWalk(0.8));

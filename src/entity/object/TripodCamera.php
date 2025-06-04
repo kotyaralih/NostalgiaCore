@@ -5,7 +5,7 @@ class TripodCamera extends Entity{
 	
 	function __construct(Level $level, $eid, $class, $type = 0, $data = []){
 		parent::__construct($level, $eid, $class, $type, $data);
-		$this->setHealth(PHP_INT_MAX, "generic");
+		$this->setHealth(PHP_INT_MAX, "generic", allowHarm: false);
 	}
 	
 	public function isPickable(){

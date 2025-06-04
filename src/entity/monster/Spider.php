@@ -5,7 +5,7 @@ class Spider extends Monster{
 	function __construct(Level $level, $eid, $class, $type = 0, $data = array()){
 		$this->setSize(1.4, 0.9);
 		parent::__construct($level, $eid, $class, $type, $data);
-		$this->setHealth($this->data["Health"] ?? 8, "generic");
+		$this->setHealth($this->data["Health"] ?? 8, "generic", allowHarm: false);
 		$this->setName("Spider");
 		$this->setSpeed(0.3);
 		$this->ai->addTask(new TaskRandomWalk(1.2));
