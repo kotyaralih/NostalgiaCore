@@ -18,6 +18,10 @@ class Entity extends Position
 	public $canBeAttacked;
 	public $moveTime, $lookTime, $idleTime, $knockbackTime = 0;
 	public $attackTimeout = 0;
+	/**
+	 * @deprecated always true
+	 * @var boolean
+	 */
 	public $needsUpdate = true;
 	public $speedModifer;
 	public $hasGravity;
@@ -418,8 +422,6 @@ class Entity extends Position
 	
 	public function environmentUpdate($time)
 	{
-		$hasUpdate = $this->class === ENTITY_MOB; // force true for mobs
-		
 		$tickDiff = ($time - $this->lastUpdate) / 0.05;
 		if($this->attackTimeout > 0) $this->attackTimeout -= $tickDiff;
 		if($this->attackTimeout < 0) $this->attackTimeout = 0;
@@ -480,8 +482,6 @@ class Entity extends Position
 			
 			if($this->fire <= 0){
 				$this->updateMetadata();
-			} else{
-				$hasUpdate = true;
 			}
 		}
 
@@ -495,7 +495,6 @@ class Entity extends Position
 		
 		if($this->isInVoid()){
 			$this->outOfWorld();
-			$hasUpdate = true;
 		}
 		
 		if(!($this instanceof Painting) && !($this->isPlayer() && $this->player->isSleeping !== false)){ //TODO better way to fix	
@@ -531,7 +530,7 @@ class Entity extends Position
 				$this->air = $this->maxAir;
 			}
 		}
-		return $hasUpdate;
+		return true;
 	}
 	
 	public function moveFlying($strafe, $forward, $speed){ //TODO rename?
@@ -744,7 +743,7 @@ class Entity extends Position
 			$this->lastUpdate = $now;
 			return;
 		}
-		$hasUpdate = $this->environmentUpdate($now);
+		$this->environmentUpdate($now);
 
 		if($this->closed === true){
 			return false;
@@ -756,18 +755,6 @@ class Entity extends Position
 				$this->updateLast();
 				$this->updatePosition(); //TODO shouldnt be called in Entity
 				$this->updateEntityMovement();
-				$update = false;
-				if($this->lastX != $this->x || $this->lastZ != $this->z || $this->lastY != $this->z){
-					//$this->server->api->handle("entity.move", $this);
-					$update = true;
-				}elseif ($this->lastYaw != $this->yaw || $this->lastPitch != $this->pitch || $this->lastHeadYaw != $this->headYaw) {
-					$update = true;
-				}
-				
-				if($update === true){
-					$hasUpdate = true;
-				}
-				
 			} else{
 				$prevGroundState = $this->onGround;
 				$this->onGround = false;
@@ -929,8 +916,6 @@ class Entity extends Position
 				if(($oldFire > 0 && $this->fire <= 0) || ($oldFire <= 0 && $this->fire > 0)){
 					$this->updateMetadata(); //TODO rewrite metadata
 				}
-				
-				$hasUpdate = true; 
 			}
 		}
 		
@@ -945,7 +930,7 @@ class Entity extends Position
 			$this->player->entityTick();
 		}
 		
-		$this->needsUpdate = $hasUpdate;
+		$this->needsUpdate = true;
 		$this->lastUpdate = $now;
 	}
 	public function isOnLadder(){
@@ -1197,9 +1182,7 @@ class Entity extends Position
 		if($this->knockbackTime > 0){
 			--$this->knockbackTime;
 		}
-		if($this->delayBeforePickup > 0){
-			--$this->delayBeforePickup;
-		}
+		
 		if($this->moveTime > 0){
 			--$this->moveTime;
 		}

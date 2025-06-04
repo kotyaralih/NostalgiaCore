@@ -574,10 +574,9 @@ class Level{
 			if($e->class === ENTITY_MOB && !$e->isPlayer()){
 				++$this->totalMobsAmount;
 			}
-			if($e->isPlayer() || $e->needsUpdate){
-				$e->update($currentTime);
-				if(!$e->isPlayer()) $post[] = $k;
-			}
+			
+			$e->update($currentTime);
+			if(!$e->isPlayer()) $post[] = $k;
 			
 			if($e instanceof Entity){
 				$newChunkX = (int)$e->x >> 4;
