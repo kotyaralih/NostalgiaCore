@@ -404,7 +404,8 @@ class PlayerAPI{
 			"lastIP" => "",
 			"lastID" => 0,
 			"achievements" => [],
-			"slot-count" => 7
+			"slot-count" => 7,
+			"bed-position" => null,
 		];
 
 		if(!file_exists(DATA_PATH . "players/" . $iname . ".yml")){

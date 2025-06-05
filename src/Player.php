@@ -46,7 +46,6 @@ class Player{
 	private $receiveCount = -1;
 	private $buffer;
 	private $bufferLen = 0;
-	private $nextBuffer = 0;
 	private $evid = [];
 	private $lastMovement = 0;
 	private $forceMovement = false;
@@ -87,6 +86,7 @@ class Player{
 	private $ackQueue = [];
 	
 	public $slotCount = 7;
+	public $bedPosition = null;
 	
 	/**
 	 * DataPacket that is used as a buffer for all non-player entity movement packets
@@ -197,12 +197,18 @@ class Player{
 		return $this->spawnPosition;
 	}
 	
+	public function setBedPosition(?Position $bedPos){
+		if($bedPos != null) $this->bedPosition = [$bedPos->level->getName(), (int)$bedPos->x, (int)$bedPos->y, (int)$bedPos->z];
+		else $this->bedPosition = null;
+		$this->data->set("bed-position", $this->bedPosition);
+	}
+	
 	/**
 	 * @param Vector3 $pos
 	 *
 	 * @return boolean
 	 */
-	public function sleepOn(Vector3 $pos){
+	public function sleepOn(Position $pos){
 		foreach($this->server->api->player->getAll($this->level) as $p){
 			if($p->isSleeping instanceof Vector3){
 				if($pos->distance($p->isSleeping) <= 0.1){
@@ -210,6 +216,8 @@ class Player{
 				}
 			}
 		}
+		
+		$this->setBedPosition($pos);
 		$this->isSleeping = $pos;
 		$this->sleepingTime = 0;
 		$this->teleport(new Position($pos->x + 0.5, $pos->y + 1, $pos->z + 0.5, $this->level), false, false, false, false);
@@ -218,13 +226,6 @@ class Player{
 			$this->entity->updateMetadata();
 		}
 		
-		$spawnPoint = BedBlock::findStandUpPosition($this->level, $pos->x, $pos->y, $pos->z);
-		if($spawnPoint == null) $spawnPoint = $pos->add(0.5, 1, 0.5);
-		else{
-			$spawnPoint->x += 0.5;
-			$spawnPoint->z += 0.5;
-		}
-		$this->setSpawn($spawnPoint);
 		return true;
 	}
 	
@@ -586,7 +587,6 @@ class Player{
 		$this->bufferLen = 0;
 		$this->buffer = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
 		$this->buffer->data = [];
-		$this->nextBuffer = microtime(true) + 0.05;
 	}
 
 	/**
@@ -1916,6 +1916,12 @@ class Player{
 					$this->data->set("slot-count", $this->slotCount);
 				}
 				
+				if($this->data->exists("bed-position")){
+					$this->bedPosition = $this->data->get("bed-position");
+				}else{
+					$this->setBedPosition(null);
+				}
+				
 				$this->entity = $this->server->api->entity->add($this->level, ENTITY_PLAYER, 0, ["player" => $this]);
 				$this->eid = $this->entity->eid;
 				$this->server->query("UPDATE players SET EID = " . $this->eid . " WHERE CID = " . $this->CID . ";");
@@ -2418,7 +2424,24 @@ class Player{
 				$this->craftingType = CraftingRecipes::TYPE_INVENTORY;
 				
 				$this->checkSpawnPosition();
-				$this->teleport($this->spawnPosition, false, false, true, false);
+				$tpTarget = $this->spawnPosition;
+				if($this->bedPosition != null){
+					[$levelname, $x, $y, $z] = $this->bedPosition;
+					$level = $this->server->api->level->get($levelname);
+					if($level === false || $level->level->getBlockID($x, $y, $z) != BED_BLOCK){
+						remove_bed:
+						$this->sendChat("The bed is missing or cannot be accessed.");
+						$this->setBedPosition(null);
+					}else{
+						$spawnPoint = BedBlock::findStandUpPosition($level, $x, $y, $z);
+						if($spawnPoint == null) goto remove_bed;
+						$spawnPoint->x += 0.5;
+						$spawnPoint->z += 0.5;
+						$tpTarget = $spawnPoint;
+					}
+				}
+				
+				$this->teleport($tpTarget, false, false, true, false);
 				$pk = new MovePlayerPacket();
 				$pk->eid = $this->entity->eid;
 				$pk->x = $this->entity->x;

@@ -65,7 +65,7 @@ class BedBlock extends TransparentBlock{
 				for($zCheck = $minZ; $zCheck <= $maxZ; ++$zCheck){
 					$idCheck = $level->level->getBlockID($xCheck, $y - 1, $zCheck);
 					if(!StaticBlock::getIsTransparent($idCheck) && $level->level->getBlockID($xCheck, $y, $zCheck) == 0 && $level->level->getBlockID($xCheck, $y + 1, $zCheck) == 0){
-						return new Vector3($xCheck, $y, $zCheck);
+						return new Position($xCheck, $y, $zCheck, $level);
 					}
 				}
 			}

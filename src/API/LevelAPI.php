@@ -109,8 +109,9 @@ class LevelAPI{
 		return true;
 	}
 	/**
+	 * Gets a level by name. Returns false if no level with such name exists.
 	 * @param string $name
-	 * @return Level|boolean
+	 * @return Level|false
 	 */
 	public function get($name){
 		if(isset($this->levels[$name])){
