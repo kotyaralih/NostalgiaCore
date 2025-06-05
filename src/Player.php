@@ -2432,6 +2432,7 @@ class Player{
 						remove_bed:
 						$this->sendChat("The bed is missing or cannot be accessed.");
 						$this->setBedPosition(null);
+						$this->setSpawn($this->level->getSpawn());
 					}else{
 						$spawnPoint = BedBlock::findStandUpPosition($level, $x, $y, $z);
 						if($spawnPoint == null) goto remove_bed;
