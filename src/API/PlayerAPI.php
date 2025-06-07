@@ -326,6 +326,7 @@ class PlayerAPI{
 			$origin = $this->get($name);
 			if($origin instanceof Player){
 				$name = $origin->username;
+				$target = $player->username;
 				return $origin->teleport($player->entity);
 			}
 		}
