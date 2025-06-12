@@ -262,15 +262,15 @@ class Item{
 			return false;
 		}
 		
-		$levels = [ //TODO rewrite(item usage too)
-			2 => 33, //GOLD
-			1 => 60, //WOODEN
-			3 => 132, //STONE
-			4 => 251, //IRON
-			5 => 1562, //DIAMOND(called EMERALD in disassembled code)
-			FLINT_STEEL => 65, //lets assume it is correct
-			SHEARS => 239, //x2
-			BOW => 385 //x3
+		$levels = [
+			2 => 32, //GOLD
+			1 => 59, //WOODEN
+			3 => 131, //STONE
+			4 => 250, //IRON
+			5 => 1561, //DIAMOND(called EMERALD in disassembled code)
+			FLINT_STEEL => 64,
+			SHEARS => 238,
+			BOW => 384
 		];
 
 		if(($type = $this->getLevel()) === false){
