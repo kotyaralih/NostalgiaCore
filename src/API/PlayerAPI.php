@@ -222,7 +222,8 @@ class PlayerAPI{
 				}
 			case "kill":
 			case "suicide":
-				if(!isset($args[0]) and ($issuer instanceof Player)){
+				if(!isset($args[0])){
+					if(!($issuer instanceof Player)) return "Usage: /kill <player>";
 					$player = $issuer;
 				}else{
 					$player = $this->get($args[0]);
