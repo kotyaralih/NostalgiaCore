@@ -6,6 +6,9 @@ class GlassPaneBlock extends TransparentBlock{
 		parent::__construct(GLASS_PANE, 0, "Glass Pane");
 		$this->isFullBlock = false;
 		$this->isSolid = false;
+		$this->breakTime = 0.3;
+		$this->hardness = 0.3*5;
+		$this->material = Material::$glass;
 	}
 	public static function updateShape(Level $level, $x, $y, $z){
 		$id = $level->level->getBlockID($x, $y, $z);

@@ -5,6 +5,8 @@ class BrownMushroomBlock extends FlowableBlock{
 	public function __construct(){
 		parent::__construct(BROWN_MUSHROOM, 0, "Brown Mushroom");
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$plant;
 	}
 
 	public static function neighborChanged(Level $level, $x, $y, $z, $nX, $nY, $nZ, $oldID){

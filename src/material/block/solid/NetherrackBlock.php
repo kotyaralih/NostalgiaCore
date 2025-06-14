@@ -5,6 +5,8 @@ class NetherrackBlock extends SolidBlock{
 	public function __construct(){
 		parent::__construct(NETHERRACK, 0, "Netherrack");
 		$this->hardness = 2;
+		$this->breakTime = 0.4;
+		$this->material = Material::$stone;
 	}
 	
 	public function getBreakTime(Item $item, Player $player){

@@ -8,6 +8,8 @@ class CakeBlock extends TransparentBlock{
 		$this->isActivable = true;
 		$this->meta = $meta & 0x07;
 		$this->hardness = 2.5;
+		$this->breakTime = 0.5;
+		$this->material = Material::$cake;
 	}
 	
 	public static function getCollisionBoundingBoxes(Level $level, $x, $y, $z, Entity $entity){

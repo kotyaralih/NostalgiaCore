@@ -7,7 +7,7 @@ class LeatherBootsItem extends ArmorItem{
 	}
 	
 	public function getMaterialDurability(){
-		return Material::LEATHER;
+		return ArmorMaterial::LEATHER;
 	}
 	
 	public function getBaseDurability(){

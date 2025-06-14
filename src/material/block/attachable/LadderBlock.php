@@ -28,6 +28,8 @@ class LadderBlock extends TransparentBlock{
 		$this->isSolid = false;
 		$this->isFullBlock = false;
 		$this->hardness = 2;
+		$this->breakTime = 0.4;
+		$this->material = Material::$decoration;
 	}
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){
 		if($face === 0 || $face === 1){

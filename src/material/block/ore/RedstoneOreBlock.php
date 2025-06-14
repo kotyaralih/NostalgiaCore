@@ -5,6 +5,8 @@ class RedstoneOreBlock extends SolidBlock{
 	public function __construct(){
 		parent::__construct(REDSTONE_ORE, 0, "Redstone Ore");
 		$this->hardness = 15;
+		$this->breakTime = 3;
+		$this->material = Material::$stone;
 	}
 	
 	public static function interact(Level $level, $x, $y, $z, Player $player){

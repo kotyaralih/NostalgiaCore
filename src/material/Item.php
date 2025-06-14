@@ -157,6 +157,14 @@ class Item{
 		}
 	}
 	
+	public function canDestroySpecial($id, $meta){
+		return false;
+	}
+	
+	public function getDestroySpeed($id, $meta){
+		return 1.0;
+	}
+	
 	public function isPickaxe(){
 		return false;
 	}
@@ -321,10 +329,6 @@ class Item{
 	
 	public function getDamageAgainstOf($e){
 		return Item::DEF_DAMAGE;
-	}
-	
-	public function getDestroySpeed(Block $block, Player $player){
-		return 1;
 	}
 	
 	public function onActivate(Level $level, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){

@@ -22,6 +22,8 @@ class SlabBlock extends TransparentBlock{
 			$this->isFullBlock = false;
 		}		
 		$this->hardness = 30;
+		$this->breakTime = 2;
+		$this->material = Material::$stone;
 	}
 	public static function updateShape(Level $level, $x, $y, $z){
 		

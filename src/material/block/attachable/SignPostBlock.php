@@ -16,6 +16,8 @@ class SignPostBlock extends TransparentBlock{
 		$this->isSolid = false;
 		$this->isFullBlock = false;
 		$this->hardness = 5;
+		$this->breakTime = 1;
+		$this->material = Material::$wood;
 	}
 	
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){

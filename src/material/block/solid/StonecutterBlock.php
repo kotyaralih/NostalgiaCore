@@ -5,6 +5,9 @@ class StonecutterBlock extends SolidBlock{
 	public function __construct($meta = 0){
 		parent::__construct(STONECUTTER, $meta, "Stonecutter");
 		$this->isActivable = true;
+		$this->breakTime = 2.5;
+		$this->hardness = 2.5*5;
+		$this->material = Material::$stone;
 	}
 	
 	public function onActivate(Item $item, Player $player){

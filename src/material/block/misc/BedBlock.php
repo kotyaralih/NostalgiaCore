@@ -19,6 +19,8 @@ class BedBlock extends TransparentBlock{
 		$this->isActivable = true;
 		$this->isFullBlock = false;
 		$this->hardness = 1;
+		$this->breakTime = 0.2;
+		$this->material = Material::$cloth;
 	}
 	
 	public static function getCollisionBoundingBoxes(Level $level, $x, $y, $z, Entity $entity){

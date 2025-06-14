@@ -6,6 +6,8 @@ class DandelionBlock extends FlowableBlock{
 		parent::__construct(DANDELION, 0, "Dandelion");
 		$this->isActivable = true;
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$plant;
 	}
 	public static function getAABB(Level $level, $x, $y, $z){
 		return null;

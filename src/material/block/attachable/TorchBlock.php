@@ -5,6 +5,8 @@ class TorchBlock extends FlowableBlock implements LightingBlock{
 	public function __construct($meta = 0){
 		parent::__construct(TORCH, $meta, "Torch");
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$decoration;
 	}
 	
 	public function getMaxLightValue(){

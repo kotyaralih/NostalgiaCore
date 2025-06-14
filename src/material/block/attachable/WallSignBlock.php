@@ -9,6 +9,9 @@ class WallSignBlock extends SignPostBlock{
 	public function __construct($meta = 0){
 		TransparentBlock::__construct(WALL_SIGN, $meta, "Wall Sign");
 		$this->isSolid = false;
+		$this->breakTime = 1;
+		$this->hardness = 5;
+		$this->material = Material::$wood;
 	}
 	
 	public static function neighborChanged(Level $level, $x, $y, $z, $nX, $nY, $nZ, $oldID){

@@ -105,7 +105,7 @@ define("SUGARCANE_BLOCK", 83);
 define("FENCE", 85);
 define("PUMPKIN", 86);
 define("NETHERRACK", 87);
-define("SOUL_SAND", 88);
+define("SOUL_SAND", 88); //doesnt exist
 define("GLOWSTONE", 89);
 define("GLOWSTONE_BLOCK", 89);
 
@@ -136,7 +136,7 @@ define("NETHER_BRICKS", 112);
 define("NETHER_BRICK_BLOCK", 112);
 
 define("NETHER_BRICKS_STAIRS", 114);
-
+//TODO missing tile: 126 dt 0.500000 h 2.500000 b CakeTile n activatorRail, mat cake
 define("SANDSTONE_STAIRS", 128);
 
 define("SPRUCE_WOOD_STAIRS", 134);

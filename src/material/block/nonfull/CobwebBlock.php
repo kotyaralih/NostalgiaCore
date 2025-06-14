@@ -6,7 +6,9 @@ class CobwebBlock extends FlowableBlock{
 		parent::__construct(COBWEB, 0, "Cobweb");		
 		$this->isSolid = true;
 		$this->isFullBlock = false;
-		$this->hardness = 25;
+		$this->hardness = 30;
+		$this->breakTime = 4;
+		$this->material = Material::$web;
 	}
 	
 	public static function getAABB(Level $level, $x, $y, $z){

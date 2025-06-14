@@ -6,6 +6,8 @@ class PumpkinStemBlock extends FlowableBlock{
 		parent::__construct(PUMPKIN_STEM, $meta, "Pumpkin Stem");
 		$this->isActivable = true;
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$plant;
 	}
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){
 			$down = $this->getSide(0);

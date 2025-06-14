@@ -7,7 +7,7 @@ class DiamondHelmetItem extends ArmorItem{
 	}
 	
 	public function getMaterialDurability(){
-		return Material::DIAMOND;
+		return ArmorMaterial::DIAMOND;
 	}
 	
 	public function getBaseDurability(){

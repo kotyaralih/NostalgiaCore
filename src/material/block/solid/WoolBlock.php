@@ -27,6 +27,8 @@ class WoolBlock extends SolidBlock{
 		
 		$this->name = self::$names[$this->meta] ?? "Illegal Wool";
 		$this->hardness = 4;
+		$this->breakTime = 0.8;
+		$this->material = Material::$cloth;
 	}
 	
 }

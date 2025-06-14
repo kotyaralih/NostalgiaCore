@@ -19,6 +19,8 @@ class SaplingBlock extends FlowableBlock{
 		);
 		$this->name = $names[$this->meta & 0x03];
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$plant;
 	}
 	public static function getAABB(Level $level, $x, $y, $z){
 		return null;

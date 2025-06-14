@@ -12,6 +12,8 @@ class StillWaterBlock extends LiquidBlockStatic{
 	public function __construct($meta = 0){
 		LiquidBlock::__construct(STILL_WATER, $meta, "Still Water");
 		$this->hardness = 500;
+		$this->breakTime = -1; //in vanilla it is 100, but you cant interact with the block so it is not possible to destroy it
+		$this->material = Material::$water;
 	}
 	
 	public static function getTickDelay(){

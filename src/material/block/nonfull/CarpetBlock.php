@@ -23,9 +23,11 @@ class CarpetBlock extends FlowableBlock{
 			15 => "Black Carpet",
 		);
 		$this->name = $names[$this->meta];
-		$this->hardness = 0;
+		$this->hardness = 0.5;
+		$this->breakTime = 0.1;
 		$this->isFullBlock = false;		
 		$this->isSolid = true;
+		$this->material = Material::$cloth;
 	}
 	public static function getCollisionBoundingBoxes(Level $level, $x, $y, $z, Entity $entity){
 		return [static::getAABB($level, $x, $y, $z)];

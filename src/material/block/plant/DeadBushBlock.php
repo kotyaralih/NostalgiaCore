@@ -6,6 +6,8 @@ class DeadBushBlock extends FlowableBlock{
 		parent::__construct(DEAD_BUSH, 0, "Dead Bush");
 		//$this->isReplaceable = true;
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$replaceable_plant;
 	}
 	
 	public static function getAABB(Level $level, $x, $y, $z){

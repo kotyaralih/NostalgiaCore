@@ -5,7 +5,9 @@ class IceBlock extends TransparentBlock{
 	public function __construct(){
 		parent::__construct(ICE, 0, "Ice");
 		$this->hardness = 2.5;
+		$this->breakTime = 0.5;
 		$this->slipperiness = 0.98;
+		$this->material = Material::$ice;
 	}
 	
 	public static function getCollisionBoundingBoxes(Level $level, $x, $y, $z, Entity $entity){

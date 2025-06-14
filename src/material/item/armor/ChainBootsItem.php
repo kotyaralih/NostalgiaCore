@@ -7,7 +7,7 @@ class ChainBootsItem extends ArmorItem{
 	}
 	
 	public function getMaterialDurability(){
-		return Material::CHAIN;
+		return ArmorMaterial::CHAIN;
 	}
 	
 	public function getBaseDurability(){

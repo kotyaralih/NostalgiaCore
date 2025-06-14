@@ -12,6 +12,8 @@ class PlanksBlock extends SolidBlock{
 		);
 		$this->name = $names[$this->meta & 0x03];
 		$this->hardness = 15;
+		$this->breakTime = 2;
+		$this->material = Material::$wood;
 	}
 	
 }

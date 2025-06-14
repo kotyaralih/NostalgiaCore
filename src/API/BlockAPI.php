@@ -402,13 +402,37 @@ class BlockAPI{
 				return $this->cancelAction($target, $player, false);
 			}
 		}
-
-		if((!$target->isBreakable($item, $player) and $this->server->api->dhandle("player.block.break.invalid", ["player" => $player, "target" => $target, "item" => $item]) !== true) or ($player->gamemode & 0x02) === 0x02 or (($player->lastBreak - $player->getLag() / 1000) + $target->getBreakTime($item, $player) - 0.2) >= microtime(true)){
+		
+		$currentTime = microtime(true);
+		$isIndestructible = (!$target->isBreakable($item, $player) && $this->server->api->dhandle("player.block.break.invalid", ["player" => $player, "target" => $target, "item" => $item]) !== true);
+		$isAdventure = ($player->gamemode & 0x02) === 0x02;
+		$progress = $target->getDestroyProgress($player);
+		
+		$tooFast = false;
+		if($progress == 0 || is_nan($progress)){
+			$exceptedTimeMS = INF;
+			$tooFast = true;
+		}else{
+			$exceptedTimeMS = ceil(1 / $progress)*0.05;
+			
+		}
+		
+		if($player->gamemode == 1){ //creative
+			$exceptedTimeMS = 0.05; //1 block/tick
+			$tooFast = false;
+		}
+		
+		$exceptedTimeAfter = $player->lastBreak + $exceptedTimeMS;
+		if($currentTime < $exceptedTimeAfter) $tooFast = true;
+		if($isIndestructible || $isAdventure || $tooFast){
 			if($this->server->api->dhandle("player.block.break.bypass", ["player" => $player, "target" => $target, "item" => $item]) !== true){
+				if($tooFast){
+					ConsoleAPI::warn("{$player->username} tried destroying block({$target->getID()} {$target->getMetadata()}) too fast($currentTime < $exceptedTimeAfter)");
+				}
 				return $this->cancelAction($target, $player, false);
 			}
 		}
-		$player->lastBreak = microtime(true);
+		$player->lastBreak = $currentTime;
 
 		if($this->server->api->dhandle("player.block.break", ["player" => $player, "target" => $target, "item" => $item]) !== false){
 			$drops = $target->getDrops($item, $player);

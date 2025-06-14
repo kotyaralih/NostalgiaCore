@@ -5,7 +5,9 @@ class LavaBlock extends LiquidBlockDynamic implements LightingBlock{
 	public static $blockID = LAVA;
 	public function __construct($meta = 0){
 		parent::__construct(LAVA, $meta, "Lava");
-		$this->hardness = 500;
+		$this->hardness = 500; //0 in vanilla
+		$this->breakTime = -1; //in vanilla it is 0, but you cant interact with the block so it is not possible to destroy it
+		$this->material = Material::$lava;
 	}
 	
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){

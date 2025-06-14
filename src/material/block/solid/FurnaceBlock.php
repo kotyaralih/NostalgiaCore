@@ -12,5 +12,6 @@ class FurnaceBlock extends BurningFurnaceBlock{
 		$this->id = FURNACE;
 		$this->name = "Furnace";
 		$this->isActivable = true;
+		$this->material = Material::$stone;
 	}
 }

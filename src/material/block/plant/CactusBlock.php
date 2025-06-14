@@ -6,6 +6,8 @@ class CactusBlock extends TransparentBlock{
 		parent::__construct(CACTUS, $meta, "Cactus");
 		$this->isFullBlock = false;
 		$this->hardness = 2;
+		$this->breakTime = 0.4;
+		$this->material = Material::$cactus;
 	}
 	
 	public static function onEntityCollidedWithBlock(Level $level, $x, $y, $z, Entity $entity){

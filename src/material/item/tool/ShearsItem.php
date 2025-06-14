@@ -12,4 +12,13 @@ class ShearsItem extends ItemTool{
 		}
 		return parent::mineBlock($block, $player);
 	}
+	
+	public function canDestroySpecial($id, $meta){
+		return $id == COBWEB;
+	}
+	public function getDestroySpeed($id, $meta){
+		if($id == COBWEB || $id == LEAVES) return 15;
+		if($id == WOOL) return 5;
+		return parent::getDestroySpeed($id, $meta);
+	}
 }

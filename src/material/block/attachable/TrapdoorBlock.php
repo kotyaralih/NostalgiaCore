@@ -11,6 +11,8 @@ class TrapdoorBlock extends TransparentBlock{
 			$this->isFullBlock = true;
 		}
 		$this->hardness = 15;
+		$this->breakTime = 3;
+		$this->material = Material::$wood;
 	}
 
 	public function canAttachTo(Block $target){

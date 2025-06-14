@@ -5,6 +5,8 @@ class FarmlandBlock extends TransparentBlock{
 	public function __construct($meta = 0){
 		parent::__construct(FARMLAND, $meta, "Farmland");
 		$this->hardness = 3;
+		$this->breakTime = 0.6;
+		$this->material = Material::$dirt;
 	}
 	public function getDrops(Item $item, Player $player){
 		return array(

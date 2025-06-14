@@ -7,7 +7,7 @@ class GoldenLeggingsItem extends ArmorItem{
 	}
 	
 	public function getMaterialDurability(){
-		return Material::GOLD;
+		return ArmorMaterial::GOLD;
 	}
 	
 	public function getBaseDurability(){

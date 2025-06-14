@@ -7,6 +7,8 @@ class ChestBlock extends TransparentBlock{
 		$this->isActivable = true;
 		$this->isFullBlock = false;
 		$this->hardness = 15;
+		$this->breakTime = 2.5;
+		$this->material = Material::$wood;
 	}
 	public static function getCollisionBoundingBoxes(Level $level, $x, $y, $z, Entity $entity){
 		return [new AxisAlignedBB($x + 0.025, $y, $z + 0.025, $x + 0.975, $y + 0.95, $z + 0.975)];

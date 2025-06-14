@@ -34,6 +34,7 @@ class PocketMinecraftServer{
 			@cli_set_process_title("NostalgiaCore ".MAJOR_VERSION);
 		}*/
 		console("[INFO] Starting Minecraft PE server on " . ($this->serverip === "0.0.0.0" ? "*" : $this->serverip) . ":" . $this->port);
+		Material::init();
 		EntityRegistry::registerEntities();
 		PlayerNull::$INSTANCE = new PlayerNull();
 		Feature::init();

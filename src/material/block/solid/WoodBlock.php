@@ -17,6 +17,8 @@ class WoodBlock extends SolidBlock{
 		);
 		$this->name = $names[$this->meta & 0x03];
 		$this->hardness = 10;
+		$this->breakTime = 2.0;
+		$this->material = Material::$wood;
 	}
 	
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){

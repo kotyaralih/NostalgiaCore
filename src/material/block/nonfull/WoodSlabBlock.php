@@ -16,7 +16,9 @@ class WoodSlabBlock extends TransparentBlock{
 		}else{
 			$this->isFullBlock = false;
 		}		
-		$this->hardness = 15;
+		$this->hardness = 30;
+		$this->breakTime = 2;
+		$this->material = Material::$wood;
 	}
 	
 	public static function updateShape(Level $level, $x, $y, $z){

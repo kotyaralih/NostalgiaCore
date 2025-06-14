@@ -8,6 +8,8 @@ class SnowLayerBlock extends FlowableBlock{
 		$this->isSolid = false;
 		$this->isFullBlock = false;
 		$this->hardness = 0.5;
+		$this->breakTime = 0.1;
+		$this->material = Material::$topSnow;
 	}
 	public static function getAABB(Level $level, $x, $y, $z){
 		return null;

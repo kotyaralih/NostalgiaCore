@@ -12,6 +12,8 @@ class StoneBricksBlock extends SolidBlock{
 		);
 		$this->name = $names[$this->meta & 0x03];
 		$this->hardness = 30;
+		$this->breakTime = 1.5;
+		$this->material = Material::$stone;
 	}
 
 	public function getBreakTime(Item $item, Player $player){

@@ -16,5 +16,12 @@ abstract class ItemAxe extends ItemTool
 			default => false,
 		};
 	}
+	public function getDestroySpeed($id, $meta){
+		$effMult = ItemTool::TIER_EFFICIENCY_MULTIPLIER[$this->getLevel()] ?? ItemTool::TIER_EFFICIENCY_MULTIPLIER[0];
+		
+		$mat = StaticBlock::getMaterial($id);
+		if($mat == Material::$wood) return $effMult;
+		return parent::getDestroySpeed($id, $meta);
+	}
 }
 

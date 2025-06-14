@@ -6,6 +6,8 @@ class BedrockBlock extends SolidBlock{
 		parent::__construct(BEDROCK, 0, "Bedrock");
 		$this->breakable = false;
 		$this->hardness = 18000000;
+		$this->breakTime = -1;
+		$this->material = Material::$stone;
 	}
 	
 	public function isBreakable(Item $item, Player $player){

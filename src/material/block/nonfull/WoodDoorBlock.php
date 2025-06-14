@@ -6,6 +6,8 @@ class WoodDoorBlock extends DoorBlock{
 		parent::__construct(WOOD_DOOR_BLOCK, $meta, "Wood Door Block");
 		$this->isActivable = true;
 		$this->hardness = 15;
+		$this->breakTime = 3;
+		$this->material = Material::$wood;
 	}
 	
 	public function getDrops(Item $item, Player $player){

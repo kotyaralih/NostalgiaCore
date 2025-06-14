@@ -6,6 +6,8 @@ class FenceBlock extends TransparentBlock{
 		parent::__construct(FENCE, 0, "Fence");
 		$this->isFullBlock = false;
 		$this->hardness = 15;
+		$this->breakTime = 2;
+		$this->material = Material::$wood;
 	}
 	
 	public static function canConnectTo(Level $level, $x, $y, $z){

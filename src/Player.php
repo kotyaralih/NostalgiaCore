@@ -731,6 +731,17 @@ class Player{
 	
 	public $currentChunk = false;
 	
+	public function getDestroySpeed($id, $meta){
+		return $this->getHeldItem()->getDestroySpeed($id, $meta);
+	}
+	
+	public function canDestroy($id, $meta){
+		$mat = StaticBlock::getMaterial($id);
+		if($mat->alwaysDestroyable) return true;
+		
+		return $this->getHeldItem()->canDestroySpecial($id, $meta);
+	}
+	
 	public function onChunkReceived($blockX, $blockZ){
 		$minX = $blockX;
 		$maxX = $blockX + 15;

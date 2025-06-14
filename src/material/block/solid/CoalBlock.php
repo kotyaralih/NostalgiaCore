@@ -5,6 +5,8 @@ class CoalBlock extends SolidBlock{
 	public function __construct(){
 		parent::__construct(COAL_BLOCK, 0, "Coal Block");
 		$this->hardness = 30;
+		$this->breakTime = 5;
+		$this->material = Material::$metal;
 	}
 
 	public function getBreakTime(Item $item, Player $player){

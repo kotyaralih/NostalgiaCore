@@ -12,6 +12,8 @@ class TallGrassBlock extends FlowableBlock{
 		);
 		$this->name = $names[$this->meta & 0x03];
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$replaceable_plant;
 	}
 
 	public static function neighborChanged(Level $level, $x, $y, $z, $nX, $nY, $nZ, $oldID){

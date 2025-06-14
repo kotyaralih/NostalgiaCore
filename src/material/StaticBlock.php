@@ -17,8 +17,9 @@ class StaticBlock
 	public static $hasPhysics = [];
 	public static $isLiquid = [];
 	public static $isFullBlock = [];
-	
+	public static $material = [];
 	public static $hardness = [];
+	public static $destroyTime = [];
 	public static $slipperiness = [];
 	public static $boundingBoxes = [];
 	public static $minXs = [], $minYs = [], $minZs = [], $maxXs = [], $maxYs = [], $maxZs = [];
@@ -40,6 +41,8 @@ class StaticBlock
 			self::$slipperiness[$b->getID()] = $b->slipperiness;
 			self::$boundingBoxes[$b->getID()] = $b->boundingBox;
 			self::$hardness[$b->getID()] = $b->getHardness();
+			self::$destroyTime[$b->getID()] = $b->breakTime;
+			self::$material[$b->getID()] = $b->material;
 			self::$prealloc[$b->getID()] = $b;
 			$b::$blockID = $b->getID();
 			FireBlock::setFlammabilityAndCatchingChance($b->getID(), 0, 0);
@@ -100,6 +103,10 @@ class StaticBlock
 		FireBlock::setFlammabilityAndCatchingChance(COAL_BLOCK, 5, 5);
 		FireBlock::setFlammabilityAndCatchingChance(HAY_BALE, 60, 20);
 		FireBlock::setFlammabilityAndCatchingChance(SPONGE, 30, 60);
+	}
+	
+	public static function getMaterial($blockID){
+		return self::$material[$blockID] ?? Material::$air;
 	}
 	
 	public static function setBlockBounds($blockID, $minX, $minY, $minZ, $maxX, $maxY, $maxZ){

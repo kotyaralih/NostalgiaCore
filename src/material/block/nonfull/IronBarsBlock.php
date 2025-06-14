@@ -6,6 +6,9 @@ class IronBarsBlock extends TransparentBlock{
 		parent::__construct(IRON_BARS, 0, "Iron Bars");
 		$this->isFullBlock = false;
 		$this->isSolid = false;
+		$this->breakTime = 5;
+		$this->hardness = 30;
+		$this->material = Material::$metal;
 	}
 	
 	public static function updateShape(Level $level, $x, $y, $z){

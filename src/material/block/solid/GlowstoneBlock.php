@@ -5,6 +5,8 @@ class GlowstoneBlock extends TransparentBlock implements LightingBlock{
 	public function __construct(){
 		parent::__construct(GLOWSTONE_BLOCK, 0, "Glowstone");
 		$this->hardness = 1.5;
+		$this->breakTime = 0.3;
+		$this->material = Material::$glass;
 	}
 	
 	public function getMaxLightValue(){

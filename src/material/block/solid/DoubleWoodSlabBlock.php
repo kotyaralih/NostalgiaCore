@@ -11,7 +11,9 @@ class DoubleWoodSlabBlock extends SolidBlock{
 			3 => "Jungle",
 		);
 		$this->name = "Double " . $names[$this->meta & 0x07] . " Wooden Slab";
-		$this->hardness = 15;
+		$this->hardness = 30;
+		$this->breakTime = 2;
+		$this->material = Material::$wood;
 	}
 
 	public function getBreakTime(Item $item, Player $player){

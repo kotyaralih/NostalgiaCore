@@ -31,6 +31,8 @@ class FenceGateBlock extends TransparentBlock{
 			$this->isFullBlock = false;
 		}
 		$this->hardness = 15;
+		$this->breakTime = 2;
+		$this->material = Material::$wood;
 	}
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){
 		$faces = array(

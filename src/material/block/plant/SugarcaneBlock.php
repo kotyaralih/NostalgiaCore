@@ -6,6 +6,8 @@ class SugarcaneBlock extends FlowableBlock{
 		parent::__construct(SUGARCANE_BLOCK, $meta, "Sugarcane");
 		$this->isActivable = true;
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$plant;
 	}
 	
 	public function getDrops(Item $item, Player $player){

@@ -5,7 +5,9 @@ class TNTBlock extends SolidBlock{
 	public function __construct(){
 		parent::__construct(TNT, 0, "TNT");
 		$this->hardness = 0;
+		$this->breakTime = 0;
 		$this->isActivable = true;
+		$this->material = Material::$explosive;
 	}
 	
 	public function onActivate(Item $item, Player $player){

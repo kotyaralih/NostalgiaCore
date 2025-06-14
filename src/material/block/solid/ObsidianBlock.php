@@ -4,7 +4,9 @@ class ObsidianBlock extends SolidBlock{
 	public static $blockID;
 	public function __construct(){
 		parent::__construct(OBSIDIAN, 0, "Obsidian");
-		$this->hardness = 6000;		
+		$this->hardness = 6000;
+		$this->breakTime = 10;
+		$this->material = Material::$stone;
 	}
 	
 	public function getBreakTime(Item $item, Player $player){

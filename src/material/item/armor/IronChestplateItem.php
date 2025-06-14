@@ -7,7 +7,7 @@ class IronChestplateItem extends ArmorItem{
 	}
 	
 	public function getMaterialDurability(){
-		return Material::IRON;
+		return ArmorMaterial::IRON;
 	}
 	
 	public function getBaseDurability(){

@@ -6,6 +6,9 @@ class NetherReactorBlock extends SolidBlock{
 	public function __construct($meta = 0){
 		parent::__construct(NETHER_REACTOR, $meta, "Nether Reactor");
 		$this->isActivable = true;
+		$this->hardness = 15;
+		$this->breakTime = 3;
+		$this->material = Material::$metal;
 	}
 	
 	public function onActivate(Item $item, Player $player){

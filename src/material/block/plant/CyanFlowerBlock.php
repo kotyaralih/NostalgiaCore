@@ -6,6 +6,8 @@ class CyanFlowerBlock extends FlowableBlock{
 		parent::__construct(CYAN_FLOWER, 0, "Cyan Flower");
 		$this->isActivable = true;
 		$this->hardness = 0;
+		$this->breakTime = 0;
+		$this->material = Material::$plant;
 	}
 	
 	public static function getAABB(Level $level, $x, $y, $z){

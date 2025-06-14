@@ -5,6 +5,8 @@ class PumpkinBlock extends SolidBlock{
 	public function __construct($meta = 0){
 		parent::__construct(PUMPKIN, $meta, "Pumpkin");
 		$this->hardness = 5;
+		$this->breakTime = 1;
+		$this->material = Material::$vegetable;
 	}
 	
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){

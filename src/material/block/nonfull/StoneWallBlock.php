@@ -7,7 +7,9 @@ class StoneWallBlock extends TransparentBlock{
 		parent::__construct(STONE_WALL, $meta & 0x01, $meta === 1 ? "Mossy Cobblestone Wall" : "Cobblestone Wall");
 		$this->isFullBlock = false;
 		$this->isSolid = false;
-		$this->hardness = 30;
+		$this->hardness = 50;
+		$this->breakTime = 10;
+		$this->material = Material::$stone;
 	}
 	public function getDrops(Item $item, Player $player){
 		if($item->isPickaxe()){
