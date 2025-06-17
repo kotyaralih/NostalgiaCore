@@ -527,11 +527,13 @@ class BlockAPI{
 		}
 		
 		if($hand->isSolid === true && ($hand->getID() != BED_BLOCK && $hand->getID() != CARPET)){
-			$aabb = $hand->getAABB($block->level, $block->x, $block->y, $block->z);
 			foreach($block->level->players as $pl){
-				$playerbb = $pl->entity->boundingBox;
-				if(($aabb->maxX > $playerbb->minX && $aabb->minX < $playerbb->maxX) && ($aabb->maxY > ($playerbb->minY+0.21) && $aabb->minY < $playerbb->maxY) && ($aabb->maxZ > $playerbb->minZ && $aabb->minZ < $playerbb->maxZ)){
-					return $this->cancelAction($block, $player); //Entity in block
+				$aabbs = $hand->getCollisionBoundingBoxes($block->level, $block->x, $block->y, $block->z, $pl->entity);
+				foreach($aabbs as $aabb){
+					$playerbb = $pl->entity->boundingBox;
+					if(($aabb->maxX > $playerbb->minX && $aabb->minX < $playerbb->maxX) && ($aabb->maxY > ($playerbb->minY+0.21) && $aabb->minY < $playerbb->maxY) && ($aabb->maxZ > $playerbb->minZ && $aabb->minZ < $playerbb->maxZ)){
+						return $this->cancelAction($block, $player); //Entity in block
+					}
 				}
 			}
 			
