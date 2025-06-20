@@ -80,7 +80,7 @@ class Player{
 	 * @var array
 	 */
 	public $packetAlwaysRecoverQueue = [];
-	private $recoveryQueue = [];
+	public $recoveryQueue = [];
 	private $receiveQueue = [];
 	private $resendQueue = [];
 	private $ackQueue = [];
@@ -93,14 +93,23 @@ class Player{
 	 * @var RakNetPacket
 	 */
 	public $entityMovementQueue;
+	public $entityMovementQueuePrevSentCnt = 0;
 	public $entityMovementQueueLength = 0;
+	/**
+	 * Used only for statistic in ping command.
+	 * @var integer
+	 */
+	public $entityMovementPacketsPerSecond = 0;
+	public $lastEntityMovementPacketsPerSecondRecordedTime = 0;
 	
 	public $blockUpdateQueue;
 	public $blockUpdateQueueLength = 0;
+	public $blockUpdateQueuePrevSentCnt = 0;
 	public $blockUpdateQueueOrderIndex = 0;
 	
 	public $chatMessagesQueue;
 	public $chatMessagesQueueLength = 0;
+	public $chatMessagesQueuePrevSentCnt = 0;
 	public $chatMessagesOrderIndex = 0;
 	public $chunkDataSent = [];
 	
@@ -1362,6 +1371,10 @@ class Player{
 			$this->ackQueue = [];
 		}
 
+		if($time - $this->lastEntityMovementPacketsPerSecondRecordedTime > 1){
+			$this->entityMovementPacketsPerSecond = 0;
+			$this->lastEntityMovementPacketsPerSecondRecordedTime = $time;
+		}
 		
 		if($this->sendingInventoryRequired){
 			//console("inv resent");
@@ -1597,6 +1610,7 @@ class Player{
 		}
 		
 		$this->entityMovementQueueLength += 6*$packets + $len;
+		$this->entityMovementPacketsPerSecond += $packets;
 	}
 	
 	/**

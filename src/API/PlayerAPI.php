@@ -123,7 +123,7 @@ class PlayerAPI{
 				$issuer->teleport($this->server->spawn);
 				return "You were teleported to the spawn.";
 			case "ping":
-				
+				$additional = false;
 				if(!($issuer instanceof Player)){
 					if(isset($args[0])){
 						goto get_ping_of_others;
@@ -133,6 +133,7 @@ class PlayerAPI{
 				
 				if(isset($args[0]) && $this->server->api->ban->isOp($issuer->iusername)){
 					get_ping_of_others:
+					$additional = true;
 					$p = $this->get($args[0]);
 					if(!($p instanceof Player)){
 						return "Player with username '{$args[0]}' is not on server.";
@@ -140,8 +141,18 @@ class PlayerAPI{
 				}else{
 					$p = $issuer;
 				}
-				
-				return "{$p->username}'s ping: " . round($p->getLag(), 2) . "ms, packet loss " . round($p->getPacketLoss() * 100, 2) . "%, " . round($p->getBandwidth() / 1024, 2) . " KB/s\n";
+				$ping = round($p->getLag(), 2);
+				$pkLoss = round($p->getPacketLoss() * 100, 2);
+				$transfer = round($p->getBandwidth() / 1024, 2);
+				$additionalInfo = "";
+				if($additional){
+					$arqCnt = count($p->packetAlwaysRecoverQueue);
+					$rqCnt = count($p->recoveryQueue);
+					$emps = $p->entityMovementPacketsPerSecond;
+					$additionalInfo = "ARQ/RQ/EMPS: $arqCnt/$rqCnt/$emps";
+				}
+				$chunksCnt = count($p->chunkDataSent);
+				return "{$p->username}'s ping: {$ping}ms, packet loss {$pkLoss}%, $transfer KB/s. Chunks: $chunksCnt/256\n$additionalInfo";
 			case "gamemode":
 				$player = false;
 				$setgm = false;
