@@ -29,6 +29,7 @@ class WoolBlock extends SolidBlock{
 		$this->hardness = 4;
 		$this->breakTime = 0.8;
 		$this->material = Material::$cloth;
+		$this->lightBlock = 255;
 	}
 	
 }

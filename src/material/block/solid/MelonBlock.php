@@ -7,6 +7,7 @@ class MelonBlock extends TransparentBlock{
 		$this->hardness = 5;
 		$this->breakTime = 1;
 		$this->material = Material::$vegetable;
+		$this->lightBlock = 255;
 	}
 	public function getDrops(Item $item, Player $player){
 		return array(

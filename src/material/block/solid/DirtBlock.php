@@ -8,6 +8,7 @@ class DirtBlock extends SolidBlock{
 		$this->hardness = 2.5;
 		$this->breakTime = 0.5;
 		$this->material = Material::$dirt;
+		$this->lightBlock = 255;
 	}
 
 	public function onActivate(Item $item, Player $player){

@@ -7,6 +7,7 @@ class SandBlock extends FallableBlock{
 		$this->hardness = 2.5;
 		$this->breakTime = 0.5;
 		$this->material = Material::$sand;
+		$this->lightBlock = 255;
 	}
 	
 }

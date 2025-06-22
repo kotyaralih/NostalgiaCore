@@ -7,6 +7,7 @@ class BrownMushroomBlock extends FlowableBlock{
 		$this->hardness = 0;
 		$this->breakTime = 0;
 		$this->material = Material::$plant;
+		$this->lightEmission = 1;
 	}
 
 	public static function neighborChanged(Level $level, $x, $y, $z, $nX, $nY, $nZ, $oldID){

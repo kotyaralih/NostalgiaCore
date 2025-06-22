@@ -7,6 +7,8 @@ class GlowingRedstoneOreBlock extends SolidBlock implements LightingBlock{
 		$this->hardness = 15;
 		$this->breakTime = 3;
 		$this->material = Material::$stone;
+		$this->lightBlock = 255;
+		$this->lightEmission = 9;
 	}
 	
 	public static function onRandomTick(Level $level, $x, $y, $z){

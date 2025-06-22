@@ -7,6 +7,7 @@ class HayBaleBlock extends SolidBlock{
 		$this->hardness = 2.5;
 		$this->breakTime = 0.5;
 		$this->material = Material::$dirt;
+		$this->lightBlock = 255;
 	}
 	
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){

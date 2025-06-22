@@ -520,7 +520,140 @@ class Level{
 		}
 		$this->addBlockToSendQueue($x, $y, $z, $id, $meta);
 	}
+	/**
+	 * Contains light updates. Light update is an integer that contains min/max block coords and light layer
+	 * Format: 0011ffeeddccbbaa
+	 * 00 - unused(8th byte)
+	 * 11 - light layer(currently must be 0(block), future: 15(sky))
+	 * ff, ee, dd - minX, minY, minZ
+	 * cc, bb, aa - maxX, maxY, maxZ
+	 * @var int[]
+	 */
+	public $lightUpdates = [];
+	public $lightUpdateIndx = -1;
+	public function handleBlockLightUpdate($minX, $minY, $minZ, $maxX, $maxY, $maxZ){
+		for($x = $minX; $x <= $maxX; ++$x){
+			for($z = $minZ; $z <= $maxZ; ++$z){
+				for($y = $minY; $y <= $maxY; ++$y){
+					$brightness = $this->level->getBlockLight($x, $y, $z);
+					$blockID = $this->level->getBlockID($x, $y, $z);
+					$lightBlock = StaticBlock::$lightBlock[$blockID];
+					if($lightBlock == 0) $lightBlock = 1;
+					$lightEmission = StaticBlock::$lightEmission[$blockID];
+					$newBrightness = 0;
+					if($lightBlock <= 14 || $lightEmission != 0){
+						$xNegBright = $this->level->getBlockLight($x-1, $y, $z);
+						$xPosBright = $this->level->getBlockLight($x+1, $y, $z);
+						$yNegBright = $this->level->getBlockLight($x, $y-1, $z);
+						$yPosBright = $this->level->getBlockLight($x, $y+1, $z);
+						$zNegBright = $this->level->getBlockLight($x, $y, $z-1);
+						$zPosBright = $this->level->getBlockLight($x, $y, $z+1);
+						
+						$v15 = $xNegBright;
+						if($xPosBright > $v15) $v15 = $xPosBright;
+						if($yNegBright > $v15) $v15 = $yNegBright;
+						if($yPosBright > $v15) $v15 = $yPosBright;
+						if($zNegBright > $v15) $v15 = $zNegBright;
+						if($zPosBright > $v15) $v15 = $zPosBright;
+						
+						$newBrightness = $v15 - $lightBlock;
+						if($newBrightness < 0) $newBrightness = 0;
+						if($lightEmission > $newBrightness) $newBrightness = $lightEmission;
+					}
+					
+					if($brightness != $newBrightness){
+						$this->level->setBlockLight($x, $y, $z, $newBrightness);
+						$v4 = $newBrightness - 1;
+						if($v4 < 0) $v4 = 0;
+						$this->updateLightIfOtherThan(0, $x-1, $y, $z, $v4);
+						$this->updateLightIfOtherThan(0, $x, $y-1, $z, $v4);
+						$this->updateLightIfOtherThan(0, $x, $y, $z-1, $v4);
+						if($x+1 >= $maxX) $this->updateLightIfOtherThan(0, $x+1, $y, $z, $v4);
+						if($y+1 >= $maxY) $this->updateLightIfOtherThan(0, $x, $y+1, $z, $v4);
+						if($z+1 >= $maxZ) $this->updateLightIfOtherThan(0, $x, $y, $z+1, $v4);
+					}
+				}
+			}
+		}
+	}
 	
+	public function updateLight($layer, $minX, $minY, $minZ, $maxX, $maxY, $maxZ){
+		/*$max = 5; TODO: expand lightupdate
+		$sz = $this->lightUpdateIndx;
+		if($sz < $max) $max = $sz;
+		for($i = 0; $i < $max; ++$i){
+			$update = $this->lightUpdates[$i];
+			if($update->layer == $layer && ($r = $update->expand($minX, $minY, $minZ, $maxX, $maxY, $maxZ))){
+				--$this->lightUpdatesCount;
+			}
+		}*/
+		
+		if($maxX < $minX){
+			$s = $minX;
+			$minX = $maxX;
+			$maxX = $s;
+		}
+		if($maxY < $minY){
+			$s = $minY;
+			$minY = $maxY;
+			$maxY = $s;
+		}
+		if($maxZ < $minZ){
+			$s = $minZ;
+			$minZ = $maxZ;
+			$maxZ = $s;
+		}
+		if($minX < 0) $minX = 0;
+		if($minX > 255) $minX = 255;
+		if($minY < 0) $minY = 0;
+		if($minY > 127) $minY = 127;
+		if($minZ < 0) $minZ = 0;
+		if($minZ > 255) $minZ = 255;
+		
+		if($maxX < 0) $minX = 0;
+		if($maxX > 255) $minX = 255;
+		if($maxY < 0) $minY = 0;
+		if($maxY > 127) $minY = 127;
+		if($maxZ < 0) $maxZ = 0;
+		if($maxZ > 255) $maxZ = 255;
+		
+		$update = ($layer << 48) | ($minX << 40) | ($minY << 32) | ($minZ << 24) | ($maxX << 16) | ($maxY << 8) | ($maxZ);
+		$this->lightUpdates[++$this->lightUpdateIndx] = $update;
+	}
+	
+	public function updateLightIfOtherThan($layer, $x, $y, $z, $level){
+		if($y < 0 || $y > 127 || $x < 0 || $x > 255 || $z < 0 || $z > 255) return;
+		if($layer == 0){
+			$blockID = $this->level->getBlockID($x, $y, $z);
+			$emission = StaticBlock::$lightEmission[$blockID];
+			if($emission > $level) $level = $emission;
+			
+			if($this->level->getBlockLight($x, $y, $z) != $level){
+				$this->updateLight($layer, $x, $y, $z, $x, $y, $z);
+			}
+		}
+	}
+	public function updateLights(){
+		if($this->lightUpdateIndx < 0) return false;
+		$limit = 500;
+		do{
+			$upd = $this->lightUpdates[$this->lightUpdateIndx];
+			unset($this->lightUpdates[$this->lightUpdateIndx]);
+			--$this->lightUpdateIndx;
+			$maxZ = $upd & 0xff;
+			$maxY = ($upd >> 8) & 0xff;
+			$maxX = ($upd >> 16) & 0xff;
+			$minZ = ($upd >> 24) & 0xff;
+			$minY = ($upd >> 32) & 0xff;
+			$minX = ($upd >> 40) & 0xff;	
+			$layer = $upd >> 48;
+			if($layer == 0) $this->handleBlockLightUpdate($minX, $minY, $minZ, $maxX, $maxY, $maxZ);
+			else console("wha");
+			if(!--$limit) return true;
+		}while($this->lightUpdateIndx >= 0);
+		if(count($this->lightUpdates) > 0) return true;
+		return false;
+	}
 	public function onTick(PocketMinecraftServer $server, $currentTime){
 		if(!$this->stopTime) ++$this->time;
 		for($cX = 0; $cX < 16; ++$cX){
@@ -647,6 +780,7 @@ class Level{
 		}
 		
 		$this->queuedBlockUpdates = [];
+		$this->updateLights();
 	}
 	
 	public function isBoundingBoxOnFire(AxisAlignedBB $bb){

@@ -19,6 +19,7 @@ class WoodBlock extends SolidBlock{
 		$this->hardness = 10;
 		$this->breakTime = 2.0;
 		$this->material = Material::$wood;
+		$this->lightBlock = 255;
 	}
 	
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){

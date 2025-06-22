@@ -7,6 +7,7 @@ class DiamondOreBlock extends SolidBlock{
 		$this->hardness = 15;
 		$this->breakTime = 3;
 		$this->material = Material::$stone;
+		$this->lightBlock = 255;
 	}
 	
 	public function getBreakTime(Item $item, Player $player){

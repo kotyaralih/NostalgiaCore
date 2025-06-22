@@ -17,6 +17,7 @@ class LeavesBlock extends TransparentBlock{
 		$this->hardness = 1;
 		$this->breakTime = 0.2;
 		$this->material = Material::$leaves;
+		$this->lightBlock = 1;
 	}
 	
 	public static function getCollisionBoundingBoxes(Level $level, $x, $y, $z, Entity $entity){

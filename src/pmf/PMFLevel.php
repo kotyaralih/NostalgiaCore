@@ -3,7 +3,6 @@
 define("PMF_CURRENT_LEVEL_VERSION", 0x00);
 
 class PMFLevel extends PMF{
-
 	public $isLoaded = true;
 	private $levelData = [];
 	public $locationTable = [];
@@ -298,6 +297,7 @@ class PMFLevel extends PMF{
 		for($Y = 0; $Y < $this->levelData["height"]; ++$Y){
 			$t = 1 << $Y;
 			if(($info[0] & $t) === $t){
+				//TODO do something with skylight
 				// 4096 + 2048 + 2048, Block Data, Meta, Light
 				if(strlen($this->chunks[$index][$Y] = gzread($chunk, 8192)) < 8192){
 					console("[NOTICE] Empty corrupt chunk detected [$X,$Z,:$Y], recovering contents", true, true, 2);
@@ -397,6 +397,7 @@ class PMFLevel extends PMF{
 		}else{
 			$this->chunks[$index][$Y][$bind] = chr($block);
 			if($block > 0) StaticBlock::getBlock($block)::onPlace($this->level, $x, $y, $z);
+			$this->level->updateLight(0, $x, $y, $z, $x, $y, $z);
 		}
 		
 		if(!isset($this->chunkChange[$index][$Y])){
@@ -408,6 +409,56 @@ class PMFLevel extends PMF{
 		return true;
 	}
 
+	public function getBlockLight($x, $y, $z){
+		if($x < 0 || $x > 255 || $z < 0 || $z > 255 || $y < 0 || $y > 127) return 0;
+		$X = $x >> 4;
+		$Z = $z >> 4;
+		$Y = $y >> 4;
+		$index = self::getIndex($X, $Z);
+		if(!isset($this->chunks[$index]) || $this->chunks[$index] === false || ($this->chunks[$index][$Y] === false)) return 0;
+		$aX = $x & 0xf;
+		$aZ = $z & 0xf;
+		$aY = $y & 0xf;
+		$m = ord($this->chunks[$index][$Y][(int) (($aY >> 1) + 24 + ($aX << 5) + ($aZ << 9))]);
+		return $y & 1 ? $m >> 4 : $m & 0x0F;
+	}
+	
+	public function setBlockLight($x, $y, $z, $value){
+		if($x < 0 || $x > 255 || $z < 0 || $z > 255 || $y < 0 || $y > 127) return false;
+		$X = $x >> 4;
+		$Z = $z >> 4;
+		$Y = $y >> 4;
+		$value &= 0x0F;
+		
+		$index = self::getIndex($X, $Z);
+		if(!isset($this->chunks[$index]) || $this->chunks[$index] === false){
+			if($this->loadChunk($X, $Z) === false) return false;
+		}elseif($this->chunks[$index][$Y] === false){
+			$this->fillMiniChunk($X, $Z, $Y);
+		}
+		
+		$aX = $x & 0xf;
+		$aZ = $z & 0xf;
+		$aY = $y & 0xf;
+		$mindex = (int) (($aY >> 1) + 24 + ($aX << 5) + ($aZ << 9));
+		$old_m = ord($this->chunks[$index][$Y][$mindex]);
+		if(($y & 1) === 0) $m = ($old_m & 0xF0) | $value;
+		else $m = ($value << 4) | ($old_m & 0x0F);
+		
+		if($old_m != $m){
+			$this->chunks[$index][$Y][$mindex] = chr($m);
+			
+			if(!isset($this->chunkChange[$index][$Y])){
+				$this->chunkChange[$index][$Y] = 1;
+			}else{
+				++$this->chunkChange[$index][$Y];
+			}
+			$this->chunkChange[$index][-1] = true;
+			return true;
+		}
+		return false;
+	}
+	
 	public function getBlockDamage($x, $y, $z){
 		if($x < 0 || $x > 255 || $z < 0 || $z > 255 || $y < 0 || $y > 127){
 			return 0;
@@ -531,6 +582,7 @@ class PMFLevel extends PMF{
 			$this->chunkChange[$index][-1] = true;
 			
 			if($block > 0) StaticBlock::getBlock($block)::onPlace($this->level, $x, $y, $z);
+			$this->level->updateLight(0, $x, $y, $z, $x, $y, $z);
 			return true;
 		}
 		return false;

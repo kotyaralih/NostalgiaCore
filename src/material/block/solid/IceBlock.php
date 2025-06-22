@@ -8,6 +8,7 @@ class IceBlock extends TransparentBlock{
 		$this->breakTime = 0.5;
 		$this->slipperiness = 0.98;
 		$this->material = Material::$ice;
+		$this->lightBlock = 3;
 	}
 	
 	public static function getCollisionBoundingBoxes(Level $level, $x, $y, $z, Entity $entity){
