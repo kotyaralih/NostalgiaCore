@@ -3,13 +3,18 @@
 define("PMF_CURRENT_LEVEL_VERSION", 0x00);
 
 class PMFLevel extends PMF{
+	const NC_DATA_VERSION = 1;
 	public $isLoaded = true;
 	private $levelData = [];
+	public $hasLight = "";
 	public $locationTable = [];
 	private $log = 4; //must be 4 or else rip world
 	private $payloadOffset = 0;
 	public $chunks = [];
 	public $chunkChange = [];
+	/**
+	 * @var Level
+	 */
 	public $level;
 	public function __construct($file, $blank = false){
 		if(is_array($blank)){
@@ -81,8 +86,83 @@ class PMFLevel extends PMF{
 		if($locationTable !== false){
 			$this->writeLocationTable();
 		}
+		
+		$this->writeNCData();
+	}
+	
+	public function writeNCData(){
+		$dir = dirname($this->file);
+		try{
+			$file = fopen("$dir/ncleveldata.pmf", "wb");
+			fwrite($file, chr(self::NC_DATA_VERSION), 1);
+			fwrite($file, $this->hasLight, 16*16);
+		}finally{
+			fclose($file);		
+		}
 	}
 
+	public function readNCData(){
+		$this->hasLight = str_repeat("\x00", 16*16);
+		
+		$dir = dirname($this->file);
+		$path = "$dir/ncleveldata.pmf";
+		if(!is_file($path)){
+			ConsoleAPI::notice("No NC Level data found! Old world?");
+			return;
+		}
+		try{
+			$file = fopen($path, "rb");
+			$ncdv = ord(fread($file, 1));
+			$v = self::NC_DATA_VERSION;
+			if($ncdv !== $v){
+				ConsoleAPI::notice("NC level data version on server($v) does not match the world($ncdv)! Creating NC level data backup.");
+				$newpath = "$path.bak.".microtime(true);
+				$f = copy($path, $newpath);
+				if($f === false) ConsoleAPI::error("NC level data backup creation failed.");
+				else ConsoleAPI::notice("NC level data backup created. (path: $newpath)");
+			}
+			$this->hasLight = fread($file, 16*16);
+		}finally{
+			fclose($file);
+		}
+	}
+	
+	/**
+	 * Checks was skylight generated for chunk
+	 * @param int $X - chunk x
+	 * @param int $Z - chunk z
+	 */
+	public function hasSkylight($X, $Z){
+		if($X < 0 || $X > 15 || $Z < 0 || $Z > 15) return false;
+		$index = self::getIndex($X, $Z);
+		return (ord($this->hasLight[$index]) & 2) > 0;
+	}
+	/**
+	 * Checks was blocklight generated for chunk
+	 * @param int $X - chunk x
+	 * @param int $Z - chunk z
+	 */
+	public function hasBlocklight($X, $Z){
+		if($X < 0 || $X > 15 || $Z < 0 || $Z > 15) return false;
+		$index = self::getIndex($X, $Z);
+		return (ord($this->hasLight[$index]) & 1) > 0;
+	}
+	
+	public function markHasBlocklight($X, $Z){
+		if($X < 0 || $X > 15 || $Z < 0 || $Z > 15) return false;
+		$index = self::getIndex($X, $Z);
+		$o = ord($this->hasLight[$index]);
+		$this->hasLight[$index] = chr($o | 1);
+		return true;
+	}
+	public function markHasSkylight($X, $Z){
+		if($X < 0 || $X > 15 || $Z < 0 || $Z > 15) return false;
+		$index = self::getIndex($X, $Z);
+		$o = ord($this->hasLight[$index]);
+		$this->hasLight[$index] = chr($o | 2);
+		return true;
+	}
+	
 	private function writeLocationTable(){
 		$cnt = pow($this->levelData["width"], 2);
 		@ftruncate($this->fp, $this->payloadOffset);
@@ -159,6 +239,7 @@ class PMFLevel extends PMF{
 		}else{
 			$this->payloadOffset = ftell($this->fp);
 		}
+		$this->readNCData();
 		return $this->readLocationTable();
 	}
 
@@ -274,13 +355,12 @@ class PMFLevel extends PMF{
 		return $this->chunks[$index][$Y];
 	}
 
+	public $checkLight = [];
 	public function loadChunk($X, $Z){
-
 		$index = self::getIndex($X, $Z);
 
 		if($this->isChunkLoaded($X, $Z)){
 			return true;
-
 		}elseif(!isset($this->locationTable[$index])){
 			return false;
 		}
@@ -307,8 +387,26 @@ class PMFLevel extends PMF{
 				$this->chunks[$index][$Y] = false;
 			}
 		}
+		$this->checkLight[$index] = [$X, $Z];
+		
 		@gzclose($chunk);
 		return true;
+	}
+	
+	public function forceLightUpdatesIfNeeded(){
+		foreach($this->checkLight as $index => [$X, $Z]){
+			$update = false;
+			if(!$this->hasBlocklight($X, $Z)){
+				ConsoleAPI::notice("Chunk $X $Z (Level: {$this->level->getName()} has no blocklight! Forcing light update(it might take a while).");
+				$this->level->updateLight(0, $X*16, 0, $Z*16, $X*16+15, 127, $Z*16+15);
+				$update = true;
+				$this->markHasBlocklight($X, $Z);
+			}
+			
+			if($update) while($this->level->updateLights());
+			unset($this->checkLight[$index]);
+		}
+		
 	}
 
 	protected function fillMiniChunk($X, $Z, $Y){
