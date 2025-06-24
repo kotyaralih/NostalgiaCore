@@ -107,13 +107,16 @@ class DoorBlock extends TransparentBlock{
 
 	
 	public static function neighborChanged(Level $level, $x, $y, $z, $nX, $nY, $nZ, $oldID){
-		if($level->level->getBlockID($x, $y - 1, $z) == AIR){ //Replace with common break method
-			$level->fastSetBlockUpdate($x, $y, $z, 0, 0);
-			$id = $level->level->getBlockID($x, $y, $z);
+		if($level->level->getBlockID($x, $y - 1, $z) == AIR){
 			
-			if($id == 64) ServerAPI::request()->api->entity->drop(new Position($x+0.5, $y, $z+0.5, $level), BlockAPI::getItem(324, 0, 1));
-			elseif($id == 71) ServerAPI::request()->api->entity->drop(new Position($x+0.5, $y, $z+0.5, $level), BlockAPI::getItem(330, 0, 1));
-				
+			[$id, $meta] = $level->level->getBlock($x, $y, $z);
+			
+			$level->fastSetBlockUpdate($x, $y, $z, 0, 0);
+			if(($meta & 8) == 0){
+				if($id == DOOR_BLOCK) ServerAPI::request()->api->entity->drop(new Position($x+0.5, $y, $z+0.5, $level), BlockAPI::getItem(WOODEN_DOOR, 0, 1));
+				elseif($id == IRON_DOOR_BLOCK) ServerAPI::request()->api->entity->drop(new Position($x+0.5, $y, $z+0.5, $level), BlockAPI::getItem(IRON_DOOR, 0, 1));
+			}
+			
 			$top = $level->level->getBlockID($x, $y + 1, $z);
 			if($top == IRON_DOOR_BLOCK || $top == DOOR_BLOCK){
 				$level->fastSetBlockUpdate($x, $y + 1, $z, 0, 0);
