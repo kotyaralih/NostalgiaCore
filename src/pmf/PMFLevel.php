@@ -394,6 +394,10 @@ class PMFLevel extends PMF{
 	}
 	
 	public function forceLightUpdatesIfNeeded(){
+		if(!PocketMinecraftServer::$ENABLE_LIGHT_UPDATES) {
+			$this->checkLight = [];
+			return;
+		}
 		foreach($this->checkLight as $index => [$X, $Z]){
 			$update = false;
 			if(!$this->hasBlocklight($X, $Z)){
@@ -508,7 +512,7 @@ class PMFLevel extends PMF{
 	}
 
 	public function getBlockLight($x, $y, $z){
-		if($x < 0 || $x > 255 || $z < 0 || $z > 255 || $y < 0 || $y > 127) return 0;
+		if($x < 0 || $x > 255 || $z < 0 || $z > 255 || $y < 0 || $y > 127 || !PocketMinecraftServer::$ENABLE_LIGHT_UPDATES) return 0;
 		$X = $x >> 4;
 		$Z = $z >> 4;
 		$Y = $y >> 4;
@@ -522,7 +526,7 @@ class PMFLevel extends PMF{
 	}
 	
 	public function setBlockLight($x, $y, $z, $value){
-		if($x < 0 || $x > 255 || $z < 0 || $z > 255 || $y < 0 || $y > 127) return false;
+		if($x < 0 || $x > 255 || $z < 0 || $z > 255 || $y < 0 || $y > 127 || !PocketMinecraftServer::$ENABLE_LIGHT_UPDATES) return false;
 		$X = $x >> 4;
 		$Z = $z >> 4;
 		$Y = $y >> 4;

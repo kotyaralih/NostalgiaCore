@@ -12,7 +12,7 @@ class PocketMinecraftServer{
 	
 	public $doTick, $levelData, $tiles, $entities, $schedule, $scheduleCnt, $whitelist, $spawn, $difficulty, $stop, $asyncThread;
 	public static $FORCE_20_TPS = false, $KEEP_CHUNKS_LOADED = true, $PACKET_READING_LIMIT = 100;
-	
+	public static $ENABLE_LIGHT_UPDATES = true;
 	function __construct($name, $gamemode = SURVIVAL, $seed = false, $port = 19132, $serverip = "0.0.0.0"){
 		$this->port = (int) $port;
 		$this->doTick = true;
@@ -97,7 +97,8 @@ class PocketMinecraftServer{
 			"keep-items-on-death" => Entity::$keepInventory,
 			"disable-emojis-in-chat" => Player::$disableEmojisInChat,
 			"disable-emojis-on-signs" => Level::$disableEmojisOnSigns,
-			"allow-dropping-single-items" => Player::$allowDroppingSingleItems
+			"allow-dropping-single-items" => Player::$allowDroppingSingleItems,
+			"enable-light-updates" => self::$ENABLE_LIGHT_UPDATES,
 		]);
 		Player::$disableEmojisInChat = $this->extraprops->get("disable-emojis-in-chat");
 		Level::$disableEmojisOnSigns = $this->extraprops->get("disable-emojis-on-signs");
@@ -109,12 +110,16 @@ class PocketMinecraftServer{
 		Living::$entityPushing = $this->extraprops->get("enable-mob-pushing");
 		self::$FORCE_20_TPS = $this->extraprops->get("force-20-tps");
 		self::$KEEP_CHUNKS_LOADED = $this->extraprops->get("keep-chunks-loaded");
+		self::$ENABLE_LIGHT_UPDATES = $this->extraprops->get("enable-light-updates");
 		PocketMinecraftServer::$SAVE_PLAYER_DATA = $this->extraprops->get("save-player-data");
 		MobController::$ADVANCED = $this->extraprops->get("experimental-mob-ai");
 		Explosion::$enableExplosions = $this->extraprops->get("enable-explosions");
 		NetherReactorBlock::$enableReactor = $this->extraprops->get("enable-nether-reactor");
 		if(self::$FORCE_20_TPS){
 			ConsoleAPI::warn("Forcing 20 tps. This may result in higher CPU usage!");
+		}
+		if(!self::$ENABLE_LIGHT_UPDATES){
+			ConsoleAPI::warn("Light updates are disabled: this should decrease memory consumption and increase performance, but will prevent all existing light from updating and disable some light-dependant features.");
 		}
 		if($this->extraprops->get("discord-msg")){
 			if($this->extraprops->get("discord-webhook-url") !== "none"){

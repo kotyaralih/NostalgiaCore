@@ -532,6 +532,7 @@ class Level{
 	public $lightUpdates = [];
 	public $lightUpdateIndx = -1;
 	public function handleBlockLightUpdate($minX, $minY, $minZ, $maxX, $maxY, $maxZ){
+		if(!PocketMinecraftServer::$ENABLE_LIGHT_UPDATES) return;
 		for($x = $minX; $x <= $maxX; ++$x){
 			for($z = $minZ; $z <= $maxZ; ++$z){
 				for($y = $minY; $y <= $maxY; ++$y){
@@ -604,6 +605,7 @@ class Level{
 	 * @param int $maxZ - must be in range (0, 255). Must be more than minZ.
 	 */
 	public function updateLight($layer, $minX, $minY, $minZ, $maxX, $maxY, $maxZ){
+		if(!PocketMinecraftServer::$ENABLE_LIGHT_UPDATES) return;
 		/*$max = 5; //no idea is it needed for block light
 		$sz = $this->lightUpdateIndx;
 		if($sz < $max) $max = $sz;
