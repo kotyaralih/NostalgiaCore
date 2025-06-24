@@ -604,7 +604,7 @@ class Level{
 	 * @param int $maxZ - must be in range (0, 255). Must be more than minZ.
 	 */
 	public function updateLight($layer, $minX, $minY, $minZ, $maxX, $maxY, $maxZ){
-		/*$max = 5; no idea is it needed for block light
+		/*$max = 5; //no idea is it needed for block light
 		$sz = $this->lightUpdateIndx;
 		if($sz < $max) $max = $sz;
 		for($i = 0; $i < $max; ++$i){
@@ -619,7 +619,7 @@ class Level{
 				$miY = ($upd >> 32) & 0xff;
 				$miX = ($upd >> 40) & 0xff;
 				if($miX <= $minX && $miY <= $minY && $miZ <= $minZ && $maX >= $maxX && $maY >= $maxY && $maZ >= $maxZ){
-					console("light happen is scheduled to happen already");
+					//console("light happen is scheduled to happen already");
 					return;
 				}
 				if($miX-1 > $minX || $miY-1 > $minY || $miZ-1 > $minZ || $maX+1 < $maxX || $maY+1 < $maxY || $maZ+1 < $maxZ){

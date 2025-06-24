@@ -214,7 +214,7 @@ class ConsoleAPI{
 					foreach($this->server->api->level->levels as $level){
 						$lightUpdates += count($level->lightUpdates);
 					}
-					return "TPS: {$info["tps"]}, Memory usage: {$info["memory_usage"]} (Peak {$info["memory_peak_usage"]}), Entities: {$info["entities"]}, Events: {$info["events"]}, Handlers: {$info["handlers"]}, Actions: {$info["actions"]}, Garbage: {$info["garbage"]} Light updates: {$lightUpdates}";
+					return "TPS: {$info["tps"]}, Memory usage: {$info["memory_usage"]} (Peak {$info["memory_peak_usage"]}), Entities: {$info["entities"]}, Events: {$info["events"]}, Handlers: {$info["handlers"]}, Actions: {$info["actions"]}, Garbage: {$info["garbage"]}, Light updates: {$lightUpdates}";
 				}
 				return "TPS: {$info["tps"]}, Memory usage: {$info["memory_usage"]} (Peak {$info["memory_peak_usage"]})";
 			case "stop":
