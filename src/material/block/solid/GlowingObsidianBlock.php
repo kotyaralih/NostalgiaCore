@@ -7,6 +7,8 @@ class GlowingObsidianBlock extends SolidBlock implements LightingBlock{
 		$this->hardness = 6000;
 		$this->breakTime = 10;
 		$this->material = Material::$stone;
+		$this->lightBlock = 255;
+		$this->lightEmission = 13;
 	}
 	
 	public function getMaxLightValue(){

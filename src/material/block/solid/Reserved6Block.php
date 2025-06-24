@@ -8,6 +8,7 @@ class Reserved6Block extends SolidBlock{
 		$this->hardness = 0;
 		$this->breakTime = 0;
 		$this->material = Material::$dirt;
+		$this->lightBlock = 255;
 	}
 	
 }

@@ -14,6 +14,7 @@ class QuartzBlock extends SolidBlock{
 		$this->breakTime = 0.8;
 		$this->hardness = 4;
 		$this->material = Material::$stone;
+		$this->lightBlock = 255;
 	}
 
 	public function getBreakTime(Item $item, Player $player){

@@ -7,6 +7,7 @@ class TorchBlock extends FlowableBlock implements LightingBlock{
 		$this->hardness = 0;
 		$this->breakTime = 0;
 		$this->material = Material::$decoration;
+		$this->lightEmission = 14;
 	}
 	
 	public function getMaxLightValue(){

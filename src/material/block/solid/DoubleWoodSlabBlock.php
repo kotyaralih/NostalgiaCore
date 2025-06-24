@@ -14,6 +14,7 @@ class DoubleWoodSlabBlock extends SolidBlock{
 		$this->hardness = 30;
 		$this->breakTime = 2;
 		$this->material = Material::$wood;
+		$this->lightBlock = 255;
 	}
 
 	public function getBreakTime(Item $item, Player $player){

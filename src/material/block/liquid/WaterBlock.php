@@ -9,6 +9,7 @@ class WaterBlock extends LiquidBlockDynamic{
 		$this->hardness = 500;
 		$this->breakTime = -1; //in vanilla it is 100, but you cant interact with the block so it is not possible to destroy it
 		$this->material = Material::$water;
+		$this->lightBlock = 3;
 	}
 	
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){

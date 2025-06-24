@@ -14,6 +14,7 @@ class PlanksBlock extends SolidBlock{
 		$this->hardness = 15;
 		$this->breakTime = 2;
 		$this->material = Material::$wood;
+		$this->lightBlock = 255;
 	}
 	
 }

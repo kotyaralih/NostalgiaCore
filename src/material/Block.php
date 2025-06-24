@@ -160,6 +160,10 @@ abstract class Block extends Position{
 	public $y = 0;
 	public $z = 0;
 	public $slipperiness;
+	
+	public $lightEmission = 0;
+	public $lightBlock = 0;
+	
 	public static function interact(Level $level, $x, $y, $z, Player $player){}
 	
 	public static function neighborChanged(Level $level, $x, $y, $z, $nX, $nY, $nZ, $oldID){}

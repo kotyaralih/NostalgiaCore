@@ -9,6 +9,7 @@ class CobwebBlock extends FlowableBlock{
 		$this->hardness = 30;
 		$this->breakTime = 4;
 		$this->material = Material::$web;
+		$this->lightBlock = 1;
 	}
 	
 	public static function getAABB(Level $level, $x, $y, $z){

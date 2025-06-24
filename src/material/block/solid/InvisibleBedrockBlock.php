@@ -8,6 +8,7 @@ class InvisibleBedrockBlock extends SolidBlock{
 		$this->hardness = 18000000;
 		$this->breakTime = -1;
 		$this->material = Material::$stone;
+		$this->lightBlock = 255;
 	}
 	
 	public function isBreakable(Item $item, Player $player){

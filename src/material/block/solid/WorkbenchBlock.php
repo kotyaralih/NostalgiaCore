@@ -8,6 +8,7 @@ class WorkbenchBlock extends SolidBlock{
 		$this->hardness = 12.5;
 		$this->breakTime = 2.5;
 		$this->material = Material::$wood;
+		$this->lightBlock = 255;
 	}
 	
 	public function onActivate(Item $item, Player $player){

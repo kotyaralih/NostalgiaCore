@@ -7,6 +7,7 @@ class BookshelfBlock extends SolidBlock{
 		$this->hardness = 7.5;
 		$this->breakTime = 1.5;
 		$this->material = Material::$wood;
+		$this->lightBlock = 255;
 	}
 	
 }

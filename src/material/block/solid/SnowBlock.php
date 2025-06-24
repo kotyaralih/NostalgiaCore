@@ -7,6 +7,7 @@ class SnowBlock extends SolidBlock{
 		$this->hardness = 1;
 		$this->breakTime = 0.2;
 		$this->material = Material::$snow;
+		$this->lightBlock = 255;
 	}
 
 	public function getDrops(Item $item, Player $player){

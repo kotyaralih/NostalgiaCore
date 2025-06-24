@@ -9,6 +9,7 @@ class NetherReactorBlock extends SolidBlock{
 		$this->hardness = 15;
 		$this->breakTime = 3;
 		$this->material = Material::$metal;
+		$this->lightBlock = 255;
 	}
 	
 	public function onActivate(Item $item, Player $player){

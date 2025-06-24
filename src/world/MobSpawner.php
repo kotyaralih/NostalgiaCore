@@ -88,7 +88,7 @@ class MobSpawner{
 				$zMob = $z + mt_rand(-3, 3);
 				
 				
-				$y = $this->getSafeY($xMob, $zMob, $grassOnly, $type >= 32 && $type <= 36 && $type != 35);
+				$y = $this->getSafeY($xMob, $zMob, $grassOnly, $type >= 32 && $type <= 36 && $type != 35, $type >= 32 && $type <= 36);
 				if(!$y || $y < 0){
 					continue;
 				}
@@ -125,7 +125,7 @@ class MobSpawner{
 		];
 	}
 	
-	protected function getSafeY($x, $z, $grassOnly = false, $highMob = false){ //first safe block //TODO check boundingbox
+	protected function getSafeY($x, $z, $grassOnly = false, $highMob = false, $isMonster = false){ //first safe block //TODO check boundingbox
 		$allowed = [];
 		for($y = 0; $y < 128; ++$y){
 			$b = $this->level->level->getBlockID($x, $y, $z);
@@ -136,6 +136,9 @@ class MobSpawner{
 				(StaticBlock::getIsSolid($b1) && (!$grassOnly || $b1 === GRASS) &&
 				(!$highMob || !StaticBlock::getIsSolid($b2) && !StaticBlock::getIsLiquid($b2)))
 			){
+				if($isMonster && ($rb = $this->level->getRawBrightness($x, $y, $z)) > 8){ //dont spawn if too bright
+					continue;
+				}
 				$allowed[] = $y;
 			}
 		}

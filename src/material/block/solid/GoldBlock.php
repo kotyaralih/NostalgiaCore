@@ -7,6 +7,7 @@ class GoldBlock extends SolidBlock{
 		$this->hardness = 30;
 		$this->breakTime = 3;
 		$this->material = Material::$metal;
+		$this->lightBlock = 255;
 	}
 
 	public function getBreakTime(Item $item, Player $player){

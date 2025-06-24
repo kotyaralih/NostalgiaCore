@@ -8,6 +8,7 @@ class InfoUpdateBlock extends SolidBlock{
 		$this->hardness = 5;
 		$this->breakTime = 1;
 		$this->material = Material::$dirt;
+		$this->lightBlock = 255;
 	}
 	
 }

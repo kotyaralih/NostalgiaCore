@@ -8,6 +8,7 @@ class TNTBlock extends SolidBlock{
 		$this->breakTime = 0;
 		$this->isActivable = true;
 		$this->material = Material::$explosive;
+		$this->lightBlock = 255;
 	}
 	
 	public function onActivate(Item $item, Player $player){

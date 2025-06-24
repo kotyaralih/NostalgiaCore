@@ -22,10 +22,13 @@ class StaticBlock
 	public static $destroyTime = [];
 	public static $slipperiness = [];
 	public static $boundingBoxes = [];
+	public static $lightBlock = [];
+	public static $lightEmission = [];
 	public static $minXs = [], $minYs = [], $minZs = [], $maxXs = [], $maxYs = [], $maxZs = [];
 	
 	public static function init(){
 		self::$NULL_BOUNDS = new AxisAlignedBB(0, 0, 0, 0, 0, 0);
+		for($i = 0; $i < 256; ++$i) self::$lightBlock[$i] = self::$lightEmission[$i] = 0;
 		foreach(Block::$class as $nonstaticname){
 			/**@var Block $b*/
 			$b = new $nonstaticname();
@@ -43,6 +46,8 @@ class StaticBlock
 			self::$hardness[$b->getID()] = $b->getHardness();
 			self::$destroyTime[$b->getID()] = $b->breakTime;
 			self::$material[$b->getID()] = $b->material;
+			self::$lightBlock[$b->getID()] = $b->lightBlock;
+			self::$lightEmission[$b->getID()] = $b->lightEmission;
 			self::$prealloc[$b->getID()] = $b;
 			$b::$blockID = $b->getID();
 			FireBlock::setFlammabilityAndCatchingChance($b->getID(), 0, 0);

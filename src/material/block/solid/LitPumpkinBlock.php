@@ -15,6 +15,8 @@ class LitPumpkinBlock extends SolidBlock implements LightingBlock{
 		$this->hardness = 5;
 		$this->breakTime = 1.0;
 		$this->material = Material::$vegetable;
+		$this->lightBlock = 255;
+		$this->lightEmission = 15;
 	}
 	
 	public function getMaxLightValue(){

@@ -8,6 +8,7 @@ class GrassBlock extends SolidBlock{
 		$this->hardness = 3;
 		$this->breakTime = 0.6;
 		$this->material = Material::$dirt;
+		$this->lightBlock = 255;
 	}
 
 	public function getDrops(Item $item, Player $player){

@@ -7,6 +7,7 @@ class ObsidianBlock extends SolidBlock{
 		$this->hardness = 6000;
 		$this->breakTime = 10;
 		$this->material = Material::$stone;
+		$this->lightBlock = 255;
 	}
 	
 	public function getBreakTime(Item $item, Player $player){

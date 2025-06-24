@@ -18,6 +18,7 @@ class LevelAPI{
 		$this->server->api->console->register("save-on", "", [$this, "commandHandler"]);
 		$this->server->api->console->register("save-off", "", [$this, "commandHandler"]);
 		$this->server->api->console->register("setwspawn", "Set the spawn position for your current world. ", [$this, "commandHandler"]);
+		
 		$this->default = $this->server->api->getProperty("level-name");
 		if($this->loadLevel($this->default) === false){
 			$this->generateLevel($this->default, $this->server->seed);

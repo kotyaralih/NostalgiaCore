@@ -8,6 +8,8 @@ class StillLavaBlock extends LiquidBlockStatic{
 		$this->hardness = 500;
 		$this->breakTime = -1; //in vanilla it is 100, but you cant interact with the block so it is not possible to destroy it
 		$this->material = Material::$lava;
+		$this->lightEmission = 15;
+		$this->lightBlock = 255;
 	}
 	
 	public static function getTickDelay(){

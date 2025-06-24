@@ -8,6 +8,8 @@ class BurningFurnaceBlock extends SolidBlock implements LightingBlock{
 		$this->hardness = 17.5;
 		$this->breakTime = 3.5;
 		$this->material = Material::$stone;
+		$this->lightBlock = 255;
+		$this->lightEmission = 13;
 	}
 
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){
