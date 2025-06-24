@@ -284,8 +284,8 @@ class PlayerAPI{
 				
 				$xChunk = $x >> 4;
 				$zChunk = $z >> 4;
-				
-				return "$username's coordinates: X: $x ($xChunk), Y: $y, Z: $z ($zChunk), world: $level.\nDirection: $direction";
+				$brightness = $ent->level->getRawBrightness((int)$x, (int)$y, (int)$z);
+				return "$username's coordinates: X: $x ($xChunk), Y: $y, Z: $z ($zChunk), world: $level.\nDirection: $direction Brightness: $brightness";
 		}
 		return $output;
 	}
