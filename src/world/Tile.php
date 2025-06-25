@@ -283,7 +283,10 @@ class Tile extends Position{
 				$pk->z = $this->z;
 				$pk->case1 = 1;
 				$pk->case2 = 2;
-				$this->server->api->player->broadcastPacket($this->server->api->player->getAll($this->level), $pk);
+				foreach($this->level->players as $player){
+					$player->blockQueueDataPacket(clone $pk);
+				}
+				
 				for($s = 0; $s < CHEST_SLOTS; ++$s){
 					$slot = $this->getSlot($s);
 					if($slot->getID() > AIR and $slot->count > 0){
@@ -297,7 +300,7 @@ class Tile extends Position{
 			$pk = new ContainerSetContentPacket;
 			$pk->windowid = $id;
 			$pk->slots = $slots;
-			$player->dataPacket($pk);
+			$player->blockQueueDataPacket($pk);
 			return true;
 		}elseif($this->class === TILE_FURNACE){
 			$player->windowCnt++;
@@ -311,7 +314,7 @@ class Tile extends Position{
 			$pk->x = $this->x;
 			$pk->y = $this->y;
 			$pk->z = $this->z;
-			$player->dataPacket($pk);
+			$player->blockQueueDataPacket($pk);
 
 			$slots = [];
 			for($s = 0; $s < FURNACE_SLOTS; ++$s){
@@ -325,7 +328,7 @@ class Tile extends Position{
 			$pk = new ContainerSetContentPacket;
 			$pk->windowid = $id;
 			$pk->slots = $slots;
-			$player->dataPacket($pk);
+			$player->blockQueueDataPacket($pk);
 			return true;
 		}
 	}
@@ -375,7 +378,7 @@ class Tile extends Position{
 				$pk->y = $this->y;
 				$pk->z = $this->z;
 				$pk->namedtag = $nbt->binary;
-				$player->dataPacketAlwaysRecover($pk);
+				$player->blockQueueDataPacket($pk);
 				break;
 			case TILE_SIGN:
 				$nbt = new NBT();
@@ -420,7 +423,7 @@ class Tile extends Position{
 				$pk->y = $this->y;
 				$pk->z = $this->z;
 				$pk->namedtag = $nbt->binary;
-				$player->dataPacketAlwaysRecover($pk);
+				$player->blockQueueDataPacket($pk);
 				break;
 		}
 	}

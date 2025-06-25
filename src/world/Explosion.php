@@ -1,16 +1,10 @@
 <?php
 
 class Explosion{
-	
-	public static $specialDrops = [
-		GRASS => DIRT,
-		STONE => COBBLESTONE,
-		COAL_ORE => COAL,
-		DIAMOND_ORE => DIAMOND,
-		REDSTONE_ORE => REDSTONE,
-	];
 	public static $enableExplosions = true;
-	public $level; //Rays
+	/** @var Level */
+	public $level;
+	/** @var Position */
 	public $source;
 	public $size;
 	public $affectedBlocks = [];
@@ -222,4 +216,10 @@ class Explosion{
 		$pk->records = $send;
 		$server->api->player->broadcastPacket($this->level->players, $pk);
 	}
+	
+	
+	/**
+	 * @deprecated unused
+	 */
+	public static $specialDrops = [];
 }

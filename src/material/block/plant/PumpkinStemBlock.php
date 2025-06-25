@@ -13,7 +13,6 @@ class PumpkinStemBlock extends FlowableBlock{
 			$down = $this->getSide(0);
 			if($down->getID() === FARMLAND){
 				$this->level->setBlock($block, $this, true, false, true);
-				$this->level->scheduleBlockUpdate(new Position($this, 0, 0, $this->level), Utils::getRandomUpdateTicks(), BLOCK_UPDATE_RANDOM);
 				return true;
 			}
 		return false;

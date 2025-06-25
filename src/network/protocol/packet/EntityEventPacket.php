@@ -6,6 +6,10 @@ class EntityEventPacket extends RakNetDataPacket{
 	
 	const ENTITY_DAMAGE = 2;
 	const ENTITY_DEAD = 3;
+	/**
+	 * Works only for player entities
+	 */
+	const ENTITY_COMPLETE_USING_ITEM = 9;
 	const ENTITY_ANIM_10 = 10;
 	
 	public function __construct($eid = null, $event = null){

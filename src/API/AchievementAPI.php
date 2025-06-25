@@ -81,7 +81,7 @@ class AchievementAPI{
 		],
 		
 	];
-	
+	/** @var PocketMinecraftServer */
 	private $server;
 	
 	function __construct(){
@@ -91,9 +91,9 @@ class AchievementAPI{
 	/**
 	 * Add an achievement
 	 * @param string $achievementId
-	 * @param string $achievementName
-	 * @param array $requires
-	 * @return boolean
+	 * @param string $achievementName display name
+	 * @param array $requires a list of achievement ids, optional 
+	 * @return boolean true if the achievement was added. false if the achievement with this id already exists.
 	 */
 	public static function addAchievement($achievementId, $achievementName, array $requires = []){
 		if(!isset(self::$achievements[$achievementId])){
@@ -106,6 +106,12 @@ class AchievementAPI{
 		return false;
 	}
 	
+	/**
+	 * Gives the achievement to player
+	 * @param Player $player
+	 * @param string $achievementId
+	 * @return boolean
+	 */
 	public static function grantAchievement(Player $player, $achievementId){
 		if(isset(self::$achievements[$achievementId]) and !self::hasAchievement($player, $achievementId)){
 			foreach(self::$achievements[$achievementId]["requires"] as $requerimentId){
@@ -124,6 +130,11 @@ class AchievementAPI{
 		return false;
 	}
 	
+	/**
+	 * @param Player $player
+	 * @param string $achievementId
+	 * @return boolean
+	 */
 	public static function hasAchievement(Player $player, $achievementId){
 		if(!isset(self::$achievements[$achievementId]) or !isset($player->achievements)){
 			$player->achievements = [];
@@ -136,6 +147,11 @@ class AchievementAPI{
 		return true;
 	}
 	
+	/**
+	 * @param Player $player
+	 * @param string $achievementId
+	 * @return boolean
+	 */
 	public static function broadcastAchievement(Player $player, $achievementId){
 		if(isset(self::$achievements[$achievementId])){
 			$result = ServerAPI::request()->api->dhandle("achievement.broadcast", ["player" => $player, "achievementId" => $achievementId]);
@@ -151,6 +167,11 @@ class AchievementAPI{
 		return false;
 	}
 	
+	/**
+	 * Removes achievement from player.
+	 * @param Player $player
+	 * @param string $achievementId
+	 */
 	public static function removeAchievement(Player $player, $achievementId){
 		if(self::hasAchievement($player, $achievementId)){
 			$player->achievements[$achievementId] = false;

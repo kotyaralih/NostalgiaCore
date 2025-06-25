@@ -62,7 +62,6 @@ class CactusBlock extends TransparentBlock{
 			$block3 = $this->getSide(5);
 			if($block0->isFlowable === true and $block1->isFlowable === true and $block2->isFlowable === true and $block3->isFlowable === true){
 				$this->level->setBlock($this, $this, true, false, true);
-				$this->level->scheduleBlockUpdate(new Position($this, 0, 0, $this->level), Utils::getRandomUpdateTicks(), BLOCK_UPDATE_RANDOM);
 				ServerAPI::request()->api->block->scheduleBlockUpdate(clone $this, 10, BLOCK_UPDATE_NORMAL);
 				return true;
 			}

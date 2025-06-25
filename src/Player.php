@@ -38,7 +38,6 @@ class Player{
 	public $lastCorrect;
 	public $craftingItems = [];
 	public $toCraft = [];
-	public $lastCraft = 0;
 	public $loginData = [];
 	/** @var Level */
 	public $level;
@@ -95,6 +94,7 @@ class Player{
 	public $entityMovementQueue;
 	public $entityMovementQueuePrevSentCnt = 0;
 	public $entityMovementQueueLength = 0;
+	
 	/**
 	 * Used only for statistic in ping command.
 	 * @var integer
@@ -104,13 +104,13 @@ class Player{
 	
 	public $blockUpdateQueue;
 	public $blockUpdateQueueLength = 0;
-	public $blockUpdateQueuePrevSentCnt = 0;
 	public $blockUpdateQueueOrderIndex = 0;
 	
 	public $chatMessagesQueue;
 	public $chatMessagesQueueLength = 0;
-	public $chatMessagesQueuePrevSentCnt = 0;
 	public $chatMessagesOrderIndex = 0;
+	
+	
 	public $chunkDataSent = [];
 	
 	/**
@@ -408,10 +408,32 @@ class Player{
 	}
 
 	/**
-	 * @param integer $id
-	 * @param array $data
-	 *
-	 * @return array|bool
+	 * Sends data packet that wont be buffered. Packets are not ordered.
+	 * @param RakNetDataPacket $packet
+	 * @param int $reliability=0 unused
+	 * @param bool $recover=true can the packet be recovered or not. If true the packet will be recovered only once. Otherwise, it won't be recovered at all.
+	 * @returns int[]|false - array with seqNumber of the packet. false if player is not connected. empty array if cancelled by DataPacketSendEvent.
+	 */
+	public function directDataPacket(RakNetDataPacket $packet, $reliability = 0, $recover = true){
+		if($this->connected === false) return false;
+		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return [];
+		
+		$packet->encode();
+		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
+		$pk->data[] = $packet;
+		$pk->seqNumber = $this->counter[0]++;
+		$pk->sendtime = microtime(true);
+		if($recover !== false){
+			$this->recoveryQueue[$pk->seqNumber] = $pk;
+		}
+		
+		$this->send($pk);
+		return [$pk->seqNumber];
+	}
+	
+	/**
+	 * Sends data packet that will be recovered only once. Packet MAY not arrive at all or arrive out of order.
+	 * @param RakNetDataPacket $packet
 	 */
 	public function dataPacket(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
@@ -435,9 +457,13 @@ class Player{
 		return [];
 	}
 
+	/**
+	 * Sends data packet that will always be recovered. Packets MAY arrive out of order.
+	 * @param RakNetDataPacket $packet
+	 */
 	public function dataPacketAlwaysRecover(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
-		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return;
+		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return false;
 		
 		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
 		$pk->data[] = $packet;
@@ -459,11 +485,7 @@ class Player{
 		return [$pk->seqNumber];
 	}
 	
-	public function sendChunkDataPacket(RakNetDataPacket $pk){
-		if($this->connected === false) return false;
-		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
-		
-		$pk->encode();
+	public function blockQueueDataPacket_big(RakNetDataPacket $pk){
 		$sendtime = microtime(true);
 		$size = $this->MTU - 34;
 		if($size <= 0) return false;
@@ -719,7 +741,7 @@ class Player{
 		$pk->chunkX = $X;
 		$pk->chunkZ = $Z;
 		$pk->data = $this->level->getOrderedChunk($X, $Z, $Yndex);
-		$cnt = $this->sendChunkDataPacket($pk);
+		$cnt = $this->blockQueueDataPacket($pk);
 		$this->chunkDataSent["$X:$Z"] = true;
 		
 		$tiles = $this->server->query("SELECT ID FROM tiles WHERE spawnable = 1 AND level = '{$this->level->getName()}' AND x >= $minX AND x <= $maxX AND z >= $minZ AND z <= $maxZ;");
@@ -816,7 +838,7 @@ class Player{
 		$pk->chunkX = $X;
 		$pk->chunkZ = $Z;
 		$pk->data = $this->level->getOrderedChunk($X, $Z, $Yndex);
-		$cnt = $this->sendChunkDataPacket($pk);
+		$cnt = $this->blockQueueDataPacket($pk);
 		$this->chunkDataSent["$X:$Z"] = true;
 		
 		if($cnt === false){
@@ -934,13 +956,13 @@ class Player{
 								$pk->windowid = $id;
 								$pk->property = 0; //Smelting
 								$pk->value = floor($data->data["CookTime"]);
-								$this->dataPacket($pk);
+								$this->blockQueueDataPacket($pk);
 
 								$pk = new ContainerSetDataPacket;
 								$pk->windowid = $id;
 								$pk->property = 1; //Fire icon
 								$pk->value = $data->data["BurnTicks"];
-								$this->dataPacket($pk);
+								$this->blockQueueDataPacket($pk);
 							}
 						}
 					}
@@ -954,7 +976,7 @@ class Player{
 							$pk->windowid = $id;
 							$pk->slot = $data["slot"] + ($data["offset"] ?? 0);
 							$pk->item = $data["slotdata"];
-							$this->dataPacket($pk);
+							$this->blockQueueDataPacket($pk);
 						}
 					}
 				}
@@ -1029,7 +1051,6 @@ class Player{
 				$this->dataPacket($pk);
 				break;
 			case "entity.animate":
-
 				$pk = new AnimatePacket;
 				$pk->eid = $data["eid"];
 				$pk->action = $data["action"]; //1 swing arm,
@@ -1495,12 +1516,48 @@ class Player{
 		$this->blockUpdateQueue->data = [];
 	}
 	
+	/**
+	 * Sends packet in block order channel. Packets are always delivered and ordered.
+	 * Used for sending tileentity data, chunk data, updateblock packets.
+	 * @param RakNetPacket $pk
+	 */
+	public function blockQueueDataPacket(RakNetDataPacket $pk){
+		if($this->connected === false) return false;
+		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
+		
+		$pk->encode();
+		
+		$len = 1 + strlen($pk->buffer);
+		$MTU = $this->MTU - 24;
+		if($len > $MTU) return $this->blockQueueDataPacket_big($pk);
+		
+		if(($this->blockUpdateQueueLength + $len) >= $MTU){
+			$this->sendBlockUpdateQueue();
+		}
+		
+		$pk->messageIndex = $this->counter[3]++;
+		$pk->reliability = 3;
+		$pk->orderChannel = Player::BLOCKUPDATE_ORDER_CHANNEL;
+		$pk->orderIndex = $this->blockUpdateQueueOrderIndex++;
+		@$this->blockUpdateQueue->data[] = $pk;
+		$this->blockUpdateQueueLength += 10 + $len;
+	}
+	
+	/**
+	 * Adds block update into queue. Does nothing if chunk wasnt loaded.
+	 * @param int $x
+	 * @param int $y
+	 * @param int $z
+	 * @param int $id
+	 * @param int $meta
+	 * @return boolean
+	 */
 	public function addBlockUpdateIntoQueue($x, $y, $z, $id, $meta){
 		$xC = $x >> 4;
 		$zC = $z >> 4;
 		if(!isset($this->chunkDataSent["$xC:$zC"])){
 			ConsoleAPI::debug("Ignoring block update $x $y $z $id $meta: chunk data was not sent.");
-			return; //dont send updateblockpacket as it will be buffered and updated only after all chunks will load
+			return false; //dont send updateblockpacket as it will be buffered and updated only after all chunks will load
 		}
 		$packet = new UpdateBlockPacket();
 		$packet->x = $x;
@@ -1508,21 +1565,7 @@ class Player{
 		$packet->z = $z;
 		$packet->block = $id;
 		$packet->meta = $meta;
-		$packet->encode();
-		
-		$len = 1 + strlen($packet->buffer);
-		$MTU = $this->MTU - 24;
-		
-		if(($this->blockUpdateQueueLength + $len) >= $MTU){
-			$this->sendBlockUpdateQueue();
-		}
-		
-		$packet->messageIndex = $this->counter[3]++;
-		$packet->reliability = 3;
-		$packet->orderChannel = Player::BLOCKUPDATE_ORDER_CHANNEL;
-		$packet->orderIndex = $this->blockUpdateQueueOrderIndex++;
-		@$this->blockUpdateQueue->data[] = $packet;
-		$this->blockUpdateQueueLength += 10 + $len;
+		$this->blockQueueDataPacket($packet);
 	}
 	
 	public function addEntityMovementUpdateToQueue(Entity $e){
@@ -1699,28 +1742,12 @@ class Player{
 			$this->data->set("gamemode", $this->gamemode);
 		}
 	}
-
-	public function directDataPacket(RakNetDataPacket $packet, $reliability = 0, $recover = true){
-		if($this->connected === false) return false;
-		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return [];
-
-		$packet->encode();
-		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
-		$pk->data[] = $packet;
-		$pk->seqNumber = $this->counter[0]++;
-		$pk->sendtime = microtime(true);
-		if($recover !== false){
-			$this->recoveryQueue[$pk->seqNumber] = $pk;
-		}
-
-		$this->send($pk);
-		return [$pk->seqNumber];
-	}
 	
 	public function sendChatMessagePacket(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return false;
 		
+		//TODO big chat messages support
 		$packet->encode();
 		$len = strlen($packet->buffer) + 1;
 		$MTU = $this->MTU - 24;
@@ -2271,7 +2298,6 @@ class Player{
 								if($slotItem !== false){
 									if($slotItem->count == 1) $this->inventory[$this->slot] = BlockAPI::getItem(AIR, 0, 0);
 									else $slotItem->count -= 1;
-									//$this->sendInventory();
 								}
 							}
 							
@@ -2516,7 +2542,7 @@ class Player{
 						if($this->entity->getHealth() < 20 && $foodHeal != 0){
 							$pk = new EntityEventPacket;
 							$pk->eid = 0;
-							$pk->event = 9;
+							$pk->event = EntityEventPacket::ENTITY_COMPLETE_USING_ITEM;
 							$this->dataPacket($pk);
 
 							$this->entity->heal($foodHeal, "eating");
@@ -2743,18 +2769,18 @@ class Player{
 
 					$slot = $tile->getSlot($slotn);
 					if($this->server->api->dhandle("player.container.slot", [
-							"tile" => $tile,
-							"slot" => $packet->slot,
-							"offset" => $offset,
-							"slotdata" => $slot,
-							"itemdata" => $item,
-							"player" => $this
-						]) === false){
+						"tile" => $tile,
+						"slot" => $packet->slot,
+						"offset" => $offset,
+						"slotdata" => $slot,
+						"itemdata" => $item,
+						"player" => $this
+					]) === false){
 						$pk = new ContainerSetSlotPacket;
 						$pk->windowid = $packet->windowid;
 						$pk->slot = $packet->slot;
 						$pk->item = $slot;
-						$this->dataPacket($pk);
+						$this->blockQueueDataPacket($pk);
 						break;
 					}
 					
@@ -2782,17 +2808,17 @@ class Player{
 
 					$slot = $tile->getSlot($packet->slot);
 					if($this->server->api->dhandle("player.container.slot", [
-							"tile" => $tile,
-							"slot" => $packet->slot,
-							"slotdata" => $slot,
-							"itemdata" => $item,
-							"player" => $this,
-						]) === false){
+						"tile" => $tile,
+						"slot" => $packet->slot,
+						"slotdata" => $slot,
+						"itemdata" => $item,
+						"player" => $this,
+					]) === false){
 						$pk = new ContainerSetSlotPacket;
 						$pk->windowid = $packet->windowid;
 						$pk->slot = $packet->slot;
 						$pk->item = $slot;
-						$this->dataPacket($pk);
+						$this->blockQueueDataPacket($pk);
 						break;
 					}
 
