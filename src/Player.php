@@ -1532,6 +1532,7 @@ class Player{
 	public function sendEntityMovementUpdateQueue(){
 		if($this->entityDataQueueLength > 0 && $this->entityDataQueue instanceof RakNetPacket){
 			$this->entityDataQueue->seqNumber = $this->counter[0]++;
+			$this->packetAlwaysRecoverQueue[$this->entityDataQueue->seqNumber] = $this->entityDataQueue;
 			$this->send($this->entityDataQueue);
 		}
 		$this->entityDataQueueLength = 0;
