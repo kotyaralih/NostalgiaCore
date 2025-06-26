@@ -1425,7 +1425,6 @@ class Player{
 		}
 
 		if($this->sendingInventoryRequired){
-			//console("inv resent");
 			if(($this->gamemode & 0x01) !== CREATIVE){
 				$hotbar = [];
 				foreach($this->hotbar as $slot){
@@ -1480,6 +1479,14 @@ class Player{
 		
 		if($this->bufferLen > 0){
 			$this->sendBuffer();
+		}
+		
+		if($this->blockUpdateQueueLength > 0){
+			$this->sendBlockUpdateQueue();
+		}
+		
+		if($this->entityDataQueueLength > 0){
+			$this->sendEntityMovementUpdateQueue();
 		}
 
 		$limit = $time - 5; //max lag
