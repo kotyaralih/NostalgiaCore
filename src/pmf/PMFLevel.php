@@ -45,6 +45,7 @@ class PMFLevel extends PMF{
 			@mkdir($dirname , 0755);
 		}
 		
+		$this->hasLight = str_repeat("\x00", 16*16);
 		for($index = 0; $index < $cnt; ++$index){
 			$this->chunks[$index] = false;
 			$this->chunkChange[$index] = false;

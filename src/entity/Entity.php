@@ -118,7 +118,7 @@ class Entity extends Position
 	
 	public $moveStrafing, $moveForward;
 	
-	function __construct(Level $level, $eid, $class, $type = 0, $data = [])
+	public function __construct(Level $level, $eid, $class, $type = 0, $data = [])
 	{
 		$this->random = new XorShift128Random();
 		$this->last = [&$this->lastX, &$this->lastY, &$this->lastZ, &$this->lastYaw, &$this->lastPitch, &$this->lastTime]; //pointers to variables
@@ -202,6 +202,7 @@ class Entity extends Position
 			$this->outOfWorld();
 		}
 	}
+	
 	public function handlePrePlayerSearcher(){
 		
 	}
