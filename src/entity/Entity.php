@@ -1132,11 +1132,12 @@ class Entity extends Position
 		$this->server->api->dhandle("entity.metadata", $this);
 	}
 
+	/**
+	 * @param Player $player
+	 * @return boolean
+	 */
 	public function spawn($player)
 	{
-		if(! ($player instanceof Player)){
-			$player = $this->server->api->player->get($player);
-		}
 		if($player->eid === $this->eid or $this->closed !== false or ($player->level !== $this->level and $this->class !== ENTITY_PLAYER)){
 			return false;
 		}
@@ -1160,14 +1161,14 @@ class Entity extends Position
 				$pk->itemID = 0;
 				$pk->itemAuxValue = 0;
 				$pk->metadata = $this->getMetadata();
-				$player->dataPacketAlwaysRecover($pk, 2, true);
+				$player->entityQueueDataPacket($pk, 2, true);
 
 				$pk = new PlayerEquipmentPacket();
 				$pk->eid = $this->eid;
 				$pk->item = $this->player->getSlot($this->player->slot)->getID();
 				$pk->meta = $this->player->getSlot($this->player->slot)->getMetadata();
 				$pk->slot = 0;
-				$player->dataPacket($pk);
+				$player->entityQueueDataPacket($pk);
 				$this->player->sendArmor($player);
 				break;
 		}
@@ -1600,9 +1601,9 @@ class Entity extends Position
 					if(($p->entity instanceof Entity) && $p->entity->eid == $this->eid){
 						$pk2 = clone $pk;
 						$pk2->eid = 0;
-						$p->dataPacket($pk2);
+						$p->entityQueueDataPacket($pk2);
 					}else{
-						$p->dataPacket(clone $pk);
+						$p->entityQueueDataPacket(clone $pk);
 					}
 				}
 			}
@@ -1610,7 +1611,7 @@ class Entity extends Position
 			if($this->player instanceof Player){
 				$pk = new SetHealthPacket();
 				$pk->health = $this->health;
-				$this->player->dataPacket($pk);
+				$this->player->entityQueueDataPacket($pk);
 			}
 			if($this->health <= 0 and $this->dead === false){
 				$this->makeDead($cause);

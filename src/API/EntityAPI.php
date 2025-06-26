@@ -1,6 +1,9 @@
 <?php
 
 class EntityAPI{
+	/**
+	 * @var Entity[]
+	 */
 	public $entities;
 	private $server;
 	private $eCnt = 1;
@@ -222,6 +225,13 @@ class EntityAPI{
 		}
 	}
 	
+	/**
+	 * 
+	 * @param Position $center
+	 * @param number $radius
+	 * @param boolean $class
+	 * @return Entity[]
+	 */
 	public function getRadius(Position $center, $radius = 15, $class = false){
 		$minChunkX = ((int)($center->x - $radius)) >> 4;
 		$minChunkZ = ((int)($center->z - $radius)) >> 4;

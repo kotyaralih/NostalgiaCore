@@ -272,7 +272,7 @@ class Arrow extends Entity{
 			$pk->speedX = $this->speedX;
 			$pk->speedY = $this->speedY;
 			$pk->speedZ = $this->speedZ;
-			$player->dataPacketAlwaysRecover($pk);
+			$player->entityQueueDataPacket($pk);
 		}
 	}
 }

@@ -198,6 +198,7 @@ abstract class Projectile extends Entity{
 		
 		return $data;
 	}
+	
 	public function spawn($player)
 	{
 		$pk = new AddEntityPacket();
@@ -210,7 +211,8 @@ abstract class Projectile extends Entity{
 		$pk->speedY = $this->speedY;
 		$pk->speedZ = $this->speedZ;
 		$pk->did = 0;
-		$player->dataPacketAlwaysRecover($pk);
+		$player->entityQueueDataPacket($pk);
+		return true;
 	}
 	
 }

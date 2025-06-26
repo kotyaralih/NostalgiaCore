@@ -205,6 +205,6 @@ class Painting extends Entity{
 		$pk->z = (int) $this->zPos;
 		$pk->direction = $this->direction;
 		$pk->title = $this->motive;
-		$player->dataPacketAlwaysRecover($pk);
+		$player->entityQueueDataPacket($pk);
 	}
 }
