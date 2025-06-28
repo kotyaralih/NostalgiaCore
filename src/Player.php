@@ -88,6 +88,10 @@ class Player{
 	public $slotCount = 7;
 	public $bedPosition = null;
 	
+	public $entityMovementQueue;
+	public $entityMovementQueueLength = 0;
+	public $entityMovementQueueOrderIndex = 0;
+	
 	/**
 	 * @var RakNetPacket
 	 */
@@ -174,6 +178,9 @@ class Player{
 		$this->entityDataQueue = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
 		$this->entityDataQueue->data = [];
 		
+		$this->entityMovementQueue = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
+		$this->entityMovementQueue->data = [];
+		
 		$this->blockUpdateQueue = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
 		$this->blockUpdateQueue->data = [];
 		
@@ -195,7 +202,7 @@ class Player{
 		$local = ++$this->lastLocalEID;
 		$this->global2localEID[$e->eid] = $local;
 		$this->local2GlobalEID[$local] = $e->eid;
-		ConsoleAPI::info("Adding Entity {$e->eid} => {$local}");
+		//ConsoleAPI::info("Adding Entity {$e->eid} => {$local}");
 		return true;
 	}
 	
@@ -213,7 +220,7 @@ class Player{
 		if($local == null) return false;
 		unset($this->global2localEID[$e->eid]);
 		unset($this->local2GlobalEID[$local]);
-		ConsoleAPI::info("Removing Entity {$e->eid} => {$local}");
+		//ConsoleAPI::info("Removing Entity {$e->eid} => {$local}");
 		return true;
 	}
 	
@@ -1519,6 +1526,10 @@ class Player{
 		}
 		
 		if($this->entityDataQueueLength > 0){
+			$this->sendEntityDataQueue();
+		}
+		
+		if($this->entityMovementQueueLength > 0){
 			$this->sendEntityMovementUpdateQueue();
 		}
 
@@ -1563,6 +1574,17 @@ class Player{
 	}
 	
 	public function sendEntityMovementUpdateQueue(){
+		if($this->entityMovementQueueLength > 0 && $this->entityMovementQueue instanceof RakNetPacket){
+			$this->entityMovementQueue->seqNumber = $this->counter[0]++;
+			$this->entityMovementQueue->sendtime = microtime(true);
+			$this->send($this->entityMovementQueue);
+		}
+		$this->entityMovementQueueLength = 0;
+		$this->entityMovementQueue = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
+		$this->entityMovementQueue->data = [];
+	}
+	
+	public function sendEntityDataQueue(){
 		if($this->entityDataQueueLength > 0 && $this->entityDataQueue instanceof RakNetPacket){
 			$this->entityDataQueue->seqNumber = $this->counter[0]++;
 			$this->packetAlwaysRecoverQueue[$this->entityDataQueue->seqNumber] = $this->entityDataQueue;
@@ -1664,7 +1686,7 @@ class Player{
 		if($len > $MTU) return $this->entityQueueDataPacket_big($pk);
 		
 		if(($this->entityDataQueueLength + $len) >= $MTU){
-			$this->sendEntityMovementUpdateQueue();
+			$this->sendEntityDataQueue();
 		}
 		
 		$pk->messageIndex = $this->counter[3]++;
@@ -1702,6 +1724,11 @@ class Player{
 	}
 	
 	public function addEntityMovementUpdateToQueue(Entity $e){
+		$len = 0;
+		$packets = 0;
+		$motionSent = false;
+		$moveSent = false;
+		$headSent = false;
 		$svdYSpeed = $e->speedY;
 		if($e->modifySpeedY){
 			$e->speedY = $e->modifedSpeedY;
@@ -1713,7 +1740,10 @@ class Player{
 				$motion->speedX = $e->speedX;
 				$motion->speedY = $e->speedY;
 				$motion->speedZ = $e->speedZ;
-				$this->entityQueueDataPacket($motion);
+				$motion->encode();
+				$len += 1 + strlen($motion->buffer);
+				++$packets;
+				$motionSent = true;
 			}
 		}
 		if($e->modifySpeedY){
@@ -1731,7 +1761,7 @@ class Player{
 				$move->yaw = $e->yaw;
 				$move->pitch = $e->pitch;
 				$move->bodyYaw = $e->headYaw;
-				$this->entityQueueDataPacket($move);
+				$move->encode();
 			}else{
 				$move = new MoveEntityPacket_PosRot();
 				$move->eid = $e->eid;
@@ -1740,14 +1770,45 @@ class Player{
 				$move->z = $e->z;
 				$move->yaw = $e->yaw;
 				$move->pitch = $e->pitch;
-				$this->entityQueueDataPacket($move);
+				$move->encode();
 			}
+			
+			$len += strlen($move->buffer) + 1;
+			++$packets;
+			$moveSent = true;
 		}else if($e->headYaw != $e->lastHeadYaw){
 			$headyaw = new RotateHeadPacket();
 			$headyaw->eid = $e->eid;
 			$headyaw->yaw = $e->headYaw;
-			$this->entityQueueDataPacket($headyaw);
+			$headyaw->encode();
+			$len += strlen($headyaw->buffer) + 1;
+			++$packets;
+			$headSent = true;
 		}
+		if($packets <= 0) return;
+		//console("Update {$e}: $packets, mot: $motionSent, mov: $moveSent, hed: $headSent");
+		$MTU = $this->MTU - 24;
+		if(($this->entityMovementQueueLength + $len) >= $MTU){
+			$this->sendEntityMovementUpdateQueue();
+		}
+		if($motionSent){
+			$motion->messageIndex = 0; //force 0 cuz reliability 0
+			$motion->reliability = 0;
+			$this->entityMovementQueue->data[] = $motion;
+		}
+		if($moveSent){
+			$move->messageIndex = 0;
+			$move->reliability = 0;
+			$this->entityMovementQueue->data[] = $move;
+		}
+		if($headSent){
+			$headyaw->messageIndex = 0;
+			$headyaw->reliability = 0;
+			$this->entityMovementQueue->data[] = $headyaw;
+		}
+		
+		$this->entityMovementQueueLength += 6*$packets + $len;
+		$this->entityMovementPacketsPerSecond += $packets;
 	}
 	
 	/**
