@@ -1729,6 +1729,13 @@ class Player{
 		$motionSent = false;
 		$moveSent = false;
 		$headSent = false;
+		$localeid = $this->global2localEID[$e->eid] ?? false;
+		if($localeid === false){
+			ConsoleAPI::warn("Attempting to convert global eid to local failed! (Global: {$e->eid}, Player: {$this->ip}:{$this->port}). Stacktrace: ");
+			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
+			return false;
+		}
+		
 		$svdYSpeed = $e->speedY;
 		if($e->modifySpeedY){
 			$e->speedY = $e->modifedSpeedY;
@@ -1736,7 +1743,7 @@ class Player{
 		if($e->speedX != 0 || $e->speedY != 0 || $e->speedZ != 0 || $e->speedY != $e->lastSpeedY || $e->speedX != $e->lastSpeedX || $e->speedZ != $e->lastSpeedZ){
 			if(!($e->speedY < 0 && $e->onGround) || $e->speedX != 0 || $e->speedZ != 0 || $e->speedY != $e->lastSpeedY || $e->speedX != $e->lastSpeedX || $e->speedZ != $e->lastSpeedZ){
 				$motion = new SetEntityMotionPacket();
-				$motion->eid = $e->eid;
+				$motion->eid = $localeid;
 				$motion->speedX = $e->speedX;
 				$motion->speedY = $e->speedY;
 				$motion->speedZ = $e->speedZ;
@@ -1754,7 +1761,7 @@ class Player{
 		if($e->x != $e->lastX || $e->y != $e->lastY || $e->z != $e->lastZ || $e->yaw != $e->lastYaw || $e->pitch != $e->lastPitch){
 			if($e->headYaw != $e->lastHeadYaw){
 				$move = new MovePlayerPacket();
-				$move->eid = $e->eid;
+				$move->eid = $localeid;
 				$move->x = $e->x;
 				$move->y = $e->y + $e->yOffset;
 				$move->z = $e->z;
@@ -1764,7 +1771,7 @@ class Player{
 				$move->encode();
 			}else{
 				$move = new MoveEntityPacket_PosRot();
-				$move->eid = $e->eid;
+				$move->eid = $localeid;
 				$move->x = $e->x;
 				$move->y = $e->y + $e->yOffset;
 				$move->z = $e->z;
@@ -1778,7 +1785,7 @@ class Player{
 			$moveSent = true;
 		}else if($e->headYaw != $e->lastHeadYaw){
 			$headyaw = new RotateHeadPacket();
-			$headyaw->eid = $e->eid;
+			$headyaw->eid = $localeid;
 			$headyaw->yaw = $e->headYaw;
 			$headyaw->encode();
 			$len += strlen($headyaw->buffer) + 1;
