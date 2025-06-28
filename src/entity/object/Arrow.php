@@ -262,6 +262,7 @@ class Arrow extends Entity{
 	
 	public function spawn($player){
 		if($this->type === OBJECT_ARROW){
+			$player->addEntity($this);
 			$pk = new AddEntityPacket;
 			$pk->eid = $this->eid;
 			$pk->type = $this->type;

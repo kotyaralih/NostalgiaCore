@@ -60,6 +60,7 @@ abstract class Creature extends Living{
 		if($player->eid === $this->eid or $this->closed !== false or ($player->level !== $this->level and $this->class !== ENTITY_PLAYER)){
 			return false;
 		}
+		$player->addEntity($this);
 		$pk = new AddMobPacket;
 		$pk->eid = $this->eid;
 		$pk->type = $this->type;

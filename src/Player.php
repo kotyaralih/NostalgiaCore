@@ -126,6 +126,24 @@ class Player{
 	private $lastPing = -1;
 	
 	/**
+	 * Stores local entity ids. Format: global => local.
+	 * Should be modified only by Player::addEntity or Player::removeEntity.
+	 * @var array
+	 */
+	public $global2localEID = [];
+	/**
+	 * Stores global entity ids. Format: local => global.
+	 * Should be modified only by Player::addEntity or Player::removeEntity.
+	 * @var array
+	 */
+	public $local2GlobalEID = [];
+	/**
+	 * Stores last local entity id. Increments every time Player::addEntity is called.
+	 * @var array
+	 */
+	public $lastLocalEID = -1;
+	
+	/**
 	 * @param integer $clientID
 	 * @param string $ip
 	 * @param integer $port
@@ -166,6 +184,37 @@ class Player{
 		
 		$this->evid[] = $this->server->event("server.close", [$this, "close"]);
 		console("[DEBUG] New Session started with $ip:$port. MTU {$this->MTU}, Client ID {$this->clientID}", true, true, 2);
+	}
+	
+	/**
+	 * Gives a new local id for entity. 
+	 * @param Entity $e
+	 * @return boolean
+	 */
+	public function addEntity(Entity $e){
+		$local = ++$this->lastLocalEID;
+		$this->global2localEID[$e->eid] = $local;
+		$this->local2GlobalEID[$local] = $e->eid;
+		ConsoleAPI::info("Adding Entity {$e->eid} => {$local}");
+		return true;
+	}
+	
+	public function hasEntity(Entity $e){
+		return isset($this->global2localEID[$e->eid]);
+	}
+	
+	/**
+	 * Removes an entity.
+	 * @param Entity $e
+	 * @return boolean
+	 */
+	public function removeEntity(Entity $e){
+		$local = $this->global2localEID[$e->eid] ?? null;
+		if($local == null) return false;
+		unset($this->global2localEID[$e->eid]);
+		unset($this->local2GlobalEID[$local]);
+		ConsoleAPI::info("Removing Entity {$e->eid} => {$local}");
+		return true;
 	}
 	
 	public function __get($name){
@@ -289,14 +338,10 @@ class Player{
 							$this->entityQueueDataPacket($pk);
 							
 						}else{
-							$pk = new MoveEntityPacket_PosRot();
+							$pk = new RemoveEntityPacket();
 							$pk->eid = $e->eid;
-							$pk->x = -256;
-							$pk->y = 128;
-							$pk->z = -256;
-							$pk->yaw = 0;
-							$pk->pitch = 0;
 							$this->entityQueueDataPacket($pk);
+							$this->removeEntity($e);
 						}
 					}
 				}
@@ -314,14 +359,7 @@ class Player{
 				foreach($this->level->entityList as $e){
 					if($e->eid !== $this->entity->eid){
 						if(!$e->isPlayer()){
-							$pk = new MoveEntityPacket_PosRot();
-							$pk->eid = $e->eid;
-							$pk->x = $e->x;
-							$pk->y = $e->y;
-							$pk->z = $e->z;
-							$pk->yaw = $e->yaw;
-							$pk->pitch = $e->pitch;
-							$this->entityQueueDataPacket($pk);
+							$e->spawn($this);
 						}
 					}
 				}
@@ -383,14 +421,14 @@ class Player{
 		}
 		
 		$pk = new SetEntityMotionPacket();
-		$pk->eid = 0;
+		$pk->eid = $this->eid;
 		$pk->speedX = 0;
 		$pk->speedY = 0;
 		$pk->speedZ = 0;
 		$this->entityQueueDataPacket($pk);
 		
 		$pk = new MovePlayerPacket;
-		$pk->eid = 0;
+		$pk->eid = $this->eid;
 		$pk->x = $pos->x;
 		$pk->y = $pos->y;
 		$pk->z = $pos->z;
@@ -410,6 +448,7 @@ class Player{
 	public function directDataPacket(RakNetDataPacket $packet, $reliability = 0, $recover = true){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return [];
+		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
 		$packet->encode();
 		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
@@ -431,6 +470,7 @@ class Player{
 	public function dataPacket(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return;
+		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
 		$packet->encode();
 		$len = strlen($packet->buffer) + 1;
@@ -457,6 +497,7 @@ class Player{
 	public function dataPacketAlwaysRecover(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return false;
+		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
 		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
 		$pk->data[] = $packet;
@@ -467,7 +508,7 @@ class Player{
 		$len = strlen($packet->buffer) + 1;
 		$MTU = $this->MTU - 24;
 		if($len > $MTU){
-			return $this->sendBigPacketAlwaysRecover($packet);
+			return $this->sendBigPacketAlwaysRecover($packet); //TODO fix
 		}
 		
 		$packet->messageIndex = $this->counter[3]++;
@@ -557,6 +598,7 @@ class Player{
 	public function sendBigPacketAlwaysRecover(RakNetDataPacket $pk){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
+		if(isset(ProtocolInfo::EID_PACKETS[$pk->pid()])) if(!$this->convertToLocalEIDPacket($pk)) return false;
 		
 		$pk->encode();
 		$sendtime = microtime(true);
@@ -1026,9 +1068,8 @@ class Player{
 				break;
 			case "player.pickup":
 				if($data["eid"] === $this->eid){
-					$data["eid"] = 0;
 					$pk = new TakeItemEntityPacket;
-					$pk->eid = 0;
+					$pk->eid = $data["eid"];
 					$pk->target = $data["entity"]->eid;
 					$this->entityQueueDataPacket($pk);
 					
@@ -1068,7 +1109,7 @@ class Player{
 
 				break;
 			case "entity.motion":
-				if($data->eid === $this->eid or $data->level !== $this->level){
+				if($data->eid === $this->eid || $data->level !== $this->level){
 					break;
 				}
 				if(($data->speedX === 0 && $data->speedY === 0 && $data->speedZ === 0) || ($data->speedX === $data->lastSpeedX && $data->speedY === $data->lastSpeedY && $data->lastSpeedZ === $data->speedZ)){
@@ -1088,11 +1129,7 @@ class Player{
 				$this->entityQueueDataPacket($pk);
 				break;
 			case "entity.metadata":
-				if($data->eid === $this->eid){
-					$eid = 0;
-				}else{
-					$eid = $data->eid;
-				}
+				$eid = $data->eid;
 				if($data->level === $this->level){
 					$pk = new SetEntityDataPacket;
 					$pk->eid = $eid;
@@ -1101,11 +1138,7 @@ class Player{
 				}
 				break;
 			case "entity.event":
-				if($data["entity"]->eid === $this->eid){
-					$eid = 0;
-				}else{
-					$eid = $data["entity"]->eid;
-				}
+				$eid = $data["entity"]->eid;
 				if($data["entity"]->level === $this->level){
 					$pk = new EntityEventPacket;
 					$pk->eid = $eid;
@@ -1561,6 +1594,7 @@ class Player{
 	public function blockQueueDataPacket(RakNetDataPacket $pk){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
+		if(isset(ProtocolInfo::EID_PACKETS[$pk->pid()])) if(!$this->convertToLocalEIDPacket($pk)) return false;
 		
 		$pk->encode();
 		
@@ -1580,14 +1614,49 @@ class Player{
 		$this->blockUpdateQueueLength += 10 + $len;
 	}
 	
+	public function convertToGlobalEIDPacket(RakNetDataPacket $pk){
+		$local = $pk->eid;
+		$pk->eid = $this->local2GlobalEID[$local] ?? false;
+		if($pk->eid === false){
+			PRINT_STACK_TRACE:
+			ConsoleAPI::warn("Attempting to convert eids to global in entity packet {$pk->pid()} but global eid is incorrect! (Global: $local, Player: {$this->ip}:{$this->port}). Stacktrace: ");
+			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
+			return false;
+		}
+		if($pk->pid() == ProtocolInfo::INTERACT_PACKET){
+			$local = $pk->target;
+			$pk->target = $this->local2GlobalEID[$local] ?? false;
+			if($pk->target === false){
+				ConsoleAPI::warn("Attempting to convert target eid to global in entity packet {$pk->pid()} but global eid is incorrect! (Global: $local, Player: {$this->ip}:{$this->port}). Stacktrace: ");
+				foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
+				return false;
+			}
+		}
+		return true;
+	}
+	public function convertToLocalEIDPacket(RakNetDataPacket $pk){
+		if(!isset($pk->_localeid) || !$pk->_localeid){
+			$global = $pk->eid;
+			$pk->eid = $this->global2localEID[$global] ?? false;
+			$pk->_localeid = true;
+			if($pk->eid === false){
+				ConsoleAPI::warn("Attempting to convert eids to local in entity packet {$pk->pid()} but local eid is incorrect! (Global: $global, Player: {$this->ip}:{$this->port}). Stacktrace: ");
+				foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
+				return false;
+			}
+			return true;
+		}
+	}
+	
 	/**
 	 * Sends a packet in entity order channel. Packets are always delivered and ordered.
-	 * 
+	 * @param RakNetDataPacket $pk
+	 * @return void|boolean|boolean|number[]
 	 */
 	public function entityQueueDataPacket(RakNetDataPacket $pk){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
-		
+		if(isset(ProtocolInfo::EID_PACKETS[$pk->pid()])) if(!$this->convertToLocalEIDPacket($pk)) return false;
 		$pk->encode();
 		
 		$len = 1 + strlen($pk->buffer);
@@ -1599,6 +1668,7 @@ class Player{
 		}
 		
 		$pk->messageIndex = $this->counter[3]++;
+		
 		$pk->reliability = 3;
 		$pk->orderChannel = Player::ENTITY_ORDER_CHANNEL;
 		$pk->orderIndex = $this->entityDataQueueOrderIndex++;
@@ -1770,6 +1840,7 @@ class Player{
 	public function sendChatMessagePacket(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return false;
+		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
 		//TODO big chat messages support
 		$packet->encode();
@@ -1821,6 +1892,7 @@ class Player{
 		if($this->connected === false){
 			return;
 		}
+		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToGlobalEIDPacket($packet)) return;
 
 		if(EventHandler::callEvent(new DataPacketReceiveEvent($this, $packet)) === BaseEvent::DENY){
 			return;
@@ -1962,16 +2034,6 @@ class Player{
 				$pk = new LoginStatusPacket;
 				$pk->status = 0;
 				$this->dataPacket($pk);
-
-				$pk = new StartGamePacket;
-				$pk->seed = $this->level->getSeed();
-				$pk->x = $this->data->get("position")["x"];
-				$pk->y = ceil($this->data->get("position")["y"])+1;
-				$pk->z = $this->data->get("position")["z"];
-				$pk->generator = 0;
-				$pk->gamemode = $this->gamemode & 0x01;
-				$pk->eid = 0;
-				$this->dataPacket($pk);
 				
 				if(($this->gamemode & 0x01) === 0x01){
 					$this->slot = 0;
@@ -2002,9 +2064,24 @@ class Player{
 				$this->entity = $this->server->api->entity->add($this->level, ENTITY_PLAYER, 0, ["player" => $this]);
 				$this->eid = $this->entity->eid;
 				$this->server->query("UPDATE players SET EID = " . $this->eid . " WHERE CID = " . $this->CID . ";");
+
+				$this->addEntity($this->entity);
+				
+				$pk = new StartGamePacket;
+				$pk->seed = $this->level->getSeed();
+				$pk->x = $this->data->get("position")["x"];
+				$pk->y = ceil($this->data->get("position")["y"])+1;
+				$pk->z = $this->data->get("position")["z"];
+				$pk->generator = 0;
+				$pk->gamemode = $this->gamemode & 0x01;
+				$pk->eid = $this->entity->eid;
+				
 				$this->entity->x = $pk->x;
 				$this->entity->y = $pk->y-0.9;
 				$this->entity->z = $pk->z;
+				$this->dataPacket($pk);
+				
+				
 				if(($level = $this->server->api->level->get($this->data->get("spawn")["level"])) !== false){
 					$this->spawnPosition = new Position($this->data->get("spawn")["x"], $this->data->get("spawn")["y"], $this->data->get("spawn")["z"], $level);
 
@@ -2032,7 +2109,7 @@ class Player{
 				$this->server->schedule(50, [$this, "measureLag"], [], true);
 				
 				
-				console("[INFO] " . FORMAT_AQUA . $this->username . FORMAT_RESET . "[/" . $this->ip . ":" . $this->port . "] logged in with entity id " . $this->eid . " at (" . $this->entity->level->getName() . ", " . round($this->entity->x, 2) . ", " . round($this->entity->y, 2) . ", " . round($this->entity->z, 2) . ") MTU: {$this->MTU}");
+				console("[INFO] " . FORMAT_AQUA . $this->username . FORMAT_RESET . "[/{$this->ip}:{$this->port}] logged in with entity id {$this->eid} at ({$this->entity->level->getName()}, " . round($this->entity->x, 2) . ", " . round($this->entity->y, 2) . ", " . round($this->entity->z, 2) . ") MTU: {$this->MTU}");
 				break;
 			case ProtocolInfo::READY_PACKET:
 				if($this->loggedIn === false){
@@ -2566,7 +2643,7 @@ class Player{
 						$foodHeal = Item::getFoodHeal($slot->getID());
 						if($this->entity->getHealth() < 20 && $foodHeal != 0){
 							$pk = new EntityEventPacket;
-							$pk->eid = 0;
+							$pk->eid = $this->eid;
 							$pk->event = EntityEventPacket::ENTITY_COMPLETE_USING_ITEM;
 							$this->entityQueueDataPacket($pk);
 

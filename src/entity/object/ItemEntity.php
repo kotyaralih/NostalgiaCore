@@ -44,6 +44,7 @@ class ItemEntity extends Entity{
 	
 	public function spawn($player)
 	{
+		$player->addEntity($this);
 		$pk = new AddItemEntityPacket();
 		$pk->eid = $this->eid;
 		$pk->x = $this->x;

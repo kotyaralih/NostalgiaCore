@@ -1150,6 +1150,9 @@ class Entity extends Position
 				if($this->player->gamemode === SPECTATOR){
 					break;
 				}
+				
+				$player->addEntity($this);
+				
 				$pk = new AddPlayerPacket();
 				$pk->clientID = 0; // $this->player->clientID;
 				$pk->username = $this->player->username;
@@ -1162,8 +1165,8 @@ class Entity extends Position
 				$pk->itemID = 0;
 				$pk->itemAuxValue = 0;
 				$pk->metadata = $this->getMetadata();
-				$player->entityQueueDataPacket($pk, 2, true);
-
+				$player->entityQueueDataPacket($pk);
+				
 				$pk = new PlayerEquipmentPacket();
 				$pk->eid = $this->eid;
 				$pk->item = $this->player->getSlot($this->player->slot)->getID();
@@ -1517,7 +1520,7 @@ class Entity extends Position
 	public function sendMoveUpdate()
 	{
 		if($this->class === ENTITY_PLAYER){
-			$this->player->teleport(new Vector3($this->x, $this->y, $this->z), false, false, true, false);
+			//$this->player->teleport(new Vector3($this->x, $this->y, $this->z), false, false, true, false);
 		}
 	}
 

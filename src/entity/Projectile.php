@@ -201,6 +201,8 @@ abstract class Projectile extends Entity{
 	
 	public function spawn($player)
 	{
+		$player->addEntity($this);
+		
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->eid;
 		$pk->type = $this->type;

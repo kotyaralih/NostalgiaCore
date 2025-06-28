@@ -817,6 +817,7 @@ class Level{
 		
 		
 		foreach($this->players as $player){
+			if(!$player->spawned) continue;
 			foreach($post as $eid){
 				$e = $this->entityList[$eid] ?? false;
 				if(!($e instanceof Entity)){
