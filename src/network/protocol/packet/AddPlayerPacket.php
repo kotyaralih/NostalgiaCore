@@ -46,5 +46,13 @@ class AddPlayerPacket extends RakNetDataPacket{
 		$this->putShort($this->itemAuxValue); //Example: bow shooting power
 		$this->put(Utils::writeMetadata($this->metadata));
 	}
-
+	
+	public function eidsToLocal(Player $p){
+		if(!$this->localEids){
+			$this->localEids = true;
+			$this->eid = $p->global2localEID[$this->eid] ?? false;
+			if($this->eid === false) return false;
+		}
+		return true;
+	}
 }

@@ -1466,8 +1466,8 @@ class Entity extends Position
 		if(isset($this->level->entityList[$this->linkedEntity])){
 			$e = $this->level->entityList[$this->linkedEntity];
 			if(!$e->dead && !$e->closed){
-				$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => -1, "type" => 1]);
-				$this->server->api->dhandle("entity.link", ["rider" => $this->linkedEntity, "riding" => -1, "type" => 1]);
+				$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => 0, "type" => 1]);
+				$this->server->api->dhandle("entity.link", ["rider" => $this->linkedEntity, "riding" => 0, "type" => 1]);
 				$this->isRider = false;
 				$this->linkedEntity = 0;
 				$e->linkedEntity = 0;
@@ -1602,13 +1602,7 @@ class Entity extends Position
 				$pk->eid = $this->eid;
 				$pk->event = EntityEventPacket::ENTITY_DAMAGE;
 				foreach($this->level->players as $p){
-					if(($p->entity instanceof Entity) && $p->entity->eid == $this->eid){
-						$pk2 = clone $pk;
-						$pk2->eid = 0;
-						$p->entityQueueDataPacket($pk2);
-					}else{
-						$p->entityQueueDataPacket(clone $pk);
-					}
+					$p->entityQueueDataPacket(clone $pk);
 				}
 			}
 			

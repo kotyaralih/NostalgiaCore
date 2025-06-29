@@ -395,7 +395,7 @@ class Level{
 			$this->server->api->time->set("day", $this);
 		}
 		foreach($this->players as $p){
-			$p->stopSleep();
+			if($p->isSleeping) $p->stopSleep();
 		}
 	}
 	

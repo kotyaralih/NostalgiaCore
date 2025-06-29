@@ -132,20 +132,21 @@ class Player{
 	/**
 	 * Stores local entity ids. Format: global => local.
 	 * Should be modified only by Player::addEntity or Player::removeEntity.
+	 * Entity ID 0 is reserved for non-existent entities.
 	 * @var array
 	 */
-	public $global2localEID = [];
+	public $global2localEID = [0 => 0];
 	/**
 	 * Stores global entity ids. Format: local => global.
 	 * Should be modified only by Player::addEntity or Player::removeEntity.
 	 * @var array
 	 */
-	public $local2GlobalEID = [];
+	public $local2GlobalEID = [0 => 0];
 	/**
 	 * Stores last local entity id. Increments every time Player::addEntity is called.
 	 * @var array
 	 */
-	public $lastLocalEID = -1;
+	public $lastLocalEID = 0;
 	
 	/**
 	 * @param integer $clientID
@@ -1022,8 +1023,8 @@ class Player{
 		switch($event){
 			case "entity.link":
 				$pk = new SetEntityLinkPacket();
-				$pk->rider = $data["rider"] == $this->entity->eid ? 0 : $data["rider"];
-				$pk->riding = $data["riding"] == $this->entity->eid ? 0 : $data["riding"];
+				$pk->rider = $data["rider"];
+				$pk->riding = $data["riding"];
 				$pk->type = 0;
 				$this->entityQueueDataPacket($pk);
 				break;
@@ -1136,6 +1137,7 @@ class Player{
 				$this->entityQueueDataPacket($pk);
 				break;
 			case "entity.metadata":
+				if(!$this->hasEntity($data)) break;
 				$eid = $data->eid;
 				if($data->level === $this->level){
 					$pk = new SetEntityDataPacket;
@@ -1637,37 +1639,20 @@ class Player{
 	}
 	
 	public function convertToGlobalEIDPacket(RakNetDataPacket $pk){
-		$local = $pk->eid;
-		$pk->eid = $this->local2GlobalEID[$local] ?? false;
-		if($pk->eid === false){
-			PRINT_STACK_TRACE:
-			ConsoleAPI::warn("Attempting to convert eids to global in entity packet {$pk->pid()} but global eid is incorrect! (Global: $local, Player: {$this->ip}:{$this->port}). Stacktrace: ");
+		if(!$pk->eidsToGlobal($this)){
+			ConsoleAPI::warn("Failed to convert eids to global in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
 			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
 			return false;
-		}
-		if($pk->pid() == ProtocolInfo::INTERACT_PACKET){
-			$local = $pk->target;
-			$pk->target = $this->local2GlobalEID[$local] ?? false;
-			if($pk->target === false){
-				ConsoleAPI::warn("Attempting to convert target eid to global in entity packet {$pk->pid()} but global eid is incorrect! (Global: $local, Player: {$this->ip}:{$this->port}). Stacktrace: ");
-				foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
-				return false;
-			}
 		}
 		return true;
 	}
 	public function convertToLocalEIDPacket(RakNetDataPacket $pk){
-		if(!isset($pk->_localeid) || !$pk->_localeid){
-			$global = $pk->eid;
-			$pk->eid = $this->global2localEID[$global] ?? false;
-			$pk->_localeid = true;
-			if($pk->eid === false){
-				ConsoleAPI::warn("Attempting to convert eids to local in entity packet {$pk->pid()} but local eid is incorrect! (Global: $global, Player: {$this->ip}:{$this->port}). Stacktrace: ");
-				foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
-				return false;
-			}
-			return true;
+		if(!$pk->eidsToLocal($this)){
+			ConsoleAPI::warn("Failed to convert eids to local in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
+			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
+			return false;
 		}
+		return true;
 	}
 	
 	/**

@@ -13,10 +13,18 @@ abstract class RakNetDataPacket extends stdClass{
 	public $splitIndex;
 	private $offset = 0;
 	
-	abstract public function encode();
+	public abstract function encode();
 
-	abstract public function decode();
+	public abstract function decode();
 
+	public $localEids = false;
+	public function eidsToLocal(Player $p){
+		return true;
+	}
+	public function eidsToGlobal(Player $p){
+		return true;
+	}
+	
 	public function getBuffer(){
 		return $this->buffer;
 	}

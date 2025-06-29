@@ -96,7 +96,8 @@ abstract class ProtocolInfo{
 		self::ADD_ENTITY_PACKET => true,
 		self::REMOVE_BLOCK_PACKET => true,
 		self::MOVE_PLAYER_PACKET => true,
-		self::DROP_ITEM_PACKET => true
+		self::DROP_ITEM_PACKET => true,
+		self::SET_ENTITY_LINK_PACKET => true
 	];
 }
 /*Unused:

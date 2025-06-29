@@ -228,6 +228,7 @@ class RakNetParser{
 			$data->splitCount = $splitCount;
 			$data->splitID = $splitID;
 			$data->splitIndex = $splitIndex;
+			$data->localEids = true;
 			$data->setBuffer($buf);
 		}
 		return $data;
