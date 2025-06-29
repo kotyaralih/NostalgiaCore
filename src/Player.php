@@ -433,7 +433,7 @@ class Player{
 		$pk->speedX = 0;
 		$pk->speedY = 0;
 		$pk->speedZ = 0;
-		$this->entityQueueDataPacket($pk);
+		$this->dataPacketAlwaysRecover($pk);
 		
 		$pk = new MovePlayerPacket;
 		$pk->eid = $this->eid;
@@ -443,7 +443,7 @@ class Player{
 		$pk->bodyYaw = $yaw;
 		$pk->pitch = $pitch;
 		$pk->yaw = $yaw;
-		$this->entityQueueDataPacket($pk);
+		$this->dataPacketAlwaysRecover($pk);
 	}
 
 	/**
@@ -1439,6 +1439,10 @@ class Player{
 	}
 
 	public function handlePacketQueues(){
+		if($this->server->ticks % 40 == 0){ //2s
+			$this->sendPing();
+		}
+		
 		if($this->connected === false){
 			return false;
 		}
@@ -1552,7 +1556,9 @@ class Player{
 		}
 
 		if(($resendCnt = count($this->resendQueue)) > 0){
+			$maxResendCnt = $resendCnt > 25 ? 25 : $resendCnt;
 			foreach($this->resendQueue as $count => $data){
+				if(--$maxResendCnt) break;
 				unset($this->resendQueue[$count]);
 				$this->packetStats[1]++;
 				$this->lag[] = $time - $data->sendtime;
@@ -3296,6 +3302,7 @@ class Player{
 					break;
 
 				case RakNetInfo::ACK:
+					//if(mt_rand(0, 99) > 50) break;
 					foreach($packet->packets as $count){
 						if(isset($this->packetAlwaysRecoverQueue[$count])){
 							$this->lag[] = $time - $this->packetAlwaysRecoverQueue[$count]->sendtime;

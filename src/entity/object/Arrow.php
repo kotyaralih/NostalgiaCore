@@ -47,16 +47,6 @@ class Arrow extends Entity{
 		$data["shotByPlayer"] = $this->shotByPlayer;
 		return $data;
 	}
-	public function handleUpdate(){
-		$pk = new MoveEntityPacket_PosRot;
-		$pk->eid = $this->eid;
-		$pk->x = $this->x;
-		$pk->y = $this->y;
-		$pk->z = $this->z;
-		$pk->yaw = $this->yaw;
-		$pk->pitch = $this->pitch;
-		$this->server->api->player->broadcastPacket($this->level->players, $pk);
-	}
 	
 	public function shoot($d, $d1, $d2, $f, $f1){ //original name from 0.8.1 IDA decompilation, var names are taken from b1.7.3
 		$f2 = sqrt($d * $d + $d1 * $d1 + $d2 * $d2);

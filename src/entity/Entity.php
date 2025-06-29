@@ -999,7 +999,9 @@ class Entity extends Position
 						$pk->yaw = $this->yaw;
 						$pk->pitch = $this->pitch;
 						$pk->bodyYaw = $this->yaw;
-						$this->server->api->player->broadcastPacket($players, $pk);
+						foreach($players as $player){
+							if($player->hasEntity($this)) $player->entityQueueDataPacket(clone $pk);
+						}
 					}
 				}
 			}
@@ -1602,14 +1604,14 @@ class Entity extends Position
 				$pk->eid = $this->eid;
 				$pk->event = EntityEventPacket::ENTITY_DAMAGE;
 				foreach($this->level->players as $p){
-					$p->entityQueueDataPacket(clone $pk);
+					if($p->hasEntity($this)) $p->entityQueueDataPacket(clone $pk);
 				}
 			}
 			
 			if($this->player instanceof Player){
 				$pk = new SetHealthPacket();
 				$pk->health = $this->health;
-				$this->player->entityQueueDataPacket($pk);
+				if($this->player->hasEntity($this)) $this->player->entityQueueDataPacket($pk);
 			}
 			if($this->health <= 0 and $this->dead === false){
 				$this->makeDead($cause);
@@ -1646,12 +1648,16 @@ class Entity extends Position
 			$pk->z = -256;
 			$pk->yaw = 0;
 			$pk->pitch = 0;
-			$this->server->api->player->broadcastPacket($this->level->players, $pk);
+			foreach($this->level->players as $player){
+				if($player->hasEntity($this)) $player->entityQueueDataPacket(clone $pk);
+			}
 		}else{
 			$pk = new EntityEventPacket;
 			$pk->eid = $this->eid;
 			$pk->event = EntityEventPacket::ENTITY_DEAD;
-			$this->server->api->player->broadcastPacket($this->level->players, $pk);
+			foreach($this->level->players as $player){
+				if($player->hasEntity($this)) $player->entityQueueDataPacket(clone $pk);
+			}
 		}
 
 		if($this->player instanceof Player){

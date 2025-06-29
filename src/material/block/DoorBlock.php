@@ -208,7 +208,7 @@ class DoorBlock extends TransparentBlock{
 				$pk->z = $this->z;
 				$pk->evid = 1003;
 				$pk->data = 0;
-				ServerAPI::request()->api->player->broadcastPacket($players, $pk);
+				ServerAPI::request()->api->player->broadcastPacket($players, $pk); //TODO use block queue?
 				return true;
 			}
 			return false;
