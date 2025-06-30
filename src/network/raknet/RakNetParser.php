@@ -124,6 +124,12 @@ class RakNetParser{
 		}else{
 			$messageIndex = false;
 		}
+		if($reliability == 1 || $reliability == 4){
+			$offset += 3;
+			$seqIndex = Utils::readTriad(strrev(substr($buffer, $offset - 3, 3)));
+		}else{
+			$seqIndex = false;
+		}
 
 		if($reliability == 1 ||$reliability == 3 || $reliability == 4 || $reliability == 7){
 			$offset += 3;
@@ -228,6 +234,7 @@ class RakNetParser{
 			$data->splitCount = $splitCount;
 			$data->splitID = $splitID;
 			$data->splitIndex = $splitIndex;
+			$data->seqIndex = $seqIndex;
 			$data->localEids = true;
 			$data->setBuffer($buf);
 		}

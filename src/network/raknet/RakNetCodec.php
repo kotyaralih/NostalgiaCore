@@ -106,6 +106,9 @@ class RakNetCodec{
 			or $pk->reliability === 7){
 			$packet->buffer .= Utils::writeLTriad($pk->messageIndex);
 		}
+		if($pk->reliability == 1 || $pk->reliability == 4){
+			$packet->buffer .= Utils::writeLTriad($pk->seqIndex);
+		}
 
 		if($pk->reliability === 1
 			or $pk->reliability === 3

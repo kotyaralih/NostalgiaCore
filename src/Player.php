@@ -90,7 +90,7 @@ class Player{
 	
 	public $entityMovementQueue;
 	public $entityMovementQueueLength = 0;
-	public $entityMovementQueueOrderIndex = 0;
+	public $entityMovementQueueSeqIndex = 0;
 	
 	/**
 	 * @var RakNetPacket
@@ -122,7 +122,6 @@ class Player{
 	 * @var boolean
 	 */
 	public $sendingInventoryRequired = false;
-	
 	public $expectedSetSlotPackets = [];
 	public $expectedSetSlotIndex = -1;
 	public $lastExpectedSetSlotIndexReceived = -1;
@@ -1556,9 +1555,7 @@ class Player{
 		}
 
 		if(($resendCnt = count($this->resendQueue)) > 0){
-			$maxResendCnt = $resendCnt > 25 ? 25 : $resendCnt;
 			foreach($this->resendQueue as $count => $data){
-				if(--$maxResendCnt) break;
 				unset($this->resendQueue[$count]);
 				$this->packetStats[1]++;
 				$this->lag[] = $time - $data->sendtime;
@@ -1654,8 +1651,8 @@ class Player{
 	}
 	public function convertToLocalEIDPacket(RakNetDataPacket $pk){
 		if(!$pk->eidsToLocal($this)){
-			ConsoleAPI::warn("Failed to convert eids to local in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
-			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
+			ConsoleAPI::debug("Failed to convert eids to local in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
+			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::debug($s);
 			return false;
 		}
 		return true;
@@ -1722,7 +1719,7 @@ class Player{
 		$headSent = false;
 		$localeid = $this->global2localEID[$e->eid] ?? false;
 		if($localeid === false){
-			ConsoleAPI::warn("Attempting to convert global eid to local failed! (Global: {$e->eid}, Player: {$this->ip}:{$this->port}). Stacktrace: ");
+			ConsoleAPI::warn("Attempt to convert global eid to local failed! (Global: {$e->eid}, Player: {$this->ip}:{$this->port}). Stacktrace: ");
 			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
 			return false;
 		}
@@ -1739,7 +1736,7 @@ class Player{
 				$motion->speedY = $e->speedY;
 				$motion->speedZ = $e->speedZ;
 				$motion->encode();
-				$len += 1 + strlen($motion->buffer);
+				$len += 10 + strlen($motion->buffer);
 				++$packets;
 				$motionSent = true;
 			}
@@ -1771,7 +1768,7 @@ class Player{
 				$move->encode();
 			}
 			
-			$len += strlen($move->buffer) + 1;
+			$len += strlen($move->buffer) + 10;
 			++$packets;
 			$moveSent = true;
 		}else if($e->headYaw != $e->lastHeadYaw){
@@ -1779,7 +1776,7 @@ class Player{
 			$headyaw->eid = $localeid;
 			$headyaw->yaw = $e->headYaw;
 			$headyaw->encode();
-			$len += strlen($headyaw->buffer) + 1;
+			$len += strlen($headyaw->buffer) + 10;
 			++$packets;
 			$headSent = true;
 		}
@@ -1791,21 +1788,30 @@ class Player{
 		}
 		if($motionSent){
 			$motion->messageIndex = 0; //force 0 cuz reliability 0
-			$motion->reliability = 0;
+			$motion->reliability = 1;
+			$motion->orderIndex = $this->entityDataQueueOrderIndex;
+			$motion->orderChannel = self::ENTITY_ORDER_CHANNEL;
+			$motion->seqIndex = $this->entityMovementQueueSeqIndex++;
 			$this->entityMovementQueue->data[] = $motion;
 		}
 		if($moveSent){
 			$move->messageIndex = 0;
-			$move->reliability = 0;
+			$move->reliability = 1;
+			$move->orderIndex = $this->entityDataQueueOrderIndex;
+			$move->orderChannel = self::ENTITY_ORDER_CHANNEL;
+			$move->seqIndex = $this->entityMovementQueueSeqIndex++;
 			$this->entityMovementQueue->data[] = $move;
 		}
 		if($headSent){
 			$headyaw->messageIndex = 0;
-			$headyaw->reliability = 0;
+			$headyaw->reliability = 1;
+			$headyaw->orderIndex = $this->entityDataQueueOrderIndex;
+			$headyaw->orderChannel = self::ENTITY_ORDER_CHANNEL;
+			$headyaw->seqIndex = $this->entityMovementQueueSeqIndex++;
 			$this->entityMovementQueue->data[] = $headyaw;
 		}
 		
-		$this->entityMovementQueueLength += 6*$packets + $len;
+		$this->entityMovementQueueLength += $len;
 		$this->entityMovementPacketsPerSecond += $packets;
 	}
 	
