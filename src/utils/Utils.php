@@ -437,7 +437,7 @@ class Utils{
 	}
 	
 	public static function readTriad($str){
-		return strlen($str) < 3 ? false : @unpack("N", "\x00$str")[1];
+		return strlen($str) < 3 ? 0 : @unpack("N", "\x00$str")[1]; //make sure this returns 0 on failure instead of false or else raknet parser will fall into infinite loop if start is false
 	}
 
 	public static function writeDataArray($data){
