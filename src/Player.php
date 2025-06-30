@@ -525,7 +525,43 @@ class Player{
 		$this->packetAlwaysRecoverQueue[$pk->seqNumber] = $pk;
 		return [$pk->seqNumber];
 	}
-	
+	public function sendChatMessagePacket_big(RakNetDataPacket $pk){
+		$sendtime = microtime(true);
+		$size = $this->MTU - 34;
+		if($size <= 0) return false;
+		$buffer = str_split($pk->buffer, $size);
+		$bigCnt = $this->bigCnt;
+		$this->bigCnt = ($this->bigCnt + 1) % 0x10000;
+		$cnts = [];
+		$bufCount = count($buffer);
+		
+		$orderIndex = $this->chatMessagesOrderIndex++;
+		foreach($buffer as $i => $buf){
+			$cnts[] = $count = $this->counter[0]++;
+			
+			$pk = new UnknownPacket;
+			$pk->packetID = $pk->pid();
+			$pk->reliability = 3;
+			
+			$pk->orderChannel = Player::CHATMESSAGE_ORDER_CHANNEL;
+			$pk->orderIndex = $orderIndex;
+			
+			$pk->hasSplit = true;
+			$pk->splitCount = $bufCount;
+			$pk->splitID = $bigCnt;
+			$pk->splitIndex = $i;
+			$pk->buffer = $buf;
+			$pk->messageIndex = $this->counter[3]++;
+			
+			$rk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
+			$rk->data[] = $pk;
+			$rk->seqNumber = $count;
+			$rk->sendtime = $sendtime;
+			$this->packetAlwaysRecoverQueue[$count] = $rk;
+			$this->send($rk);
+		}
+		return $cnts;
+	}
 	public function blockQueueDataPacket_big(RakNetDataPacket $pk){
 		$sendtime = microtime(true);
 		$size = $this->MTU - 34;
@@ -1907,10 +1943,10 @@ class Player{
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return false;
 		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
-		//TODO big chat messages support
 		$packet->encode();
 		$len = strlen($packet->buffer) + 1;
 		$MTU = $this->MTU - 24;
+		if($len > $MTU) return $this->sendChatMessagePacket_big($packet);
 		
 		if(($this->chatMessagesQueueLength + $len) >= $MTU) $this->sendChatBuffer();
 		
@@ -2180,6 +2216,7 @@ class Player{
 				if($this->loggedIn === false){
 					break;
 				}
+				
 				switch($packet->status){
 					case 1: //Spawn!!
 						if($this->spawned !== false){
