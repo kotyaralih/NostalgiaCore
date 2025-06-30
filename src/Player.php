@@ -2096,7 +2096,7 @@ class Player{
 				}
 
 				$this->auth = true;
-				if(!$this->data->exists("inventory") or ($this->gamemode & 0x01) === 0x01){
+				if(!$this->data->exists("inventory") || ($this->gamemode & 0x01) === 0x01){
 					if(($this->gamemode & 0x01) === 0x01){
 						$inv = [];
 						if(($this->gamemode & 0x02) === 0x02){
@@ -2227,7 +2227,6 @@ class Player{
 						$pk->time = $this->level->getTime();
 						$pk->started = !$this->level->isTimeStopped();
 						$this->dataPacketAlwaysRecover($pk);
-						console($this->level->getTime());
 						
 						$pos = new Position($this->entity->x, $this->entity->y, $this->entity->z, $this->level);
 						$pData = $this->data->get("position");
