@@ -1284,7 +1284,7 @@ class Player{
 		
 		$this->server->handle("player.invisible", $data);
 		$b = $data["status"];
-		
+		if(!($this->entity instanceof Entity)) $send = false;
 		if($b){
 			$this->invisibleFor[$player->CID] = $b;
 			if($send){
@@ -1710,8 +1710,15 @@ class Player{
 	}
 	
 	public function convertToGlobalEIDPacket(RakNetDataPacket $pk){
+		if($pk->pid() == ProtocolInfo::INTERACT_PACKET){
+			$eid = $pk->eid;
+			$target = $pk->target;
+		}
 		if(!$pk->eidsToGlobal($this)){
 			ConsoleAPI::warn("Failed to convert eids to global in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
+			if($pk->pid() == ProtocolInfo::INTERACT_PACKET){
+				ConsoleAPI::warn("EID: $eid Target: $target");
+			}
 			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
 			return false;
 		}
