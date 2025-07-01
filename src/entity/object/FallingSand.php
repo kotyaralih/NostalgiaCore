@@ -21,6 +21,7 @@ class FallingSand extends Entity{
 	}
 	public function spawn($player)
 	{
+		$player->addEntity($this);
 		$pk = new AddEntityPacket();
 		$pk->eid = $this->eid;
 		$pk->type = $this->type;
@@ -31,7 +32,7 @@ class FallingSand extends Entity{
 		$pk->speedY = $this->speedY;
 		$pk->speedZ = $this->speedZ;
 		$pk->did = -$this->data["Tile"];
-		$player->dataPacketAlwaysRecover($pk);
+		$player->entityQueueDataPacket($pk);
 	}
 	
 	public function update($now){

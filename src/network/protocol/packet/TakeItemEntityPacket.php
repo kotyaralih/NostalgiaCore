@@ -18,4 +18,14 @@ class TakeItemEntityPacket extends RakNetDataPacket{
 		$this->putInt($this->eid);
 	}
 
+	//TODO convert
+	public function eidsToLocal(Player $p){
+		if(!$this->localEids){
+			$this->localEids = true;
+			$this->eid = $p->global2localEID[$this->eid] ?? false;
+			$this->target = $p->global2localEID[$this->eid] ?? false;
+			if($this->eid === false || $this->target === false) return false;
+		}
+		return true;
+	}
 }

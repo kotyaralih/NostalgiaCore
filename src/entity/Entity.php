@@ -118,7 +118,7 @@ class Entity extends Position
 	
 	public $moveStrafing, $moveForward;
 	
-	function __construct(Level $level, $eid, $class, $type = 0, $data = [])
+	public function __construct(Level $level, $eid, $class, $type = 0, $data = [])
 	{
 		$this->random = new XorShift128Random();
 		$this->last = [&$this->lastX, &$this->lastY, &$this->lastZ, &$this->lastYaw, &$this->lastPitch, &$this->lastTime]; //pointers to variables
@@ -202,6 +202,7 @@ class Entity extends Position
 			$this->outOfWorld();
 		}
 	}
+	
 	public function handlePrePlayerSearcher(){
 		
 	}
@@ -997,8 +998,10 @@ class Entity extends Position
 						$pk->z = $this->z;
 						$pk->yaw = $this->yaw;
 						$pk->pitch = $this->pitch;
-						$pk->bodyYaw = $this->yaw;
-						$this->server->api->player->broadcastPacket($players, $pk);
+						$pk->bodyYaw = $this->headYaw;
+						foreach($players as $player){
+							if($player->hasEntity($this) && !$this->player->isInvisibleFor($player)) $player->entityQueueDataPacket(clone $pk);
+						}
 					}
 				}
 			}
@@ -1132,11 +1135,12 @@ class Entity extends Position
 		$this->server->api->dhandle("entity.metadata", $this);
 	}
 
+	/**
+	 * @param Player $player
+	 * @return boolean
+	 */
 	public function spawn($player)
 	{
-		if(! ($player instanceof Player)){
-			$player = $this->server->api->player->get($player);
-		}
 		if($player->eid === $this->eid or $this->closed !== false or ($player->level !== $this->level and $this->class !== ENTITY_PLAYER)){
 			return false;
 		}
@@ -1145,29 +1149,44 @@ class Entity extends Position
 				if($this->player->connected !== true or $this->player->spawned === false){
 					return false;
 				}
-				if($this->player->gamemode === SPECTATOR){
-					break;
-				}
+				
+				$player->addEntity($this);
+				if($this->level != $player->entity->level || $this->player->gamemode === SPECTATOR) $this->player->setInvisibleFor($player, true, send:false);
 				$pk = new AddPlayerPacket();
+				$pkm = new MovePlayerPacket();
 				$pk->clientID = 0; // $this->player->clientID;
 				$pk->username = $this->player->username;
-				$pk->eid = $this->eid;
-				$pk->x = $this->x;
-				$pk->y = $this->y;
-				$pk->z = $this->z;
-				$pk->yaw = 0;
-				$pk->pitch = 0;
+				$pkm->eid = $pk->eid = $this->eid;
+				
+				if($this->player->isInvisibleFor($player)){
+					$pkm->x = $pk->x = -256;
+					$pkm->y = $pk->y = 128;
+					$pkm->z = $pk->z = -256;
+					$pkm->yaw = $pk->yaw = 0;
+					$pkm->pitch = $pk->pitch = 0;
+					$pkm->bodyYaw = 0;
+				}else{
+					$pkm->x = $pk->x = $this->x;
+					$pkm->y = $pk->y = $this->y;
+					$pkm->z = $pk->z = $this->z;
+					$pkm->yaw = $pk->yaw = $this->yaw;
+					$pkm->pitch = $pk->pitch = $this->pitch;
+					$pkm->bodyYaw = $this->headYaw;
+				}
+				
 				$pk->itemID = 0;
 				$pk->itemAuxValue = 0;
 				$pk->metadata = $this->getMetadata();
-				$player->dataPacketAlwaysRecover($pk, 2, true);
-
+				$player->entityQueueDataPacket($pk);
+				//AddPlayerPacket doesnt read yaw correctly in vanilla(uses PacketUtil::Rot_degreesToChar instead of PacketUtil::Rot_charToDegrees)
+				$player->entityQueueDataPacket($pkm);
+				
 				$pk = new PlayerEquipmentPacket();
 				$pk->eid = $this->eid;
 				$pk->item = $this->player->getSlot($this->player->slot)->getID();
 				$pk->meta = $this->player->getSlot($this->player->slot)->getMetadata();
 				$pk->slot = 0;
-				$player->dataPacket($pk);
+				$player->entityQueueDataPacket($pk);
 				$this->player->sendArmor($player);
 				break;
 		}
@@ -1461,8 +1480,8 @@ class Entity extends Position
 		if(isset($this->level->entityList[$this->linkedEntity])){
 			$e = $this->level->entityList[$this->linkedEntity];
 			if(!$e->dead && !$e->closed){
-				$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => -1, "type" => 1]);
-				$this->server->api->dhandle("entity.link", ["rider" => $this->linkedEntity, "riding" => -1, "type" => 1]);
+				$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => 0, "type" => 1]);
+				$this->server->api->dhandle("entity.link", ["rider" => $this->linkedEntity, "riding" => 0, "type" => 1]);
 				$this->isRider = false;
 				$this->linkedEntity = 0;
 				$e->linkedEntity = 0;
@@ -1515,7 +1534,7 @@ class Entity extends Position
 	public function sendMoveUpdate()
 	{
 		if($this->class === ENTITY_PLAYER){
-			$this->player->teleport(new Vector3($this->x, $this->y, $this->z), false, false, true, false);
+			//$this->player->teleport(new Vector3($this->x, $this->y, $this->z), false, false, true, false);
 		}
 	}
 
@@ -1597,20 +1616,14 @@ class Entity extends Position
 				$pk->eid = $this->eid;
 				$pk->event = EntityEventPacket::ENTITY_DAMAGE;
 				foreach($this->level->players as $p){
-					if(($p->entity instanceof Entity) && $p->entity->eid == $this->eid){
-						$pk2 = clone $pk;
-						$pk2->eid = 0;
-						$p->dataPacket($pk2);
-					}else{
-						$p->dataPacket(clone $pk);
-					}
+					if($p->hasEntity($this)) $p->entityQueueDataPacket(clone $pk);
 				}
 			}
 			
 			if($this->player instanceof Player){
 				$pk = new SetHealthPacket();
 				$pk->health = $this->health;
-				$this->player->dataPacket($pk);
+				if($this->player->hasEntity($this)) $this->player->entityQueueDataPacket($pk);
 			}
 			if($this->health <= 0 and $this->dead === false){
 				$this->makeDead($cause);
@@ -1647,12 +1660,16 @@ class Entity extends Position
 			$pk->z = -256;
 			$pk->yaw = 0;
 			$pk->pitch = 0;
-			$this->server->api->player->broadcastPacket($this->level->players, $pk);
+			foreach($this->level->players as $player){
+				if($player->hasEntity($this)) $player->entityQueueDataPacket(clone $pk);
+			}
 		}else{
 			$pk = new EntityEventPacket;
 			$pk->eid = $this->eid;
 			$pk->event = EntityEventPacket::ENTITY_DEAD;
-			$this->server->api->player->broadcastPacket($this->level->players, $pk);
+			foreach($this->level->players as $player){
+				if($player->hasEntity($this)) $player->entityQueueDataPacket(clone $pk);
+			}
 		}
 
 		if($this->player instanceof Player){

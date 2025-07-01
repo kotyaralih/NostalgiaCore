@@ -148,8 +148,7 @@ class PlayerAPI{
 				if($additional){
 					$arqCnt = count($p->packetAlwaysRecoverQueue);
 					$rqCnt = count($p->recoveryQueue);
-					$emps = $p->entityMovementPacketsPerSecond;
-					$additionalInfo = "ARQ/RQ/EMPS: $arqCnt/$rqCnt/$emps";
+					$additionalInfo = "ARQ/RQ/EMPS: $arqCnt/$rqCnt";
 				}
 				$chunksCnt = count($p->chunkDataSent);
 				return "{$p->username}'s ping: {$ping}ms, packet loss {$pkLoss}%, $transfer KB/s. Chunks: $chunksCnt/256\n$additionalInfo";
@@ -452,7 +451,7 @@ class PlayerAPI{
 					$pk->z = -256;
 					$pk->yaw = 0;
 					$pk->pitch = 0;
-					$player->dataPacketAlwaysRecover($pk);
+					$player->entityQueueDataPacket($pk);
 				}
 			}
 		}
@@ -489,7 +488,7 @@ class PlayerAPI{
 					$pk->z = -256;
 					$pk->yaw = 0;
 					$pk->pitch = 0;
-					$p->dataPacket($pk);
+					$p->entityQueueDataPacket($pk);
 				}
 			}
 		}

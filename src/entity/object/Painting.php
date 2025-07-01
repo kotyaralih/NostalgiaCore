@@ -198,6 +198,7 @@ class Painting extends Entity{
 	}
 
 	public function spawn($player){
+		$player->addEntity($this);
 		$pk = new AddPaintingPacket;
 		$pk->eid = $this->eid;
 		$pk->x = (int) $this->xPos;
@@ -205,6 +206,6 @@ class Painting extends Entity{
 		$pk->z = (int) $this->zPos;
 		$pk->direction = $this->direction;
 		$pk->title = $this->motive;
-		$player->dataPacketAlwaysRecover($pk);
+		$player->entityQueueDataPacket($pk);
 	}
 }

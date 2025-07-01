@@ -3,11 +3,16 @@
 class PocketMinecraftServer{
 
 	public $tCnt, $ticks;
-	public $extraprops, $serverID, $interface, $database, $version, $invisible, $tickMeasure, $preparedSQL, $seed, $gamemode, $name, $maxClients, $clients, $eidCnt, $custom, $description, $motd, $port, $saveEnabled;
+	public $extraprops, $serverID, $interface, $database, $version, $invisible, $tickMeasure, $preparedSQL, $seed, $gamemode, $name, $maxClients, $eidCnt, $custom, $description, $motd, $port, $saveEnabled;
 	/**
 	 * @var ServerAPI
 	 */
 	public $api;
+	/**
+	 * @var Player[]
+	 */
+	public $clients;
+	
 	private $serverip, $evCnt, $handCnt, $events, $eventsID, $handlers, $serverType, $lastTick, $memoryStats, $async = [], $asyncID = 0;
 	
 	public $doTick, $levelData, $tiles, $entities, $schedule, $scheduleCnt, $whitelist, $spawn, $difficulty, $stop, $asyncThread;
@@ -631,9 +636,6 @@ class PocketMinecraftServer{
 			
 			foreach($this->clients as $client){
 				$client->handlePacketQueues();
-				if($this->ticks % 40 == 0){ //2s
-					$client->sendPing();
-				}
 			}
 			
 			foreach($this->api->level->levels as $l){

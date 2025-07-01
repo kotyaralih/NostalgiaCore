@@ -66,6 +66,7 @@ class PrimedTNT extends Entity{
 	}
 	
 	public function spawn($player){
+		$player->addEntity($this);
 		$pk = new AddEntityPacket;
 		$pk->eid = $this->eid;
 		$pk->type = $this->type;
@@ -76,6 +77,6 @@ class PrimedTNT extends Entity{
 		$pk->speedX = $this->speedX;
 		$pk->speedY = $this->speedY;
 		$pk->speedZ = $this->speedZ;
-		$player->dataPacketAlwaysRecover($pk);
+		$player->entityQueueDataPacket($pk);
 	}
 }

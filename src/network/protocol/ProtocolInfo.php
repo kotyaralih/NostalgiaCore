@@ -70,7 +70,35 @@ abstract class ProtocolInfo{
 	const ADVENTURE_SETTINGS_PACKET = 0xb7;
 	const ENTITY_DATA_PACKET = 0xb8;
 	const PLAYER_INPUT_PACKET = 0xb9;
-
+	
+	const EID_PACKETS = [
+		self::ADD_MOB_PACKET => true,
+		self::ADD_ITEM_ENTITY_PACKET => true,
+		self::RESPAWN_PACKET => true,
+		self::SET_ENTITY_MOTION_PACKET => true,
+		self::USE_ITEM_PACKET => true,
+		self::SET_ENTITY_DATA_PACKET => true,
+		self::PLAYER_ARMOR_EQUIPMENT_PACKET => true,
+		self::ROTATE_HEAD_PACKET => true,
+		self::PLAYER_EQUIPMENT_PACKET => true,
+		self::SEND_INVENTORY_PACKET => true,
+		self::INTERACT_PACKET => true,
+		self::ENTITY_EVENT_PACKET => true,
+		self::PLAYER_ACTION_PACKET => true,
+		self::REMOVE_ENTITY_PACKET => true,
+		self::ANIMATE_PACKET => true,
+		self::ADD_PLAYER_PACKET => true,
+		self::TAKE_ITEM_ENTITY_PACKET => true,
+		self::START_GAME_PACKET => true,
+		self::ADD_PAINTING_PACKET => true,
+		self::REMOVE_PLAYER_PACKET => true,
+		self::MOVE_ENTITY_PACKET_POSROT => true,
+		self::ADD_ENTITY_PACKET => true,
+		self::REMOVE_BLOCK_PACKET => true,
+		self::MOVE_PLAYER_PACKET => true,
+		self::DROP_ITEM_PACKET => true,
+		self::SET_ENTITY_LINK_PACKET => true
+	];
 }
 /*Unused:
  * 0xb5

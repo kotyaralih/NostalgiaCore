@@ -427,6 +427,7 @@ class Minecart extends Vehicle{
 	}
 	
 	public function spawn($player){
+		$player->addEntity($this);
 		$pk = new AddEntityPacket;
 		$pk->eid = $this->eid;
 		$pk->type = $this->type;
@@ -435,14 +436,14 @@ class Minecart extends Vehicle{
 		$pk->z = $this->z;
 		$pk->yaw = $this->yaw;
 		$pk->pitch = $this->pitch;
-		$player->dataPacketAlwaysRecover($pk);
+		$player->entityQueueDataPacket($pk);
 		
 		$pk = new SetEntityMotionPacket;
 		$pk->eid = $this->eid;
 		$pk->speedX = $this->speedX;
 		$pk->speedY = $this->speedY;
 		$pk->speedZ = $this->speedZ;
-		$player->dataPacket($pk);
+		$player->entityQueueDataPacket($pk);
 	}
 	
 	public function interactWith(Entity $e, $action){

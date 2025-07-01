@@ -57,12 +57,10 @@ abstract class Creature extends Living{
 		return 0;
 	}
 	public function spawn($player){
-		if(!($player instanceof Player)){
-			$player = $this->server->api->player->get($player);
-		}
 		if($player->eid === $this->eid or $this->closed !== false or ($player->level !== $this->level and $this->class !== ENTITY_PLAYER)){
 			return false;
 		}
+		$player->addEntity($this);
 		$pk = new AddMobPacket;
 		$pk->eid = $this->eid;
 		$pk->type = $this->type;
@@ -72,18 +70,19 @@ abstract class Creature extends Living{
 		$pk->yaw = $this->yaw;
 		$pk->pitch = $this->pitch;
 		$pk->metadata = $this->getMetadata();				
-		$player->dataPacketAlwaysRecover($pk);
+		$player->entityQueueDataPacket($pk);
 				
 		$pk = new SetEntityMotionPacket;
 		$pk->eid = $this->eid;
 		$pk->speedX = $this->speedX;
 		$pk->speedY = $this->speedY;
 		$pk->speedZ = $this->speedZ;
-		$player->dataPacket($pk);
+		$player->entityQueueDataPacket($pk);
 		
 		if($this->linkedEntity != 0 && $this->isRider){
 			$player->eventHandler(["rider" => $this->eid, "riding" => $this->linkedEntity, "type" => 0], "entity.link");
 		}
+		return true;
 	}
 	
 }

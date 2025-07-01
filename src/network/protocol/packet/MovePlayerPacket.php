@@ -34,4 +34,20 @@ class MovePlayerPacket extends RakNetDataPacket{
 		$this->putFloat($this->bodyYaw);
 	}
 
+	public function eidsToLocal(Player $p){
+		if(!$this->localEids){
+			$this->localEids = true;
+			$this->eid = $p->global2localEID[$this->eid] ?? false;
+			if($this->eid === false) return false;
+		}
+		return true;
+	}
+	public function eidsToGlobal(Player $p){
+		if($this->localEids){
+			$this->localEids = false;
+			$this->eid = $p->local2GlobalEID[$this->eid] ?? false;
+			if($this->eid === false) return false;
+		}
+		return true;
+	}
 }

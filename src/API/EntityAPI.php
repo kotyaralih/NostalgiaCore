@@ -1,6 +1,9 @@
 <?php
 
 class EntityAPI{
+	/**
+	 * @var Entity[]
+	 */
 	public $entities;
 	private $server;
 	private $eCnt = 1;
@@ -181,7 +184,11 @@ class EntityAPI{
 	
 	public function spawnToAll(Entity $e){
 		foreach($this->server->api->player->getAll($e->level) as $player){
-			if($player->eid !== false and $player->eid !== $e->eid and $e->class !== ENTITY_PLAYER and $e instanceof Entity){
+			if($player->eid != false and $player->eid != $e->eid and $e->class != ENTITY_PLAYER and $e instanceof Entity){
+				if($e->closed !== false or ($player->level !== $e->level and $e->class !== ENTITY_PLAYER)){
+					return false;
+				}
+				
 				$e->spawn($player);
 			}
 		}
@@ -193,6 +200,7 @@ class EntityAPI{
 	
 	public function remove($eid){
 		if(isset($this->entities[$eid])){
+			$e = $this->entities[$eid];
 			$level = $this->entities[$eid]->level;
 			$this->entities[$eid]->closed = true;
 			if($level instanceof Level){
@@ -210,11 +218,17 @@ class EntityAPI{
 				$pk = new RemovePlayerPacket;
 				$pk->eid = $eid;
 				$pk->clientID = 0;
-				$this->server->api->player->broadcastPacket($this->server->api->player->getAll(), $pk);
+				foreach($this->server->api->player->getAll() as $player){
+					$player->entityQueueDataPacket(clone $pk);
+					$player->removeEntity($e);
+				}
 			}else{
 				$pk = new RemoveEntityPacket;
 				$pk->eid = $eid;
-				$this->server->api->player->broadcastPacket($this->entities[$eid]->level->players, $pk);
+				foreach($this->entities[$eid]->level->players as $player){
+					$player->entityQueueDataPacket(clone $pk);
+					$player->removeEntity($e);
+				}
 			}
 			$this->server->api->dhandle("entity.remove", $this->entities[$eid]);
 			unset($this->entities[$eid]->level->entityList[$eid]);
@@ -222,6 +236,13 @@ class EntityAPI{
 		}
 	}
 	
+	/**
+	 * 
+	 * @param Position $center
+	 * @param number $radius
+	 * @param boolean $class
+	 * @return Entity[]
+	 */
 	public function getRadius(Position $center, $radius = 15, $class = false){
 		$minChunkX = ((int)($center->x - $radius)) >> 4;
 		$minChunkZ = ((int)($center->z - $radius)) >> 4;

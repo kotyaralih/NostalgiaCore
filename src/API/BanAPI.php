@@ -1,11 +1,8 @@
 <?php
 
 class BanAPI{
-
+	/** @var PocketMinecraftServer */
 	private $server;
-	/*
-	 * I would use PHPDoc Template here but PHPStorm does not recognise it. - @sekjun9878
-	 */
 	/** @var Config */
 	private $whitelist;
 	/** @var Config */
@@ -14,10 +11,14 @@ class BanAPI{
 	private $ops;
 	/** @var Config */
 	private $bannedIPs;
-	
-	public $cmdWhitelist = [];//Command WhiteList
+	/**
+	 * Contains commands that can be used by anyone on the server.
+	 * Keys: lowercased command name. Values don't matter.
+	 * @var array
+	 */
+	public $cmdWhitelist = [];
 
-	function __construct(){
+	public function __construct(){
 		$this->server = ServerAPI::request();
 	}
 
@@ -56,7 +57,6 @@ class BanAPI{
 	/**
 	 * @param mixed $data
 	 * @param string $event
-	 *
 	 * @return boolean
 	 */
 	public function permissionsCheck($data, $event){
@@ -106,11 +106,11 @@ class BanAPI{
 	}
 
 	/**
+	 * Checks is player op or not
 	 * @param string $username
-	 *
 	 * @return boolean
 	 */
-	public function isOp($username){//Is a player op?
+	public function isOp($username){
 		$username = strtolower($username);
 		if($this->server->api->dhandle("op.check", $username) === true){
 			return true;
@@ -121,6 +121,7 @@ class BanAPI{
 	}
 
 	/**
+	 * Bans a player.
 	 * @param string $username
 	 */
 	public function ban($username){
@@ -316,14 +317,16 @@ class BanAPI{
 	}
 
 	/**
-	 * @param string $username
-	 * @param string $reason
+	 * Kicks a player
+	 * @param string $username - player's username
+	 * @param string $reason - kick reason, optional
 	 */
 	public function kick($username, $reason = "No Reason"){
 		$this->commandHandler("kick", [$username, $reason], "console", "");
 	}
 
 	/**
+	 * Unbans a player
 	 * @param string $username
 	 */
 	public function pardon($username){
@@ -331,6 +334,7 @@ class BanAPI{
 	}
 
 	/**
+	 * Bans some ip
 	 * @param string $ip
 	 */
 	public function banIP($ip){
@@ -338,12 +342,16 @@ class BanAPI{
 	}
 
 	/**
+	 * Unbans some ip
 	 * @param string $ip
 	 */
 	public function pardonIP($ip){
 		$this->commandHandler("banip", ["pardon", $ip], "console", "");
 	}
 
+	/**
+	 * Rereads ban list, kick list and banip list
+	 */
 	public function reload(){
 		$this->commandHandler("ban", ["reload"], "console", "");
 		$this->commandHandler("banip", ["reload"], "console", "");
@@ -351,8 +359,8 @@ class BanAPI{
 	}
 
 	/**
+	 * Checks is ip banned or not
 	 * @param string $ip
-	 *
 	 * @return boolean
 	 */
 	public function isIPBanned($ip){
@@ -366,8 +374,8 @@ class BanAPI{
 	}
 
 	/**
+	 * Checks is username banned or not.
 	 * @param string $username
-	 *
 	 * @return boolean
 	 */
 	public function isBanned($username){
@@ -382,8 +390,8 @@ class BanAPI{
 	}
 
 	/**
+	 * Checks is username in the whitelist or not
 	 * @param string $username
-	 *
 	 * @return boolean
 	 */
 	public function inWhitelist($username){

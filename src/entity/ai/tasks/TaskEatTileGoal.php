@@ -5,7 +5,9 @@ class TaskEatTileGoal extends TaskBase
 	public function onStart(EntityAI $ai)
 	{
 		$this->selfCounter = 40;
-		$ai->entity->server->api->player->broadcastPacket($ai->entity->level->players, new EntityEventPacket($ai->entity->eid, EntityEventPacket::ENTITY_ANIM_10));
+		foreach($ai->entity->level->players as $player){
+			if($player->hasEntity($ai->entity)) $player->entityQueueDataPacket(new EntityEventPacket($ai->entity->eid, EntityEventPacket::ENTITY_ANIM_10));
+		}
 	}
 
 	public function onEnd(EntityAI $ai)

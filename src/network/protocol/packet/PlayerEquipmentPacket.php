@@ -24,5 +24,22 @@ class PlayerEquipmentPacket extends RakNetDataPacket{
 		$this->putShort($this->meta);
 		$this->putByte($this->slot);
 	}
-
+	
+	public function eidsToGlobal(Player $p){
+		if($this->localEids){
+			$this->localEids = false;
+			$this->eid = $p->local2GlobalEID[$this->eid] ?? false;
+			if($this->eid === false) return false;
+		}
+		return true;
+	}
+	
+	public function eidsToLocal(Player $p){
+		if(!$this->localEids){
+			$this->localEids = true;
+			$this->eid = $p->global2localEID[$this->eid] ?? false;
+			if($this->eid === false) return false;
+		}
+		return true;
+	}
 }

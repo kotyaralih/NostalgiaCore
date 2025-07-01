@@ -1,16 +1,10 @@
 <?php
 
 class Explosion{
-	
-	public static $specialDrops = [
-		GRASS => DIRT,
-		STONE => COBBLESTONE,
-		COAL_ORE => COAL,
-		DIAMOND_ORE => DIAMOND,
-		REDSTONE_ORE => REDSTONE,
-	];
 	public static $enableExplosions = true;
-	public $level; //Rays
+	/** @var Level */
+	public $level;
+	/** @var Position */
 	public $source;
 	public $size;
 	public $affectedBlocks = [];
@@ -91,18 +85,20 @@ class Explosion{
 							$pk->speedX = $entity->speedX;
 							$pk->speedY = $entity->speedY;
 							$pk->speedZ = $entity->speedZ;
-							$entity->player->dataPacket($pk);
+							$entity->player->entityQueueDataPacket($pk);
 						}
 					}
 				}
 			}
-			$pk = new ExplodePacket; //sound fix
+			$pk = new ExplodePacket;
 			$pk->x = $this->source->x;
 			$pk->y = $this->source->y;
 			$pk->z = $this->source->z;
 			$pk->radius = $this->size;
-			$pk->records = [];
-			$server->api->player->broadcastPacket($this->level->players, $pk);
+			$pk->records = [];  //ExplodePacket doesnt seem to use the records provided by this packet, so no need to send more data
+			foreach ($this->level->players as $player){
+				$player->blockQueueDataPacket($pk);
+			}
 			return;
 		}
 		if($this->size < 0.1 or $server->api->dhandle("entity.explosion", [
@@ -153,10 +149,7 @@ class Explosion{
 				$this->sub_expl($i, $mRays, $j, $k);
 			}
 		}
-		//if($i == 0 or $i == $mRays or $j == 0 or $j == $mRays or $k == 0 or $k == $mRays){
 		
-		
-		$send = [];
 		foreach($server->api->entity->getRadius($this->source, $radius) as $entity){
 			$distance = $this->source->distance($entity);
 			$distByRad = $distance / $this->size;
@@ -179,7 +172,7 @@ class Explosion{
 						$pk->speedX = $entity->speedX;
 						$pk->speedY = $entity->speedY;
 						$pk->speedZ = $entity->speedZ;
-						$entity->player->dataPacket($pk);
+						$entity->player->entityQueueDataPacket($pk);
 					}
 				}
 			}
@@ -191,7 +184,7 @@ class Explosion{
 			$x = $xyz >> 16;
 			$z = $xyz >> 8 & 0xff;
 			$y = $xyz & 0xff;
-			//console("$x $y $z $id $meta");
+			
 			if($id === TNT){
 				$data = [
 					"x" => $x + 0.5,
@@ -212,14 +205,22 @@ class Explosion{
 				}
 			}
 			$this->level->fastSetBlockUpdate($x, $y, $z, 0, 0, true);
-			$send[] = $xyz;
 		}
+		
 		$pk = new ExplodePacket;
 		$pk->x = $this->source->x;
 		$pk->y = $this->source->y;
 		$pk->z = $this->source->z;
 		$pk->radius = $this->size;
-		$pk->records = $send;
-		$server->api->player->broadcastPacket($this->level->players, $pk);
+		$pk->records = [];  //ExplodePacket doesnt seem to use the records provided by this packet, so no need to send more data
+		foreach ($this->level->players as $player){
+			$player->blockQueueDataPacket($pk);
+		}
 	}
+	
+	
+	/**
+	 * @deprecated unused
+	 */
+	public static $specialDrops = [];
 }

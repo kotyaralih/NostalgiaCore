@@ -395,7 +395,7 @@ class Level{
 			$this->server->api->time->set("day", $this);
 		}
 		foreach($this->players as $p){
-			$p->stopSleep();
+			if($p->isSleeping) $p->stopSleep();
 		}
 	}
 	
@@ -817,6 +817,7 @@ class Level{
 		
 		
 		foreach($this->players as $player){
+			if(!$player->spawned) continue;
 			foreach($post as $eid){
 				$e = $this->entityList[$eid] ?? false;
 				if(!($e instanceof Entity)){
