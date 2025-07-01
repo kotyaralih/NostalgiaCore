@@ -1621,7 +1621,9 @@ class Player{
 		}
 
 		if(($resendCnt = count($this->resendQueue)) > 0){
+			$limit = 25;
 			foreach($this->resendQueue as $count => $data){
+				if(!--$limit) break;
 				unset($this->resendQueue[$count]);
 				$this->packetStats[1]++;
 				$this->lag[] = $time - $data->sendtime;

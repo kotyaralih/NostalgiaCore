@@ -1153,27 +1153,33 @@ class Entity extends Position
 				$player->addEntity($this);
 				if($this->level != $player->entity->level || $this->player->gamemode === SPECTATOR) $this->player->setInvisibleFor($player, true, send:false);
 				$pk = new AddPlayerPacket();
+				$pkm = new MovePlayerPacket();
 				$pk->clientID = 0; // $this->player->clientID;
 				$pk->username = $this->player->username;
-				$pk->eid = $this->eid;
+				$pkm->eid = $pk->eid = $this->eid;
+				
 				if($this->player->isInvisibleFor($player)){
-					$pk->x = -256;
-					$pk->y = 128;
-					$pk->z = -256;
-					$pk->yaw = 0;
-					$pk->pitch = 0;
+					$pkm->x = $pk->x = -256;
+					$pkm->y = $pk->y = 128;
+					$pkm->z = $pk->z = -256;
+					$pkm->yaw = $pk->yaw = 0;
+					$pkm->pitch = $pk->pitch = 0;
+					$pkm->bodyYaw = 0;
 				}else{
-					$pk->x = $this->x;
-					$pk->y = $this->y;
-					$pk->z = $this->z;
-					$pk->yaw = $this->yaw;
-					$pk->pitch = $this->pitch;
+					$pkm->x = $pk->x = $this->x;
+					$pkm->y = $pk->y = $this->y;
+					$pkm->z = $pk->z = $this->z;
+					$pkm->yaw = $pk->yaw = $this->yaw;
+					$pkm->pitch = $pk->pitch = $this->pitch;
+					$pkm->bodyYaw = $this->headYaw;
 				}
 				
 				$pk->itemID = 0;
 				$pk->itemAuxValue = 0;
 				$pk->metadata = $this->getMetadata();
 				$player->entityQueueDataPacket($pk);
+				//AddPlayerPacket doesnt read yaw correctly in vanilla(uses PacketUtil::Rot_degreesToChar instead of PacketUtil::Rot_charToDegrees)
+				$player->entityQueueDataPacket($pkm);
 				
 				$pk = new PlayerEquipmentPacket();
 				$pk->eid = $this->eid;
