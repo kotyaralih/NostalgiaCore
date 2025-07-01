@@ -254,7 +254,7 @@ class Tile extends Position{
 			$pk->x = $this->x;
 			$pk->y = $this->y;
 			$pk->z = $this->z;
-			$player->dataPacket($pk);
+			$player->blockQueueDataPacket($pk);
 			$slots = [];
 
 			if(is_array($player->windows[$id])){
