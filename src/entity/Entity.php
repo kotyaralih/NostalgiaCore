@@ -998,9 +998,9 @@ class Entity extends Position
 						$pk->z = $this->z;
 						$pk->yaw = $this->yaw;
 						$pk->pitch = $this->pitch;
-						$pk->bodyYaw = $this->yaw;
+						$pk->bodyYaw = $this->headYaw;
 						foreach($players as $player){
-							if($player->hasEntity($this)) $player->entityQueueDataPacket(clone $pk);
+							if($player->hasEntity($this) && !$this->player->isInvisibleFor($player)) $player->entityQueueDataPacket(clone $pk);
 						}
 					}
 				}
@@ -1149,21 +1149,27 @@ class Entity extends Position
 				if($this->player->connected !== true or $this->player->spawned === false){
 					return false;
 				}
-				if($this->player->gamemode === SPECTATOR){
-					break;
-				}
 				
 				$player->addEntity($this);
-				
+				if($this->level != $player->entity->level || $this->player->gamemode === SPECTATOR) $this->player->setInvisibleFor($player, true, send:false);
 				$pk = new AddPlayerPacket();
 				$pk->clientID = 0; // $this->player->clientID;
 				$pk->username = $this->player->username;
 				$pk->eid = $this->eid;
-				$pk->x = $this->x;
-				$pk->y = $this->y;
-				$pk->z = $this->z;
-				$pk->yaw = 0;
-				$pk->pitch = 0;
+				if($this->player->isInvisibleFor($player)){
+					$pk->x = -256;
+					$pk->y = 128;
+					$pk->z = -256;
+					$pk->yaw = 0;
+					$pk->pitch = 0;
+				}else{
+					$pk->x = $this->x;
+					$pk->y = $this->y;
+					$pk->z = $this->z;
+					$pk->yaw = $this->yaw;
+					$pk->pitch = $this->pitch;
+				}
+				
 				$pk->itemID = 0;
 				$pk->itemAuxValue = 0;
 				$pk->metadata = $this->getMetadata();

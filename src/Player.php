@@ -147,6 +147,8 @@ class Player{
 	 */
 	public $lastLocalEID = 0;
 	
+	public $invisibleFor = [];
+	
 	/**
 	 * @param integer $clientID
 	 * @param string $ip
@@ -324,26 +326,8 @@ class Player{
 				foreach($this->level->entityList as $e){
 					if($e->eid !== $this->entity->eid){
 						if($e->isPlayer()){
-							$pk = new MovePlayerPacket();
-							$pk->eid = $this->entity->eid;
-							$pk->x = -256;
-							$pk->y = 128;
-							$pk->z = -256;
-							$pk->yaw = 0;
-							$pk->pitch = 0;
-							$pk->bodyYaw = 0;
-							$e->player->entityQueueDataPacket($pk);
-							
-							$pk = new MovePlayerPacket();
-							$pk->eid = $e->eid;
-							$pk->x = -256;
-							$pk->y = 128;
-							$pk->z = -256;
-							$pk->yaw = 0;
-							$pk->pitch = 0;
-							$pk->bodyYaw = 0;
-							$this->entityQueueDataPacket($pk);
-							
+							$this->setInvisibleFor($e->player, true);
+							$e->player->setInvisibleFor($this, true);
 						}else{
 							$pk = new RemoveEntityPacket();
 							$pk->eid = $e->eid;
@@ -377,14 +361,8 @@ class Player{
 				$terrain = true;
 				foreach($this->level->players as $player){
 					if($player !== $this and $player->entity instanceof Entity){
-						$pk = new MoveEntityPacket_PosRot;
-						$pk->eid = $player->entity->eid;
-						$pk->x = $player->entity->x;
-						$pk->y = $player->entity->y;
-						$pk->z = $player->entity->z;
-						$pk->yaw = $player->entity->yaw;
-						$pk->pitch = $player->entity->pitch;
-						$this->entityQueueDataPacket($pk);
+						$player->setInvisibleFor($this, false);
+						$this->setInvisibleFor($player, false);
 
 						$pk = new PlayerEquipmentPacket;
 						$pk->eid = $this->eid;
@@ -1049,9 +1027,19 @@ class Player{
 		}
 		return true;
 	}
+	
+	public function invisibilityHandler(&$data, $event){
+		$target = $data["target"];
+		if($target == $this){
+			$for = $data["for"];
+			if($target->level != $for->level || $target->gamemode == SPECTATOR) {
+				$data["status"] = true;
+			}
+		}
+	}
 
 	/**
-	 * @param mixed $data
+	 * @param mixed &$data
 	 * @param string $event
 	 */
 	public function eventHandler($data, $event){
@@ -1282,16 +1270,54 @@ class Player{
 		}
 	}
 	
-	public function makeInvisibleForOnePlayer(Player $player){
-		//TODO rewrite how invisibility is handled
-		$pk = new RemoveEntityPacket;
-		$pk->eid = $this->entity->eid;
-		$player->entityQueueDataPacket($pk);
+	
+	public function isInvisibleFor(Player $player){
+		return isset($this->invisibleFor[$player->CID]);
 	}
+	
+	public function setInvisibleFor(Player $player, $b, $send=true){
+		$data = [
+			"target" => $this,
+			"for" => $player,
+			"status" => $b
+		];
+		
+		$this->server->handle("player.invisible", $data);
+		$b = $data["status"];
+		
+		if($b){
+			$this->invisibleFor[$player->CID] = $b;
+			if($send){
+				$pk = new MovePlayerPacket();
+				$pk->x = -256;
+				$pk->y = 128;
+				$pk->z = -256;
+				$pk->eid = $this->eid;
+				$pk->yaw = 0;
+				$pk->pitch = 0;
+				$pk->headYaw = 0;
+				$player->entityQueueDataPacket($pk);
+			}
+		}else{
+			unset($this->invisibleFor[$player->CID]);
+			if($send){
+				$pk = new MovePlayerPacket();
+				$pk->eid = $this->entity->eid;
+				$pk->x = $this->entity->x;
+				$pk->y = $this->entity->y;
+				$pk->z = $this->entity->z;
+				$pk->yaw = $this->entity->yaw;
+				$pk->pitch = $this->entity->pitch;
+				$pk->bodyYaw = $this->entity->headYaw;
+				$player->entityQueueDataPacket($pk);
+			}
+		}
+	}
+	
 	public function makeInvisibleForAllPlayers(){
-		$pk = new RemoveEntityPacket;
-		$pk->eid = $this->entity->eid;
-		$this->server->api->player->broadcastPacket($this->server->api->player->getAll($this->level), $pk);
+		foreach($this->server->api->player->getA as $player){
+			if($player->CID != $this->CID) $this->setInvisibleFor($player, true);
+		}
 	}
 	public function getGamemode(){
 		switch($this->gamemode){
@@ -1385,10 +1411,14 @@ class Player{
 		}
 		
 		if($this->gamemode === SPECTATOR){
-			$this->makeInvisibleForAllPlayers();
+			foreach($this->server->api->player->getAll() as $player){
+				if($player->CID != $this->CID) $this->setInvisibleFor($player, true);
+			}
 		}
 		if($this->gamemode === CREATIVE){
-			$this->server->api->player->spawnToAllPlayers($this);
+			foreach($this->server->api->player->getAll() as $player){
+				if($player->CID != $this->CID) $this->setInvisibleFor($player, false);
+			}
 		}
 		
 		$this->inventory = $inv;
@@ -1881,6 +1911,11 @@ class Player{
 			if($msg === true and $this->username != "" and $this->spawned !== false){
 				$this->server->api->chat->broadcast($this->username . " left the game: " . $reason);
 			}
+			
+			foreach($this->server->api->player->getAll() as $player){
+				$player->setInvisibleFor($this, false);
+			}
+			
 			$this->spawned = false;
 			console("[INFO] " . FORMAT_AQUA . $this->username . FORMAT_RESET . "[/" . $this->ip . ":" . $this->port . "] logged out due to " . $reason);
 			$this->windows = [];
@@ -2206,6 +2241,7 @@ class Player{
 				$this->evid[] = $this->server->event("player.pickup", [$this, "eventHandler"]);
 				$this->evid[] = $this->server->event("tile.container.slot", [$this, "eventHandler"]);
 				$this->evid[] = $this->server->event("tile.update", [$this, "eventHandler"]);
+				$this->server->addHandler("player.invisible", [$this, "invisibilityHandler"]);
 				$this->lastMeasure = microtime(true);
 				$this->server->schedule(50, [$this, "measureLag"], [], true);
 				
@@ -2706,7 +2742,7 @@ class Player{
 				$pk->pitch = $this->entity->pitch;
 				$pk->bodyYaw = $this->entity->headYaw;
 				foreach($this->entity->level->players as $player){
-					if($player->entity->eid != $this->entity->eid){
+					if($player->entity->eid != $this->entity->eid && !$this->isInvisibleFor($player)){
 						$player->entityQueueDataPacket(clone $pk);
 					}
 				}
@@ -3396,6 +3432,14 @@ class Player{
 		return $this->clientID;
 	}
 	
+	
+	/**
+	 * @deprecated use Player::setInvisibleFor
+	 * @param Player $player
+	 */
+	public function makeInvisibleForOnePlayer(Player $player){
+		$this->setInvisibleFor($player, true);
+	}
 	
 	/**
 	 * @deprecated craft system changed
