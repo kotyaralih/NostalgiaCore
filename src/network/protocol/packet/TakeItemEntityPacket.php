@@ -23,7 +23,7 @@ class TakeItemEntityPacket extends RakNetDataPacket{
 		if(!$this->localEids){
 			$this->localEids = true;
 			$this->eid = $p->global2localEID[$this->eid] ?? false;
-			$this->target = $p->global2localEID[$this->eid] ?? false;
+			$this->target = $p->global2localEID[$this->target] ?? false;
 			if($this->eid === false || $this->target === false) return false;
 		}
 		return true;
