@@ -47,5 +47,6 @@ class EntityEventPacket extends RakNetDataPacket{
 			$this->eid = $p->local2GlobalEID[$this->eid] ?? false;
 			if($this->eid === false) return false;
 		}
+		return true;
 	}
 }
