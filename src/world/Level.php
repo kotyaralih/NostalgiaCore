@@ -216,7 +216,7 @@ class Level{
 		return false;
 	}
 	
-	public function handleMaterialAcceleration(AxisAlignedBB $aabb, $materialType, Entity $entity){
+	public function handleMaterialAcceleration(AxisAlignedBB $aabb, Material $material, Entity $entity){
 		$minX = floor($aabb->minX);
 		$maxX = ceil($aabb->maxX);
 		$minY = floor($aabb->minY);
@@ -232,7 +232,8 @@ class Level{
 			for($y = $minY; $y < $maxY; ++$y){
 				for($z = $minZ; $z < $maxZ; ++$z){
 					[$block, $meta] = $this->level->getBlock($x, $y, $z);
-					if(($materialType == 0 && ($block == WATER || $block == STILL_WATER)) || ($materialType == 1 && ($block == LAVA || $block == STILL_LAVA))){ //TODO better material system
+					$mat = StaticBlock::getMaterial($block);
+					if($material == $mat){
 						$v16 = ($y + 1) - LiquidBlock::getPercentAir($meta);
 						if($maxY >= $v16){
 							$appliedVelocity = true;

@@ -12,9 +12,16 @@ class FenceBlock extends TransparentBlock{
 	
 	public static function canConnectTo(Level $level, $x, $y, $z){
 		$id = $level->level->getBlockID($x, $y, $z);
+		/*if($id == FENCE || $id == FENCE_GATE) return true;
+		if($id == 0) return false;
+		$mat = StaticBlock::getMaterial($id);
+		if($mat->isSolidBlocking() && tile->isCubeShaped()){ //TODO tile->isCubeShaped
+			return $mat != Material::$vegetable;
+		}
+		return false;*/
 		
 		if($id != FENCE && $id != FENCE_GATE){
-			return StaticBlock::getIsSolid($id) && $id != PUMPKIN; //TODO check var6 != null && var6.blockMaterial.isOpaque() && var6.renderAsNormalBlock() ? var6.blockMaterial != Material.pumpkin : false;
+			return StaticBlock::getIsSolid($id) && $id != PUMPKIN;
 		}
 		return true;
 	}

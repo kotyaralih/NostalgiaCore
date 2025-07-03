@@ -404,7 +404,7 @@ class Entity extends Position
 	}
 	
 	public function handleWaterMovement(){
-		if($this->level->handleMaterialAcceleration($this->boundingBox->expand(0, -0.4, 0)->contract(0.001, 0.001, 0.001), 0, $this)){
+		if($this->level->handleMaterialAcceleration($this->boundingBox->expand(0, -0.4, 0)->contract(0.001, 0.001, 0.001), Material::$water, $this)){
 			$this->fallDistance = 0;
 			$this->inWater = true;
 			if($this->fire > 0){

@@ -174,7 +174,7 @@ class ItemEntity extends Entity{
 	}
 	
 	public function handleWaterMovement(){
-		return $this->level->handleMaterialAcceleration($this->boundingBox, 0, $this);
+		return $this->level->handleMaterialAcceleration($this->boundingBox, Material::$water, $this);
 	}
 	
 	public function updateEntityMovement(){
