@@ -1696,7 +1696,6 @@ class Player{
 		$len = 1 + strlen($pk->buffer);
 		$MTU = $this->MTU - 24;
 		if($len > $MTU) return $this->blockQueueDataPacket_big($pk);
-		
 		if(($this->blockUpdateQueueLength + $len) >= $MTU){
 			$this->sendBlockUpdateQueue();
 		}

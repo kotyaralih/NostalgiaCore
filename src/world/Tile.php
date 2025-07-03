@@ -266,7 +266,9 @@ class Tile extends Position{
 					$pk->z = $ob->z;
 					$pk->case1 = 1;
 					$pk->case2 = 2;
-					$this->server->api->player->broadcastPacket($all, $pk);
+					foreach($this->level->players as $pl){
+						$pl->blockQueueDataPacket(clone $pk);
+					}
 					for($s = 0; $s < CHEST_SLOTS; ++$s){
 						$slot = $ob->getSlot($s);
 						if($slot->getID() > AIR and $slot->count > 0){
@@ -283,8 +285,8 @@ class Tile extends Position{
 				$pk->z = $this->z;
 				$pk->case1 = 1;
 				$pk->case2 = 2;
-				foreach($this->level->players as $player){
-					$player->blockQueueDataPacket(clone $pk);
+				foreach($this->level->players as $pl){
+					$pl->blockQueueDataPacket(clone $pk);
 				}
 				
 				for($s = 0; $s < CHEST_SLOTS; ++$s){

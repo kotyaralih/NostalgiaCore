@@ -271,12 +271,13 @@ abstract class Block extends Position{
 	
 	public function getDestroyProgress(Player $player){
 		if($this->breakTime < 0) return 0;
+		if($this->breakTime == 0) return INF; //instabreak
 		$id = $this->getID();
 		$meta = $this->getMetadata();
 		if($player->canDestroy($id, $meta)){
 			return $player->getDestroySpeed($id, $meta) / $this->breakTime / 30;
 		}
-		if($this->breakTime == 0) return INF; //instabreak
+		
 		return (1 / $this->breakTime) / 100;
 	}
 	
