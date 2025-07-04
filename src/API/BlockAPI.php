@@ -413,7 +413,7 @@ class BlockAPI{
 			$exceptedTimeMS = INF;
 			$tooFast = true;
 		}else{
-			$exceptedTimeMS = ceil(1 / $progress)*0.05;
+			$exceptedTimeMS = ceil(PocketMinecraftServer::$BLOCK_BREAKING_PROGRESS / $progress)*0.05;
 			
 		}
 		

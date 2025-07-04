@@ -17,6 +17,7 @@ class PocketMinecraftServer{
 	
 	public $doTick, $levelData, $tiles, $entities, $schedule, $scheduleCnt, $whitelist, $spawn, $difficulty, $stop, $asyncThread;
 	public static $FORCE_20_TPS = false, $KEEP_CHUNKS_LOADED = true, $PACKET_READING_LIMIT = 100;
+	public static $BLOCK_BREAKING_PROGRESS = 0.8;
 	public static $ENABLE_LIGHT_UPDATES = true;
 	function __construct($name, $gamemode = SURVIVAL, $seed = false, $port = 19132, $serverip = "0.0.0.0"){
 		$this->port = (int) $port;
@@ -104,7 +105,9 @@ class PocketMinecraftServer{
 			"disable-emojis-on-signs" => Level::$disableEmojisOnSigns,
 			"allow-dropping-single-items" => Player::$allowDroppingSingleItems,
 			"enable-light-updates" => self::$ENABLE_LIGHT_UPDATES,
+			"min-block-breaking-progress" => self::$BLOCK_BREAKING_PROGRESS,
 		]);
+		self::$BLOCK_BREAKING_PROGRESS = $this->extraprops->get("min-block-breaking-progress");
 		Player::$disableEmojisInChat = $this->extraprops->get("disable-emojis-in-chat");
 		Level::$disableEmojisOnSigns = $this->extraprops->get("disable-emojis-on-signs");
 		Entity::$keepInventory = $this->extraprops->get("keep-items-on-death");
@@ -122,6 +125,9 @@ class PocketMinecraftServer{
 		NetherReactorBlock::$enableReactor = $this->extraprops->get("enable-nether-reactor");
 		if(self::$FORCE_20_TPS){
 			ConsoleAPI::warn("Forcing 20 tps. This may result in higher CPU usage!");
+		}
+		if(self::$BLOCK_BREAKING_PROGRESS > 1){
+			ConsoleAPI::warn("Minimal block breaking progress is more than 1, may cause ghost blocks to appear even for players with extremely low ping!");
 		}
 		if(!self::$ENABLE_LIGHT_UPDATES){
 			ConsoleAPI::warn("Light updates are disabled: this should decrease memory consumption and increase performance, but will prevent all existing light from updating and disable some light-dependant features.");

@@ -433,7 +433,7 @@ class Player{
 	public function directDataPacket(RakNetDataPacket $packet, $reliability = 0, $recover = true){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return [];
-		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
+		if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
 		$packet->encode();
 		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
@@ -455,7 +455,7 @@ class Player{
 	public function dataPacket(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return;
-		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
+		if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
 		$packet->encode();
 		$len = strlen($packet->buffer) + 1;
@@ -482,7 +482,7 @@ class Player{
 	public function dataPacketAlwaysRecover(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return false;
-		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
+		if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
 		$pk = new RakNetPacket(RakNetInfo::DATA_PACKET_0);
 		$pk->data[] = $packet;
@@ -619,7 +619,6 @@ class Player{
 	public function sendBigPacketAlwaysRecover(RakNetDataPacket $pk){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
-		if(isset(ProtocolInfo::EID_PACKETS[$pk->pid()])) if(!$this->convertToLocalEIDPacket($pk)) return false;
 		
 		$pk->encode();
 		$sendtime = microtime(true);
@@ -1689,7 +1688,7 @@ class Player{
 	public function blockQueueDataPacket(RakNetDataPacket $pk){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
-		if(isset(ProtocolInfo::EID_PACKETS[$pk->pid()])) if(!$this->convertToLocalEIDPacket($pk)) return false;
+		if(!$this->convertToLocalEIDPacket($pk)) return false;
 		
 		$pk->encode();
 		
@@ -1709,24 +1708,17 @@ class Player{
 	}
 	
 	public function convertToGlobalEIDPacket(RakNetDataPacket $pk){
-		if($pk->pid() == ProtocolInfo::INTERACT_PACKET){
-			$eid = $pk->eid;
-			$target = $pk->target;
-		}
 		if(!$pk->eidsToGlobal($this)){
-			ConsoleAPI::warn("Failed to convert eids to global in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
-			if($pk->pid() == ProtocolInfo::INTERACT_PACKET){
-				ConsoleAPI::warn("EID: $eid Target: $target");
-			}
-			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
+			//ConsoleAPI::warn("Failed to convert eids to global in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
+			//foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::warn($s);
 			return false;
 		}
 		return true;
 	}
 	public function convertToLocalEIDPacket(RakNetDataPacket $pk){
 		if(!$pk->eidsToLocal($this)){
-			ConsoleAPI::debug("Failed to convert eids to local in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
-			foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::debug($s);
+			//ConsoleAPI::debug("Failed to convert eids to local in {$pk->pid()}! (Player: {$this->ip}:{$this->port}). Stacktrace: ");
+			//foreach(explode("\n", (new Exception())->getTraceAsString()) as $s) ConsoleAPI::debug($s);
 			return false;
 		}
 		return true;
@@ -1740,7 +1732,7 @@ class Player{
 	public function entityQueueDataPacket(RakNetDataPacket $pk){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $pk)) === BaseEvent::DENY) return;
-		if(isset(ProtocolInfo::EID_PACKETS[$pk->pid()])) if(!$this->convertToLocalEIDPacket($pk)) return false;
+		if(!$this->convertToLocalEIDPacket($pk)) return false;
 		$pk->encode();
 		
 		$len = 1 + strlen($pk->buffer);
@@ -1984,7 +1976,7 @@ class Player{
 	public function sendChatMessagePacket(RakNetDataPacket $packet){
 		if($this->connected === false) return false;
 		if(EventHandler::callEvent(new DataPacketSendEvent($this, $packet)) === BaseEvent::DENY) return false;
-		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToLocalEIDPacket($packet)) return false;
+		if(!$this->convertToLocalEIDPacket($packet)) return false;
 		
 		$packet->encode();
 		$len = strlen($packet->buffer) + 1;
@@ -2036,7 +2028,7 @@ class Player{
 		if($this->connected === false){
 			return;
 		}
-		if(isset(ProtocolInfo::EID_PACKETS[$packet->pid()])) if(!$this->convertToGlobalEIDPacket($packet)) return;
+		if(!$this->convertToGlobalEIDPacket($packet)) return;
 
 		if(EventHandler::callEvent(new DataPacketReceiveEvent($this, $packet)) === BaseEvent::DENY){
 			return;
