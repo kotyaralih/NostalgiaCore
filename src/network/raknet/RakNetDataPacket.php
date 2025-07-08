@@ -3,7 +3,7 @@
 abstract class RakNetDataPacket extends stdClass{
 
 	public $buffer = b"";
-	public $reliability = 0;
+	public $reliability = RakNetInfo::RELIABILITY_UNRELIABLE;
 	public $hasSplit = false;
 	public $messageIndex;
 	public $orderIndex;
