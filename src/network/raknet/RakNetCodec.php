@@ -100,10 +100,10 @@ class RakNetCodec{
 		$packet->buffer .= chr(($pk->reliability << 5) | ($pk->hasSplit > 0 ? 0b00010000 : 0));
 		$packet->buffer .= Utils::writeShort(strlen($pk->buffer) << 3);
 		if($pk->reliability === RakNetInfo::RELIABILITY_RELIABLE
-			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_ARRANGED
+			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_ORDERED
 			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_SEQUENCED
 			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_WITHACKRECEIPT
-			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_ARRANGED_WITHACKRECEIPT){
+			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_ORDERED_WITHACKRECEIPT){
 			$packet->buffer .= Utils::writeLTriad($pk->messageIndex);
 		}
 		if($pk->reliability == RakNetInfo::RELIABILITY_UNRELIABLE_SEQUENCED || $pk->reliability == RakNetInfo::RELIABILITY_RELIABLE_SEQUENCED){
@@ -111,9 +111,9 @@ class RakNetCodec{
 		}
 
 		if($pk->reliability === RakNetInfo::RELIABILITY_UNRELIABLE_SEQUENCED
-			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_ARRANGED
+			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_ORDERED
 			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_SEQUENCED
-			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_ARRANGED_WITHACKRECEIPT){
+			or $pk->reliability === RakNetInfo::RELIABILITY_RELIABLE_ORDERED_WITHACKRECEIPT){
 			$packet->buffer .= Utils::writeLTriad($pk->orderIndex);
 			$packet->buffer .= chr($pk->orderChannel);
 		}

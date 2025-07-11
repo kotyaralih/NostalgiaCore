@@ -519,7 +519,7 @@ class Player{
 			
 			$pk = new UnknownPacket;
 			$pk->packetID = $pk->pid();
-			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ARRANGED;
+			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 			
 			$pk->orderChannel = Player::CHATMESSAGE_ORDER_CHANNEL;
 			$pk->orderIndex = $orderIndex;
@@ -556,7 +556,7 @@ class Player{
 			
 			$pk = new UnknownPacket;
 			$pk->packetID = $pk->pid();
-			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ARRANGED;
+			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 			
 			$pk->orderChannel = Player::BLOCKUPDATE_ORDER_CHANNEL;
 			$pk->orderIndex = $orderIndex;
@@ -594,7 +594,7 @@ class Player{
 			
 			$pk = new UnknownPacket;
 			$pk->packetID = $pk->pid();
-			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ARRANGED;
+			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 			
 			$pk->orderChannel = Player::ENTITY_ORDER_CHANNEL;
 			$pk->orderIndex = $orderIndex;
@@ -1700,7 +1700,7 @@ class Player{
 		}
 		
 		$pk->messageIndex = $this->counter[3]++;
-		$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ARRANGED;
+		$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 		$pk->orderChannel = Player::BLOCKUPDATE_ORDER_CHANNEL;
 		$pk->orderIndex = $this->blockUpdateQueueOrderIndex++;
 		@$this->blockUpdateQueue->data[] = $pk;
@@ -1745,7 +1745,7 @@ class Player{
 		
 		$pk->messageIndex = $this->counter[3]++;
 		
-		$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ARRANGED;
+		$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 		$pk->orderChannel = Player::ENTITY_ORDER_CHANNEL;
 		$pk->orderIndex = $this->entityDataQueueOrderIndex++;
 		@$this->entityDataQueue->data[] = $pk;
@@ -1985,7 +1985,7 @@ class Player{
 		
 		if(($this->chatMessagesQueueLength + $len) >= $MTU) $this->sendChatBuffer();
 		
-		$packet->reliability = RakNetInfo::RELIABILITY_RELIABLE_ARRANGED;
+		$packet->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 		$packet->messageIndex = $this->counter[3]++;
 		$packet->orderChannel = Player::CHATMESSAGE_ORDER_CHANNEL;
 		$packet->orderIndex = $this->chatMessagesOrderIndex++;
