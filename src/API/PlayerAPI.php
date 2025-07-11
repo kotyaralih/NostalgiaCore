@@ -294,7 +294,7 @@ class PlayerAPI{
 		if($name === ""){
 			return false;
 		}
-		$query = $this->server->query("SELECT ip,port,name FROM players WHERE name " . ($alike === true ? "LIKE '" . $name . "%'" : "= '" . $name . "'") . ";");
+		$query = $this->server->query("SELECT ip,port,name FROM players WHERE name = '$name';"); //try getting player by name first
 		$players = [];
 		if($query !== false and $query !== true){
 			while(($d = $query->fetchArray(SQLITE3_ASSOC)) !== false){
@@ -307,7 +307,21 @@ class PlayerAPI{
 				}
 			}
 		}
-
+		if($alike === true){
+			$query = $this->server->query("SELECT ip,port,name FROM players WHERE name LIKE '$name%';"); //try getting player with non-full name match if none was found
+			if($query !== false and $query !== true){
+				while(($d = $query->fetchArray(SQLITE3_ASSOC)) !== false){
+					$CID = PocketMinecraftServer::clientID($d["ip"], $d["port"]);
+					if(isset($this->server->clients[$CID])){
+						$players[$CID] = $this->server->clients[$CID];
+						if($multiple === false and $d["name"] === $name){
+							return $players[$CID];
+						}
+					}
+				}
+			}
+		}
+		
 		if($multiple === false){
 			if(count($players) > 0){
 				return array_shift($players);
