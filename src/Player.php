@@ -469,7 +469,7 @@ class Player{
 		}
 
 		$packet->messageIndex = $this->counter[3]++;
-		$packet->reliability = 2;
+		$packet->reliability = RakNetInfo::RELIABILITY_RELIABLE;
 		@$this->buffer->data[] = $packet;
 		$this->bufferLen += 6 + $len;
 		return [];
@@ -497,7 +497,7 @@ class Player{
 		}
 		
 		$packet->messageIndex = $this->counter[3]++;
-		$packet->reliability = 2;
+		$packet->reliability = RakNetInfo::RELIABILITY_RELIABLE;
 		
 		$this->send($pk);
 		$this->packetAlwaysRecoverQueue[$pk->seqNumber] = $pk;
@@ -519,7 +519,7 @@ class Player{
 			
 			$pk = new UnknownPacket;
 			$pk->packetID = $pk->pid();
-			$pk->reliability = 3;
+			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 			
 			$pk->orderChannel = Player::CHATMESSAGE_ORDER_CHANNEL;
 			$pk->orderIndex = $orderIndex;
@@ -556,7 +556,7 @@ class Player{
 			
 			$pk = new UnknownPacket;
 			$pk->packetID = $pk->pid();
-			$pk->reliability = 3;
+			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 			
 			$pk->orderChannel = Player::BLOCKUPDATE_ORDER_CHANNEL;
 			$pk->orderIndex = $orderIndex;
@@ -594,7 +594,7 @@ class Player{
 			
 			$pk = new UnknownPacket;
 			$pk->packetID = $pk->pid();
-			$pk->reliability = 3;
+			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 			
 			$pk->orderChannel = Player::ENTITY_ORDER_CHANNEL;
 			$pk->orderIndex = $orderIndex;
@@ -634,7 +634,7 @@ class Player{
 			
 			$pk = new UnknownPacket;
 			$pk->packetID = $pk->pid();
-			$pk->reliability = 2;
+			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE;
 			$pk->hasSplit = true;
 			$pk->splitCount = $bufCount;
 			$pk->splitID = $bigCnt;
@@ -671,7 +671,7 @@ class Player{
 
 			$pk = new UnknownPacket;
 			$pk->packetID = $packet->pid();
-			$pk->reliability = 2;
+			$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE;
 			$pk->hasSplit = true;
 			$pk->splitCount = $bufCount;
 			$pk->splitID = $bigCnt;
@@ -1700,7 +1700,7 @@ class Player{
 		}
 		
 		$pk->messageIndex = $this->counter[3]++;
-		$pk->reliability = 3;
+		$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 		$pk->orderChannel = Player::BLOCKUPDATE_ORDER_CHANNEL;
 		$pk->orderIndex = $this->blockUpdateQueueOrderIndex++;
 		@$this->blockUpdateQueue->data[] = $pk;
@@ -1745,7 +1745,7 @@ class Player{
 		
 		$pk->messageIndex = $this->counter[3]++;
 		
-		$pk->reliability = 3;
+		$pk->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 		$pk->orderChannel = Player::ENTITY_ORDER_CHANNEL;
 		$pk->orderIndex = $this->entityDataQueueOrderIndex++;
 		@$this->entityDataQueue->data[] = $pk;
@@ -1854,7 +1854,7 @@ class Player{
 		}
 		if($motionSent){
 			$motion->messageIndex = 0; //force 0 cuz reliability 0
-			$motion->reliability = 1;
+			$motion->reliability = RakNetInfo::RELIABILITY_UNRELIABLE_SEQUENCED;
 			$motion->orderIndex = $this->entityDataQueueOrderIndex;
 			$motion->orderChannel = self::ENTITY_ORDER_CHANNEL;
 			$motion->seqIndex = $this->entityMovementQueueSeqIndex++;
@@ -1862,7 +1862,7 @@ class Player{
 		}
 		if($moveSent){
 			$move->messageIndex = 0;
-			$move->reliability = 1;
+			$move->reliability = RakNetInfo::RELIABILITY_UNRELIABLE_SEQUENCED;
 			$move->orderIndex = $this->entityDataQueueOrderIndex;
 			$move->orderChannel = self::ENTITY_ORDER_CHANNEL;
 			$move->seqIndex = $this->entityMovementQueueSeqIndex++;
@@ -1870,7 +1870,7 @@ class Player{
 		}
 		if($headSent){
 			$headyaw->messageIndex = 0;
-			$headyaw->reliability = 1;
+			$headyaw->reliability = RakNetInfo::RELIABILITY_UNRELIABLE_SEQUENCED;
 			$headyaw->orderIndex = $this->entityDataQueueOrderIndex;
 			$headyaw->orderChannel = self::ENTITY_ORDER_CHANNEL;
 			$headyaw->seqIndex = $this->entityMovementQueueSeqIndex++;
@@ -1985,7 +1985,7 @@ class Player{
 		
 		if(($this->chatMessagesQueueLength + $len) >= $MTU) $this->sendChatBuffer();
 		
-		$packet->reliability = 3;
+		$packet->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 		$packet->messageIndex = $this->counter[3]++;
 		$packet->orderChannel = Player::CHATMESSAGE_ORDER_CHANNEL;
 		$packet->orderIndex = $this->chatMessagesOrderIndex++;
