@@ -1,6 +1,12 @@
 <?php
 
 class RakNetCodec{
+	private static function encodeIPAddress(RakNetPacket $packet) {
+		$packet->buffer .= chr(4);
+		$packet->buffer .= Utils::writeInt($packet->ip);
+		$packet->buffer .= Utils::writeShort($packet->port);
+	}
+
 	public static function encode(RakNetPacket $packet){
 		if($packet->buffer != null && strlen($packet->buffer) > 0){
 			return;
@@ -17,7 +23,7 @@ class RakNetCodec{
 			case RakNetInfo::OPEN_CONNECTION_REPLY_2:
 				$packet->buffer .= RakNetInfo::MAGIC;
 				$packet->buffer .= Utils::writeLong($packet->serverID);
-				$packet->buffer .= Utils::writeShort($packet->port);
+				static::encodeIPAddress($packet);
 				$packet->buffer .= Utils::writeShort($packet->mtuSize);
 				$packet->buffer .= chr(0); //Server security
 				break;
