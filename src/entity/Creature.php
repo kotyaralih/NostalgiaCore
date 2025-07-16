@@ -62,7 +62,6 @@ abstract class Creature extends Living{
 		}
 		if(!$player->hasEntity($this)){
 			$player->addEntity($this);
-			console("ADD MOB");
 			$pk = new AddMobPacket;
 			$pk->eid = $this->eid;
 			$pk->type = $this->type;
