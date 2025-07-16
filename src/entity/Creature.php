@@ -56,33 +56,34 @@ abstract class Creature extends Living{
 	public function getArmorValue(){
 		return 0;
 	}
-	public function spawn($player){
+	public function spawn(Player $player){
 		if($player->eid === $this->eid or $this->closed !== false or ($player->level !== $this->level and $this->class !== ENTITY_PLAYER)){
 			return false;
 		}
-		$player->addEntity($this);
-		$pk = new AddMobPacket;
-		$pk->eid = $this->eid;
-		$pk->type = $this->type;
-		$pk->x = $this->x;
-		$pk->y = $this->y;
-		$pk->z = $this->z;
-		$pk->yaw = $this->yaw;
-		$pk->pitch = $this->pitch;
-		$pk->metadata = $this->getMetadata();				
-		$player->entityQueueDataPacket($pk);
-				
-		$pk = new SetEntityMotionPacket;
-		$pk->eid = $this->eid;
-		$pk->speedX = $this->speedX;
-		$pk->speedY = $this->speedY;
-		$pk->speedZ = $this->speedZ;
-		$player->entityQueueDataPacket($pk);
-		
-		if($this->linkedEntity != 0 && $this->isRider){
-			$player->eventHandler(["rider" => $this->eid, "riding" => $this->linkedEntity, "type" => 0], "entity.link");
+		if(!$player->hasEntity($this)){
+			$player->addEntity($this);
+			console("ADD MOB");
+			$pk = new AddMobPacket;
+			$pk->eid = $this->eid;
+			$pk->type = $this->type;
+			$pk->x = $this->x;
+			$pk->y = $this->y;
+			$pk->z = $this->z;
+			$pk->yaw = $this->yaw;
+			$pk->pitch = $this->pitch;
+			$pk->metadata = $this->getMetadata();
+			$player->entityQueueDataPacket($pk);
+			
+			$pk = new SetEntityMotionPacket;
+			$pk->eid = $this->eid;
+			$pk->speedX = $this->speedX;
+			$pk->speedY = $this->speedY;
+			$pk->speedZ = $this->speedZ;
+			$player->entityQueueDataPacket($pk);
+			$this->sendLinkPackets($player);
+			return true;
 		}
-		return true;
+		return false;
 	}
 	
 }

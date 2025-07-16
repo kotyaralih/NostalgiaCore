@@ -3117,7 +3117,7 @@ class Player{
 				}
 				break;
 			case ProtocolInfo::SET_ENTITY_LINK_PACKET:
-				if($this->entity->linkedEntity != 0){
+				if($this->entity->riding != 0){
 					$this->entity->stopRiding();
 				}
 				break;
@@ -3127,10 +3127,10 @@ class Player{
 				$this->entity->moveForward = $packet->moveForward;
 				$this->entity->moveStrafing = $packet->moveStrafe;
 				
-				if($this->entity->linkedEntity != 0){
-					$e = $this->entity->level->entityList[$this->entity->linkedEntity] ?? false;
+				if($this->entity->riding != 0){
+					$e = $this->entity->level->entityList[$this->entity->riding] ?? false;
 					if($e === false) {
-						ConsoleAPI::warn("Player is riding on entity that doesnt exist in world! ({$this->iusername}, {$this->entity->linkedEntity})");
+						ConsoleAPI::warn("Player is riding on entity that doesnt exist in world! ({$this->iusername}, {$this->entity->riding})");
 						$this->entity->stopRiding();
 						break;
 					}

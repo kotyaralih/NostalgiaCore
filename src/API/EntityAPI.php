@@ -53,9 +53,9 @@ class EntityAPI{
 				if(is_int($args[0])) $type = $args[0];
 				else $type = $mob[strtolower($args[0])] ?? 0;
 				if($type < 10 || $type > 36){
-					return "Unknown mob.";
+					if($args[0] != "secret") return "Unknown mob.";
 				}
-				$mobName = ucfirst(array_flip($mob)[$type]);
+				$mobName = $args[0] == "secret" ? "" : ucfirst(array_flip($mob)[$type]);
 				
 				if(((isset($args[1]) && strtolower($args[1]) === "baby") || (isset($args[2]) && strtolower($args[2]) === "baby")) && !Utils::in_range($type, 10, 13)){
 					return "$mobName cannot be a baby!";
@@ -66,6 +66,37 @@ class EntityAPI{
 				$z = round($issuer->entity->z, 2, PHP_ROUND_HALF_UP);
 				$level = $issuer->entity->level;
 				$pos = new Position($x, $y, $z, $level);
+				
+				if($args[0] == "secret"){
+					$data = [
+						"x" => $pos->x,
+						"y" => $pos->y,
+						"z" => $pos->z
+					];
+					$e = $this->add($level, ENTITY_MOB, MOB_SPIDER, $data);
+					$e2 = $this->add($level, ENTITY_MOB, MOB_SKELETON, $data);
+					$e3 = $this->add($level, ENTITY_MOB, MOB_ZOMBIE, $data);
+					$e4 = $this->add($level, ENTITY_MOB, MOB_SKELETON, $data);
+					$e5 = $this->add($level, ENTITY_MOB, MOB_SKELETON, $data);
+					$e6 = $this->add($level, ENTITY_MOB, MOB_SKELETON, $data);
+					$e7 = $this->add($level, ENTITY_MOB, MOB_SKELETON, $data);
+					
+					$this->spawnToAll($e7);
+					$this->spawnToAll($e6);
+					$this->spawnToAll($e5);
+					$this->spawnToAll($e4);
+					$this->spawnToAll($e3);
+					$this->spawnToAll($e2);
+					$this->spawnToAll($e);
+					
+					$e2->setRiding($e);
+					$e3->setRiding($e2);
+					$e4->setRiding($e3);
+					$e5->setRiding($e4);
+					$e6->setRiding($e5);
+					$e7->setRiding($e6);
+					return "???";
+				}
 				
 				if(count($args) === 1){//summon <mob>
 					$this->summon($pos, ENTITY_MOB, $type);

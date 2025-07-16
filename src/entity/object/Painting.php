@@ -197,15 +197,20 @@ class Painting extends Entity{
 		return $data;
 	}
 
-	public function spawn($player){
-		$player->addEntity($this);
-		$pk = new AddPaintingPacket;
-		$pk->eid = $this->eid;
-		$pk->x = (int) $this->xPos;
-		$pk->y = (int) $this->yPos;
-		$pk->z = (int) $this->zPos;
-		$pk->direction = $this->direction;
-		$pk->title = $this->motive;
-		$player->entityQueueDataPacket($pk);
+	public function spawn(Player $player){
+		if(!$player->hasEntity($this)){
+			$player->addEntity($this);
+			$pk = new AddPaintingPacket;
+			$pk->eid = $this->eid;
+			$pk->x = (int) $this->xPos;
+			$pk->y = (int) $this->yPos;
+			$pk->z = (int) $this->zPos;
+			$pk->direction = $this->direction;
+			$pk->title = $this->motive;
+			$player->entityQueueDataPacket($pk);
+			$this->sendLinkPackets($player);
+			return true;
+		}
+		return false;
 	}
 }

@@ -245,13 +245,11 @@ class Arrow extends Entity{
 			
 			$this->doBlocksCollision();
 		}
-		
-		
-		
 	}
 	
-	public function spawn($player){
-		if($this->type === OBJECT_ARROW){
+	public function spawn(Player $player){
+		if(!($this->type == OBJECT_ARROW)) return false;
+		if(!$player->hasEntity($this)){
 			$player->addEntity($this);
 			$pk = new AddEntityPacket;
 			$pk->eid = $this->eid;
@@ -264,6 +262,9 @@ class Arrow extends Entity{
 			$pk->speedY = $this->speedY;
 			$pk->speedZ = $this->speedZ;
 			$player->entityQueueDataPacket($pk);
+			$this->sendLinkPackets($player);
+			return true;
 		}
+		return false;
 	}
 }

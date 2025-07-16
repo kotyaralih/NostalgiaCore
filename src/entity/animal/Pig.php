@@ -34,7 +34,7 @@ class Pig extends Animal implements Rideable{
 	}
 	
 	public function canRide($e){
-		return $this->isSaddled() && $this->linkedEntity == 0 && $e->linkedEntity == 0;
+		return $this->isSaddled() && $this->rider == 0;
 	}
 	
 	public function updateEntityMovement(){

@@ -73,10 +73,8 @@ class Entity extends Position
 	public $server;
 	private $isStatic;
 	public $level;
-	public $isRiding = false;
 	public $lastUpdate;
-	public $linkedEntity = 0;
-	public $isRider = false;
+	
 	public $check = true;
 	public $width = 1;
 	public $height = 1;
@@ -117,6 +115,18 @@ class Entity extends Position
 	public $notOnGroundTicks = 0;
 	
 	public $moveStrafing, $moveForward;
+	
+	
+	/**
+	 * Stores EID of the entity that is riding on this entity.
+	 * @var integer
+	 */
+	public $rider = 0;
+	/**
+	 * Stores EID of the entity that is being ridden by this entity.
+	 * @var integer
+	 */
+	public $riding = 0;
 	
 	public function __construct(Level $level, $eid, $class, $type = 0, $data = [])
 	{
@@ -727,12 +737,47 @@ class Entity extends Position
 		return false;
 	}
 	
+	public function getRidingHeight(){
+		return $this->yOffset;
+	}
+	
+	public function getRideHeight(){
+		return $this->height * 0.75;
+	}
+	
 	public function isInVoid(){
 		return $this->y < -1.6;
 	}
 	
 	public function handlePlayerSearcher(Player $player, $dist){
 		
+	}
+	
+	public function positionRider($dead){
+		if($this->rider != 0){
+			$e = $this->level->entityList[$this->rider];
+			if($e === false) return;
+			
+			$v3 = $this->getRideHeight();
+			if($dead || $this->dead) $v3 = 0.01;
+			$v4 = $e->getRidingHeight();
+			$e->setPos($this->x, $this->y + $v3+$v4, $this->z);
+		}
+	}
+	
+	public function handleRiding(){
+		if($this->riding != 0){
+			$e = $this->server->api->entity->get($this->riding);
+			if($e instanceof Entity){
+				$this->speedX = $this->speedY = $this->speedZ = 0;
+				
+				$e->positionRider($e->dead);
+				
+				$this->fallDistance = 0;
+			}else{
+				ConsoleAPI::warn("$this is riding invalid entity({$this->riding})");
+			}
+		}
 	}
 	
 	public function update($now){
@@ -750,6 +795,10 @@ class Entity extends Position
 			return false;
 		}
 		++$this->counter;
+		
+		if($this->riding != 0){
+			$this->handleRiding();
+		}
 		
 		if($this->isStatic === false){
 			if(!$this->isPlayer()){
@@ -1135,66 +1184,80 @@ class Entity extends Position
 		$this->server->api->dhandle("entity.metadata", $this);
 	}
 
+	public function sendLinkPackets(Player $player){
+		if($this->rider != 0){
+			$e = $this->level->entityList[$this->rider] ?? false;
+			
+			if($e != false) {
+				$e->spawn($player);
+				$player->eventHandler(["rider" => $this->rider, "riding" => $this->eid, "type" => 0], "entity.link");
+			}
+		}
+		if($this->riding != 0){
+			$e = $this->level->entityList[$this->riding] ?? false;
+			
+			if($e != false) {
+				$e->spawn($player);
+				$player->eventHandler(["rider" => $this->eid, "riding" => $this->riding, "type" => 0], "entity.link");
+			}
+		}
+	}
+	
 	/**
 	 * @param Player $player
 	 * @return boolean
 	 */
-	public function spawn($player)
+	public function spawn(Player $player)
 	{
 		if($player->eid === $this->eid or $this->closed !== false or ($player->level !== $this->level and $this->class !== ENTITY_PLAYER)){
 			return false;
 		}
-		switch($this->class) {
-			case ENTITY_PLAYER:
-				if($this->player->connected !== true or $this->player->spawned === false){
-					return false;
-				}
-				
-				$player->addEntity($this);
-				if($this->level != $player->entity->level || $this->player->gamemode === SPECTATOR) $this->player->setInvisibleFor($player, true, send:false);
-				$pk = new AddPlayerPacket();
-				$pkm = new MovePlayerPacket();
-				$pk->clientID = 0; // $this->player->clientID;
-				$pk->username = $this->player->username;
-				$pkm->eid = $pk->eid = $this->eid;
-				
-				if($this->player->isInvisibleFor($player)){
-					$pkm->x = $pk->x = -256;
-					$pkm->y = $pk->y = 128;
-					$pkm->z = $pk->z = -256;
-					$pkm->yaw = $pk->yaw = 0;
-					$pkm->pitch = $pk->pitch = 0;
-					$pkm->bodyYaw = 0;
-				}else{
-					$pkm->x = $pk->x = $this->x;
-					$pkm->y = $pk->y = $this->y;
-					$pkm->z = $pk->z = $this->z;
-					$pkm->yaw = $pk->yaw = $this->yaw;
-					$pkm->pitch = $pk->pitch = $this->pitch;
-					$pkm->bodyYaw = $this->headYaw;
-				}
-				
-				$pk->itemID = 0;
-				$pk->itemAuxValue = 0;
-				$pk->metadata = $this->getMetadata();
-				$player->entityQueueDataPacket($pk);
-				//AddPlayerPacket doesnt read yaw correctly in vanilla(uses PacketUtil::Rot_degreesToChar instead of PacketUtil::Rot_charToDegrees)
-				$player->entityQueueDataPacket($pkm);
-				
-				$pk = new PlayerEquipmentPacket();
-				$pk->eid = $this->eid;
-				$pk->item = $this->player->getSlot($this->player->slot)->getID();
-				$pk->meta = $this->player->getSlot($this->player->slot)->getMetadata();
-				$pk->slot = 0;
-				$player->entityQueueDataPacket($pk);
-				$this->player->sendArmor($player);
-				break;
+		if($this->class != ENTITY_PLAYER) return false;
+		if($this->player->connected !== true or $this->player->spawned === false) return false;
+		if(!$player->hasEntity($this)){
+			$player->addEntity($this);
+			if($this->level != $player->entity->level || $this->player->gamemode === SPECTATOR) $this->player->setInvisibleFor($player, true, send:false);
+			$pk = new AddPlayerPacket();
+			$pkm = new MovePlayerPacket();
+			$pk->clientID = 0; // $this->player->clientID;
+			$pk->username = $this->player->username;
+			$pkm->eid = $pk->eid = $this->eid;
+			
+			if($this->player->isInvisibleFor($player)){
+				$pkm->x = $pk->x = -256;
+				$pkm->y = $pk->y = 128;
+				$pkm->z = $pk->z = -256;
+				$pkm->yaw = $pk->yaw = 0;
+				$pkm->pitch = $pk->pitch = 0;
+				$pkm->bodyYaw = 0;
+			}else{
+				$pkm->x = $pk->x = $this->x;
+				$pkm->y = $pk->y = $this->y;
+				$pkm->z = $pk->z = $this->z;
+				$pkm->yaw = $pk->yaw = $this->yaw;
+				$pkm->pitch = $pk->pitch = $this->pitch;
+				$pkm->bodyYaw = $this->headYaw;
+			}
+			
+			$pk->itemID = 0;
+			$pk->itemAuxValue = 0;
+			$pk->metadata = $this->getMetadata();
+			$player->entityQueueDataPacket($pk);
+			//AddPlayerPacket doesnt read yaw correctly in vanilla(uses PacketUtil::Rot_degreesToChar instead of PacketUtil::Rot_charToDegrees)
+			$player->entityQueueDataPacket($pkm);
+			
+			$pk = new PlayerEquipmentPacket();
+			$pk->eid = $this->eid;
+			$pk->item = $this->player->getSlot($this->player->slot)->getID();
+			$pk->meta = $this->player->getSlot($this->player->slot)->getMetadata();
+			$pk->slot = 0;
+			$player->entityQueueDataPacket($pk);
+			$this->player->sendArmor($player);
+			
+			$this->sendLinkPackets($player);
+			return true;
 		}
-		
-		if($this->linkedEntity != 0 && $this->isRider){
-			$player->eventHandler(["rider" => $this->eid, "riding" => $this->linkedEntity, "type" => 0], "entity.link"); //TODO fix it
-		}
-		
+		return false;
 	}
 	
 	public function counterUpdate(){
@@ -1222,6 +1285,12 @@ class Entity extends Position
 	{
 		if($this->closed === false){
 			$this->closed = true;
+			
+			
+			$rider = $this->level->entityList[$this->rider] ?? false;
+			if($rider != false) $rider->setRiding(null);
+			$this->setRiding(null);
+			
 			$this->server->api->entity->remove($this->eid);
 		}
 	}
@@ -1476,21 +1545,6 @@ class Entity extends Position
 		return $this->setHealth(min(20, $this->getHealth() + ((int) $health)), $cause, allowHarm: false);
 	}
 	
-	public function stopRiding(){
-		if(isset($this->level->entityList[$this->linkedEntity])){
-			$e = $this->level->entityList[$this->linkedEntity];
-			if(!$e->dead && !$e->closed){
-				$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => 0, "type" => 1]);
-				$this->server->api->dhandle("entity.link", ["rider" => $this->linkedEntity, "riding" => 0, "type" => 1]);
-				$this->isRider = false;
-				$this->linkedEntity = 0;
-				$e->linkedEntity = 0;
-			}
-		}else{
-			$this->linkedEntity = 0;
-		}
-	}
-	
 	public function setPos($x, $y, $z){
 		$this->x = $x;
 		$this->y = $y;
@@ -1505,25 +1559,32 @@ class Entity extends Position
 		$this->boundingBox->maxZ = $z + $this->radius;
 	}
 	
-	public function setRiding(Entity $e, $type = 0)
+	/**
+	 * Sets entity that is being ridden by this entity.
+	 * @param ?Entity $riding
+	 */
+	public function setRiding(?Entity $riding)
 	{
-		if(!isset($this->level->entityList[$e->eid])){
-			ConsoleAPI::warn("Tried linking $this with $e that doesnt exist in the world!");
-			return;
-		}
-		
-		if($this->linkedEntity == $e->eid || $e->eid == $this->eid){
-			$this->linkedEntity = 0;
-			$e->linkedEntity = 0;
-			$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => $e->eid, "type" => $type]);
+		if($riding == null){
+			if($this->riding != 0){
+				$riding = $this->server->api->entity->get($this->riding);
+				if($riding instanceof Entity){
+					$riding->rider = 0;
+				}else{
+					ConsoleAPI::warn("SR Failed to get entity that is being ridden by $this");
+				}
+			}
+			$this->riding = 0;
 		}else{
-			$this->linkedEntity = $e->eid;
-			$e->linkedEntity = $this->eid;
-			$this->isRider = true;
-			$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => $e->eid, "type" => 0]);
+			if(!isset($this->level->entityList[$riding->eid])){
+				ConsoleAPI::warn("Tried linking $this with $riding that doesnt exist in the world!");
+				return;
+			}
+			$this->riding = $riding->eid;
+			$riding->rider = $this->eid;
+			
 		}
-		
-		
+		$this->server->api->dhandle("entity.link", ["rider" => $this->eid, "riding" => $this->riding, "type" => 0]);
 	}
 
 	public function isPlayer()
@@ -1725,7 +1786,7 @@ class Entity extends Position
 
 	public function __toString()
 	{
-		return "Entity(x={$this->x},y={$this->y},z={$this->z},level=" . $this->level->getName() . ",class={$this->class},type={$this->type})";
+		return "Entity(eid={$this->eid},x={$this->x},y={$this->y},z={$this->z},level=" . $this->level->getName() . ",class={$this->class},type={$this->type})";
 	}
 	
 	/**
@@ -1741,7 +1802,7 @@ class Entity extends Position
 	 */
 	/**
 	 *
-	 * @deprecated Use {@link getHeightOf} or {@link getWidthOf} instead
+	 * @deprecated Use {@link Entity::getHeightOf} or {@link Entity::getWidthOf} instead
 	 * @throws Exception
 	 */
 	public static function getSizeOf($e)
@@ -1751,12 +1812,18 @@ class Entity extends Position
 	
 	
 	/**
-	 *
-	 * @deprecated Use {@link getHeight} or {@link getWidth} instead
+	 * @deprecated Use {@link Entity::getHeight} or {@link Entity::getWidth} instead
 	 * @throws Exception
 	 */
 	public function getSize()
 	{
 		throw new Exception("Use getHeight or getWidth method instead of this.");
+	}
+	
+	/**
+	 * @deprecated use {@link Entity::setRiding} instead
+	 */
+	public function stopRiding(){
+		$this->setRiding(null);
 	}
 }

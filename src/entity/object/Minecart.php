@@ -72,6 +72,10 @@ class Minecart extends Vehicle{
 		return !$this->dead;
 	}
 	
+	public function getRideHeight(){
+		return ($this->height * 0) - 0.3;
+	}
+	
 	public function getDrops(){
 		return [
 			[MINECART, 0, 1]
@@ -166,8 +170,8 @@ class Minecart extends Vehicle{
 		$this->speedX = ($speedTotal * $matXDiff) / $matDiffTotal;
 		$this->speedZ = ($speedTotal * $matZDiff) / $matDiffTotal;
 		
-		if($this->linkedEntity != 0 && !$this->isRider){
-			$rider = $this->level->entityList[$this->linkedEntity] ?? false;
+		if($this->rider != 0){
+			$rider = $this->level->entityList[$this->rider] ?? false;
 			if($rider instanceof Entity && ($rider->isPlayer() || $rider->class == ENTITY_MOB)){
 				if($rider->moveForward > 0){
 					$v32 = sin($this->yaw * M_PI / 180);
@@ -201,7 +205,7 @@ class Minecart extends Vehicle{
 		$this->setPos($this->x, $this->y + $this->yOffset + 0.00001, $this->z);
 		$dx = $this->speedX;
 		$dz = $this->speedZ;
-		if($this->linkedEntity != 0 && !$this->isRider){
+		if($this->rider != 0){
 			$dx *= 0.75;
 			$dz *= 0.75;
 		}
@@ -283,7 +287,7 @@ class Minecart extends Vehicle{
 	
 	
 	public function applyNaturalSlowdown(){
-		$mult = $this->linkedEntity != 0 && !$this->isRider ? 0.997 : 0.96;
+		$mult = $this->rider != 0 ? 0.997 : 0.96;
 		
 		$this->speedX *= $mult;
 		$this->speedY = 0;
@@ -394,7 +398,7 @@ class Minecart extends Vehicle{
 				$ind = "$chunkX $chunkZ";
 				foreach($this->level->entityListPositioned[$ind] ?? [] as $entid){
 					$e = ($this->level->entityList[$entid] ?? null);
-					if($e instanceof Entity && $e->eid != $this->eid && $e->eid != $this->linkedEntity){
+					if($e instanceof Entity && $e->eid != $this->eid && $e->eid != $this->rider){
 						if($e->isPushable() && $e->boundingBox->intersectsWith($bb)){
 							if($e->isPlayer()){
 								$this->applyCollision($e);
@@ -412,38 +416,35 @@ class Minecart extends Vehicle{
 	public function close()
 	{
 		parent::close();
-		if($this->linkedEntity != 0){
-			$ent = $this->level->entityList[$this->linkedEntity] ?? false;
-			if($ent instanceof Entity){
-				$ent->stopRiding();
-			}else{
-				ConsoleAPI::warn("$this is being ridden by invalid entity {$this->linkedEntity}");
-			}
-		}
 	}
 	
 	public function isPushable(){
 		return false; //TODO replace with true
 	}
 	
-	public function spawn($player){
-		$player->addEntity($this);
-		$pk = new AddEntityPacket;
-		$pk->eid = $this->eid;
-		$pk->type = $this->type;
-		$pk->x = $this->x;
-		$pk->y = $this->y; //+ $this->yOffset;
-		$pk->z = $this->z;
-		$pk->yaw = $this->yaw;
-		$pk->pitch = $this->pitch;
-		$player->entityQueueDataPacket($pk);
-		
-		$pk = new SetEntityMotionPacket;
-		$pk->eid = $this->eid;
-		$pk->speedX = $this->speedX;
-		$pk->speedY = $this->speedY;
-		$pk->speedZ = $this->speedZ;
-		$player->entityQueueDataPacket($pk);
+	public function spawn(Player $player){
+		if(!$player->hasEntity($this)){
+			$player->addEntity($this);
+			$pk = new AddEntityPacket;
+			$pk->eid = $this->eid;
+			$pk->type = $this->type;
+			$pk->x = $this->x;
+			$pk->y = $this->y; //+ $this->yOffset;
+			$pk->z = $this->z;
+			$pk->yaw = $this->yaw;
+			$pk->pitch = $this->pitch;
+			$player->entityQueueDataPacket($pk);
+			
+			$pk = new SetEntityMotionPacket;
+			$pk->eid = $this->eid;
+			$pk->speedX = $this->speedX;
+			$pk->speedY = $this->speedY;
+			$pk->speedZ = $this->speedZ;
+			$player->entityQueueDataPacket($pk);
+			$this->sendLinkPackets($player);
+			return true;
+		}
+		return false;
 	}
 	
 	public function interactWith(Entity $e, $action){
@@ -451,14 +452,14 @@ class Minecart extends Vehicle{
 			$e->setRiding($this);
 			return true;
 		}
-		if($action === InteractPacket::ACTION_ATTACK && $e->eid == $this->linkedEntity){
+		if($action === InteractPacket::ACTION_ATTACK && $e->eid == $this->rider){
 			return false; //TODO more vanilla way?
 		}
 		parent::interactWith($e, $action);
 	}
 	public function canRide($e)
 	{
-		return $this->linkedEntity == 0 && $e->linkedEntity == 0;
+		return $this->rider == 0;
 	}
 
 }

@@ -65,18 +65,24 @@ class PrimedTNT extends Entity{
 		$this->lastUpdate = $now;
 	}
 	
-	public function spawn($player){
-		$player->addEntity($this);
-		$pk = new AddEntityPacket;
-		$pk->eid = $this->eid;
-		$pk->type = $this->type;
-		$pk->x = $this->x;
-		$pk->y = $this->y;
-		$pk->z = $this->z;
-		$pk->did = 1;
-		$pk->speedX = $this->speedX;
-		$pk->speedY = $this->speedY;
-		$pk->speedZ = $this->speedZ;
-		$player->entityQueueDataPacket($pk);
+	public function spawn(Player $player){
+		if(!$player->hasEntity($this)){
+			$player->addEntity($this);
+			$pk = new AddEntityPacket;
+			$pk->eid = $this->eid;
+			$pk->type = $this->type;
+			$pk->x = $this->x;
+			$pk->y = $this->y;
+			$pk->z = $this->z;
+			$pk->did = 1;
+			$pk->speedX = $this->speedX;
+			$pk->speedY = $this->speedY;
+			$pk->speedZ = $this->speedZ;
+			$player->entityQueueDataPacket($pk);
+			$this->sendLinkPackets($player);
+			return true;
+		}
+		return false;
+		
 	}
 }

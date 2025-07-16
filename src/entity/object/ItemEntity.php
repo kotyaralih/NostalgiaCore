@@ -42,27 +42,32 @@ class ItemEntity extends Entity{
 		
 	}
 	
-	public function spawn($player)
+	public function spawn(Player $player)
 	{
-		$player->addEntity($this);
-		$pk = new AddItemEntityPacket();
-		$pk->eid = $this->eid;
-		$pk->x = $this->x;
-		$pk->y = $this->y;
-		$pk->z = $this->z;
-		$pk->yaw = $this->yaw;
-		$pk->pitch = $this->pitch;
-		$pk->roll = 0;
-		$pk->item = BlockAPI::getItem($this->itemID, $this->meta, $this->stack);
-		$pk->metadata = $this->getMetadata();
-		$player->entityQueueDataPacket($pk);
-		
-		$pk = new SetEntityMotionPacket();
-		$pk->eid = $this->eid;
-		$pk->speedX = $this->speedX;
-		$pk->speedY = $this->speedY;
-		$pk->speedZ = $this->speedZ;
-		$player->entityQueueDataPacket($pk);
+		if(!$player->hasEntity($this)){
+			$player->addEntity($this);
+			$pk = new AddItemEntityPacket();
+			$pk->eid = $this->eid;
+			$pk->x = $this->x;
+			$pk->y = $this->y;
+			$pk->z = $this->z;
+			$pk->yaw = $this->yaw;
+			$pk->pitch = $this->pitch;
+			$pk->roll = 0;
+			$pk->item = BlockAPI::getItem($this->itemID, $this->meta, $this->stack);
+			$pk->metadata = $this->getMetadata();
+			$player->entityQueueDataPacket($pk);
+			
+			$pk = new SetEntityMotionPacket();
+			$pk->eid = $this->eid;
+			$pk->speedX = $this->speedX;
+			$pk->speedY = $this->speedY;
+			$pk->speedZ = $this->speedZ;
+			$player->entityQueueDataPacket($pk);
+			$this->sendLinkPackets($player);
+			return true;
+		}
+		return false;
 	}
 	
 	

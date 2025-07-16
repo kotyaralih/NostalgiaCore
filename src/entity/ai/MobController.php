@@ -92,6 +92,7 @@ class MobController
 	
 	public function movementTick(){
 		$this->entity->moveForward = 0;
+		
 		if($this->updateMove){
 			$this->updateMove = false;
 			$v1 = floor($this->entity->boundingBox->minY + 0.5);
