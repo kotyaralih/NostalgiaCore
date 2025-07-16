@@ -277,7 +277,7 @@ class Level{
 						$blockBounds = StaticBlock::$prealloc[$bid]::getCollisionBoundingBoxes($this, $x, $y, $z, $e); //StaticBlock::getBoundingBoxForBlockCoords($b, $x, $y, $z);
 						
 						foreach($blockBounds as $blockBound){
-							if($aABB->intersectsWith($blockBound)) $aABBs[] = $blockBound;
+							if($aABB->intersectsWith_($blockBound)) $aABBs[] = $blockBound;
 						}
 					}
 				}

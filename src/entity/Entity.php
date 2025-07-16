@@ -586,7 +586,7 @@ class Entity extends Position
 		}
 		
 	}
-	
+	  
 	public function move($dx, $dy, $dz){
 		$movX = $this->x;
 		$movY = $this->y;
@@ -610,6 +610,7 @@ class Entity extends Position
 		
 		
 		$aaBBs = $this->level->getCubes($this, $this->boundingBox->addCoord($dx, $dy, $dz));
+		
 		foreach($aaBBs as $bb){
 			$dy = $bb->calculateYOffset($this->boundingBox, $dy);
 		}
@@ -618,13 +619,12 @@ class Entity extends Position
 		foreach($aaBBs as $bb){
 			$dx = $bb->calculateXOffset($this->boundingBox, $dx);
 		}
-		$this->boundingBox->offset($dx, 0, 0);
+		$this->boundingBox->offset($dx, 0, 0); 
 		
 		foreach($aaBBs as $bb){
 			$dz = $bb->calculateZOffset($this->boundingBox, $dz);
 		}
 		$this->boundingBox->offset(0, 0, $dz);
-		
 		
 		$fallingFlag = $this->onGround || $savedDY != $dy && $savedDY < 0;
 		
@@ -666,6 +666,7 @@ class Entity extends Position
 				$this->modifySpeedY = true;
 				$this->modifedSpeedY = 0.5;
 			}
+			
 		}
 		
 		$this->x = ($this->boundingBox->minX + $this->boundingBox->maxX) / 2;
@@ -676,7 +677,6 @@ class Entity extends Position
 		$this->onGround = $savedDY != $dy && $savedDY < 0.0;
 		$this->isCollided = $this->isCollidedHorizontally || $this->isCollidedVertically;
 		$this->updateFallState($this->speedY);
-		
 		
 		if($savedDX != $dx) $this->speedX = 0;
 		if($savedDY != $dy) $this->speedY = 0;

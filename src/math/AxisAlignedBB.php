@@ -75,7 +75,14 @@ class AxisAlignedBB{
 		$this->maxX += $x;
 		$this->maxY += $y;
 		$this->maxZ += $z;
-
+		
+		if($this->minX < 1e-6 && $this->minX > -1e-6)$this->minX = 0;
+		if($this->minY < 1e-6 && $this->minY > -1e-6)$this->minY = 0;
+		if($this->minZ < 1e-6 && $this->minZ > -1e-6)$this->minZ = 0;
+		if($this->maxX < 1e-6 && $this->maxX > -1e-6)$this->maxX = 0;
+		if($this->maxY < 1e-6 && $this->maxY > -1e-6)$this->maxY = 0;
+		if($this->maxZ < 1e-6 && $this->maxZ > -1e-6)$this->maxZ = 0;
+		
 		return $this;
 	}
 
@@ -168,6 +175,10 @@ class AxisAlignedBB{
 		}
 
 		return $z;
+	}
+	
+	public function intersectsWith_(AxisAlignedBB $bb){
+		return $bb->maxX > $this->minX && $bb->minX < $this->maxX && $bb->maxY > $this->minY && $bb->minY < $this->maxY && $bb->maxZ > $this->minZ && $bb->minZ < $this->maxZ;
 	}
 	
 	public function intersectsWith(AxisAlignedBB $bb){
