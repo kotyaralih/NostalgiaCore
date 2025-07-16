@@ -1535,7 +1535,7 @@ class Player{
 		}
 
 		if($this->sendingInventoryRequired){
-			if(($this->gamemode & 0x01) !== CREATIVE){
+			if($this->gamemode !== CREATIVE){
 				$hotbar = [];
 				foreach($this->hotbar as $slot){
 					$hotbar[] = $slot <= -1 ? -1 : $slot + 9;
@@ -2380,7 +2380,12 @@ class Player{
 				}
 
 				$data["slot"] = $packet->slot;
-
+				
+				if($this->gamemode == VIEW && $packet->item != AIR){
+					$this->sendInventory();
+					break;
+				}
+				
 				if($this->server->handle("player.equipment.change", $data) !== false){
 					if(!Player::$experimentalHotbar) $this->slot = $packet->slot;
 					if(($this->gamemode & 0x01) === SURVIVAL){
