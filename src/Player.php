@@ -2115,8 +2115,8 @@ class Player{
 				}
 				$u = $this->server->api->player->get($this->iusername, false);
 				if($u !== false){
-					$u = $this->server->clients[$this->CID];
-					$u->close("this player already in game");
+					$this->close("this player already in game");
+					return;
 				}
 
 				$this->server->api->player->add($this->CID);
