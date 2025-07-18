@@ -397,6 +397,7 @@ class PlayerAPI{
 			$player = $this->server->clients[$CID];
 			$player->data = $this->getOffline($player->username);
 			$player->gamemode = $player->data->get("gamemode");
+			$player->saveInventory = ($player->gamemode & 1) == SURVIVAL;
 			if(($player->level = $this->server->api->level->get($player->data->get("position")["level"])) === false){
 				$player->level = $this->server->api->level->getDefault();
 				$player->data->set("position", [

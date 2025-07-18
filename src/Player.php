@@ -34,6 +34,7 @@ class Player{
 	public $windowCnt = 2;
 	public $windows = [];
 	public $blocked = true;
+	public $saveInventory = true;
 	public $achievements = [];
 	public $chunksLoaded = [];
 	public $lastCorrect;
@@ -169,6 +170,7 @@ class Player{
 		$this->inventory = [];
 		$this->armor = [];
 		$this->gamemode = $this->server->gamemode;
+		$this->saveInventory = ($this->gamemode & 1) == SURVIVAL; //survival, adventure
 		$this->level = $this->server->api->level->getDefault();
 		$this->slot = 0;
 		$this->hotbar = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -1378,13 +1380,14 @@ class Player{
 			return false;
 		}
 
+		$this->save();
 		$inv = &$this->inventory;
 		if($gm === VIEW){
 			$this->armor = [];
 			$this->sendArmor();
 		}
 		if(($this->gamemode & 0x01) === ($gm & 0x01)){
-			if(($gm & 0x01) === 0x01 and ($gm & 0x02) === 0x02){
+			if(($gm & 0x01) === 0x01 && ($gm & 0x02) === 0x02){ //gm == VIEW
 				$inv = [];
 				foreach(BlockAPI::$creative as $item){
 					$inv[] = BlockAPI::getItem(0, 0, 1);
@@ -1396,6 +1399,7 @@ class Player{
 				}
 			}
 			$this->gamemode = $gm;
+			$this->saveInventory = ($this->gamemode & 1) == SURVIVAL;
 			$this->sendChat("Your gamemode has been changed to " . $this->getGamemode() . ".\n");
 		}else{
 			foreach($this->inventory as $slot => $item){
@@ -1404,9 +1408,13 @@ class Player{
 			$this->hotbar = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 			$this->lastCorrect = $this->entity->copy();
 			$this->blocked = true;	
+			if(($this->gamemode & 1) != ($gm & 1)){
+				$this->saveInventory = false;
+			}
 			$this->gamemode = $gm;
 			$this->sendChat("Your gamemode has been changed to " . $this->getGamemode() . ", you've to do a forced reconnect.\n");
 			$this->server->schedule(30, [$this, "close"], "gamemode change", false, true); //Forces a kick
+			
 		}
 		
 		if($this->gamemode === SPECTATOR){
@@ -1948,24 +1956,31 @@ class Player{
 				"y" => $this->spawnPosition->y,
 				"z" => $this->spawnPosition->z
 			]);
-			$inv = [];
-			foreach($this->inventory as $slot => $item){
-				if($item instanceof Item){
-					if($slot < (($this->gamemode & 0x01) === 0 ? PLAYER_SURVIVAL_SLOTS : PLAYER_CREATIVE_SLOTS)){
-						$inv[$slot] = [$item->getID(), $item->getMetadata(), $item->count];
+			
+			if($this->saveInventory){
+				$inv = [];
+				foreach($this->inventory as $slot => $item){
+					if($item instanceof Item){
+						if($slot < (($this->gamemode & 0x01) === 0 ? PLAYER_SURVIVAL_SLOTS : PLAYER_CREATIVE_SLOTS)){
+							$inv[$slot] = [$item->getID(), $item->getMetadata(), $item->count];
+						}
 					}
 				}
+				$this->data->set("inventory", $inv);
 			}
-			$this->data->set("inventory", $inv);
+			
 			$this->data->set("hotbar", $this->hotbar);
 
-			$armor = [];
-			foreach($this->armor as $slot => $item){
-				if($item instanceof Item){
-					$armor[$slot] = [$item->getID(), $item->getMetadata()];
+			if($this->saveInventory){
+				$armor = [];
+				foreach($this->armor as $slot => $item){
+					if($item instanceof Item){
+						$armor[$slot] = [$item->getID(), $item->getMetadata()];
+					}
 				}
+				$this->data->set("armor", $armor);
 			}
-			$this->data->set("armor", $armor);
+			
 			if($this->entity instanceof Entity){
 				$this->data->set("health", $this->entity->getHealth());
 			}
@@ -2131,9 +2146,10 @@ class Player{
 				}
 
 				$this->auth = true;
+				
+				$inv = [];
 				if(!$this->data->exists("inventory") || ($this->gamemode & 0x01) === 0x01){
 					if(($this->gamemode & 0x01) === 0x01){
-						$inv = [];
 						if(($this->gamemode & 0x02) === 0x02){
 							foreach(BlockAPI::$creative as $item){
 								$inv[] = [0, 0, 1];
@@ -2144,12 +2160,17 @@ class Player{
 							}
 						}
 					}
-					$this->data->set("inventory", $inv);
+				}else{
+					$inv = [];
+					foreach($this->data->get("inventory") as $slot => $item){
+						$inv[$slot] = [$item[0], $item[1], $item[2]];
+					}
 				}
+				
 				$this->achievements = $this->data->get("achievements");
 				$this->data->set("caseusername", $this->username);
 				$this->inventory = [];
-				foreach($this->data->get("inventory") as $slot => $item){
+				foreach($inv as $slot => $item){
 					if(!is_array($item) or count($item) < 3){
 						$item = [AIR, 0, 0];
 					}
@@ -2157,8 +2178,10 @@ class Player{
 				}
 
 				$this->armor = [];
-				foreach($this->data->get("armor") as $slot => $item){
-					$this->armor[$slot] = BlockAPI::getItem($item[0], $item[1], $item[0] === 0 ? 0 : 1);
+				if(($this->gamemode & 0x01) == 0){
+					foreach($this->data->get("armor") as $slot => $item){
+						$this->armor[$slot] = BlockAPI::getItem($item[0], $item[1], $item[0] === 0 ? 0 : 1);
+					}
 				}
 
 				$this->data->set("lastIP", $this->ip);
@@ -3123,7 +3146,7 @@ class Player{
 				break;
 			case ProtocolInfo::SET_ENTITY_LINK_PACKET:
 				if($this->entity->riding != 0){
-					$this->entity->stopRiding();
+					$this->entity->setRiding(null);
 				}
 				break;
 			case ProtocolInfo::PLAYER_INPUT_PACKET:
@@ -3136,7 +3159,7 @@ class Player{
 					$e = $this->entity->level->entityList[$this->entity->riding] ?? false;
 					if($e === false) {
 						ConsoleAPI::warn("Player is riding on entity that doesnt exist in world! ({$this->iusername}, {$this->entity->riding})");
-						$this->entity->stopRiding();
+						$this->entity->setRiding(null);
 						break;
 					}
 				}
