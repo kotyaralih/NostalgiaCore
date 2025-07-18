@@ -149,6 +149,10 @@ class PluginAPI extends stdClass{
 							break;
 						}
 					}
+					if(count($pluginInfo) == 0){
+						ConsoleAPI::error("Failed to load PHAR plugin from $file: pluginInfo has no information(PHAR was made for PMMP 1.4+?)");
+						continue;
+					}
 					console("[INFO] Loading PHAR plugin \"".FORMAT_GREEN.$pluginInfo["name"].FORMAT_RESET."\" ".FORMAT_AQUA.$pluginInfo["version"].FORMAT_RESET." by ".FORMAT_AQUA.$pluginInfo["author"].FORMAT_RESET);
 					
 					$aver = CURRENT_API_VERSION;
