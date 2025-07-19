@@ -1,9 +1,9 @@
 <?php
 
 class BlockAPI{
-
+	public static $creativeHotbarSlots = [];
+	public static $reverseCreativeLookup = [];
 	public static $creative = [
-
 		//Building
 		[STONE, 0],
 		[COBBLESTONE, 0],
@@ -201,8 +201,33 @@ class BlockAPI{
 	private $scheduledUpdates = [];
 	private $randomUpdates = [];
 
+	/**
+	 * @param int $id item id
+	 * @param int $meta item metadata
+	 * @return false|int false if item is not accessible from creative mode, otherwise slot id in BlockAPI::$creative
+	 */
+	public static function hasCreativeItem($id, $meta){
+		$rind = ($id << 24) | ($meta);
+		return static::$reverseCreativeLookup[$rind] ?? false;
+	}
+	
 	function __construct(){
 		$this->server = ServerAPI::request();
+		foreach(static::$creative as $slot => [$id, $meta]){
+			$rind = ($id << 24) | ($meta);
+			static::$reverseCreativeLookup[$rind] = $slot;
+		}
+		
+		self::$creativeHotbarSlots[0] = static::hasCreativeItem(STONE, 0);
+		self::$creativeHotbarSlots[1] = static::hasCreativeItem(COBBLESTONE, 0);
+		self::$creativeHotbarSlots[2] = static::hasCreativeItem(DIRT, 0);
+		self::$creativeHotbarSlots[3] = static::hasCreativeItem(PLANKS, 0);
+		self::$creativeHotbarSlots[4] = static::hasCreativeItem(PLANKS, 1);
+		self::$creativeHotbarSlots[5] = static::hasCreativeItem(TORCH, 0);
+		self::$creativeHotbarSlots[6] = static::hasCreativeItem(BRICK_STAIRS, 0);
+		self::$creativeHotbarSlots[7] = static::hasCreativeItem(COBBLE_WALL, 0);
+		self::$creativeHotbarSlots[8] = static::hasCreativeItem(SAPLING, 0);
+		
 	}
 
 	public static function get($id, $meta = 0, $v = false){
