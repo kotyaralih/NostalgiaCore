@@ -710,6 +710,7 @@ class Level{
 			if(!--$limit) return true;
 		}while($this->lightUpdateIndx >= 0);
 		if(count($this->lightUpdates) > 0) return true;
+		$this->lightUpdates = []; //php uses a lot of memory without this thing if it performed a lot of light updates
 		return false;
 	}
 	public function onTick(PocketMinecraftServer $server, $currentTime){

@@ -66,14 +66,17 @@ class LevelImport{
 					6 => "",
 					7 => ""
 				];
+				$pmf->markHasBlocklight($X, $Z);
+				
 				for($z = 0; $z < 16; ++$z){
 					for($x = 0; $x < 16; ++$x){
 						$block = $chunks->getChunkColumn($X, $Z, $x, $z, 0);
 						$meta = $chunks->getChunkColumn($X, $Z, $x, $z, 1);
+						$blocklight = $chunks->getChunkColumn($X, $Z, $x, $z, 3);
 						for($Y = 0; $Y < 8; ++$Y){
 							$chunk[$Y] .= substr($block, $Y << 4, 16);
 							$chunk[$Y] .= substr($meta, $Y << 3, 8);
-							$chunk[$Y] .= "\x00\x00\x00\x00\x00\x00\x00\x00";
+							$chunk[$Y] .= substr($blocklight, $Y << 3, 8);
 						}
 					}
 				}
@@ -84,7 +87,8 @@ class LevelImport{
 			}
 			console("[NOTICE] Importing level " . ceil(($Z + 1) / 0.16) . "%");
 		}
-		$chunks->map = null;
+		$pmf->writeNCData();
+		
 		$chunks = null;
 		if(file_exists($this->path . "level.dat")) @unlink($this->path . "level.dat");
 		if(file_exists($this->path . "level.dat_old")) @unlink($this->path . "level.dat_old");

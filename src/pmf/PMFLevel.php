@@ -402,7 +402,7 @@ class PMFLevel extends PMF{
 		foreach($this->checkLight as $index => [$X, $Z]){
 			$update = false;
 			if(!$this->hasBlocklight($X, $Z)){
-				ConsoleAPI::notice("Chunk $X $Z (Level: {$this->level->getName()} has no blocklight! Forcing light update(it might take a while).");
+				ConsoleAPI::notice("Chunk $X $Z (Level: {$this->level->getName()}) has no blocklight! Forcing light update(it might take a while).");
 				$this->level->updateLight(0, $X*16, 0, $Z*16, $X*16+15, 127, $Z*16+15);
 				$update = true;
 				$this->markHasBlocklight($X, $Z);
@@ -550,7 +550,6 @@ class PMFLevel extends PMF{
 		
 		if($old_m != $m){
 			$this->chunks[$index][$Y][$mindex] = chr($m);
-			
 			if(!isset($this->chunkChange[$index][$Y])){
 				$this->chunkChange[$index][$Y] = 1;
 			}else{

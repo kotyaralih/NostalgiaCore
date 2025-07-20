@@ -7,6 +7,13 @@ class PocketChunkParser{
 	var $map; //21 * $sectorLength
 	private $location, $raw = b"", $file;
 
+	public function __destruct(){
+		unset($this->location);
+		unset($this->raw);
+		unset($this->file);
+		unset($this->map);
+	}
+	
 	public function loadFile($file){
 		if(file_exists($file . ".gz")){
 			$this->raw = gzinflate(file_get_contents($file . ".gz"));
