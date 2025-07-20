@@ -2510,8 +2510,12 @@ class Player{
 				$pmeta = ($packet->meta & 0xff);
 				$hmeta = ($heldItem->getMetadata() & 0xff); //in 0.8.1 useitempacket uses byte for meta
 				if($heldItem->getID() != $packet->item || $hmeta != $pmeta){
-					ConsoleAPI::warn("{$this->username}'s heldItem doesnt match on clientside({$packet->item} {$pmeta}) and serverside({$heldItem->getID()} {$hmeta}) when using item. Resending inventory.");
 					$this->sendInventory();
+					if($heldItem->getID() == $packet->item && $heldItem->getMaxDurability() != false){ //id matches, meta is used as durability -> allow to perform whatever action the player wants to do
+						goto allow_use_item;
+					}
+					ConsoleAPI::warn("{$this->username}'s heldItem doesnt match on clientside({$packet->item} {$pmeta}) and serverside({$heldItem->getID()} {$hmeta}) when using item. Resending inventory.");
+					
 					if($packet->face >= 0 && $packet->face <= 5){
 						$target = $this->level->getBlock($blockVector);
 						$block = $target->getSide($packet->face);
@@ -2520,6 +2524,7 @@ class Player{
 					}
 					break;
 				}
+				allow_use_item:
 
 				if($packet->face >= 0 and $packet->face <= 5){ //Use Block, place
 					if($this->entity->inAction === true){
