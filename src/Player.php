@@ -236,7 +236,14 @@ class Player{
 		return null;
 	}
 	
+	/**
+	 * @param int $slot inventory slot. -1 - drop
+	 * @param int $id
+	 * @param int $meta
+	 * @param int $count
+	 */
 	public function addExpectedSetSlotPacket(int $slot, int $id, int $meta, int $count){
+		ConsoleAPI::debug("Adding expected set slot: $slot $id $meta $count");
 		$this->expectedSetSlotPackets[++$this->expectedSetSlotIndex]["$slot $id $meta $count"] = $this->server->ticks;
 	}
 	
@@ -1204,11 +1211,11 @@ class Player{
 	 *
 	 * @return boolean
 	 */
-	public function addItem($type, $damage, $count, $send = true, $addexpected = true){
-		
+	public function addItem($type, $damage, $count, $send = true, $addexpected = true, $drop=true){
+		$toadd = BlockAPI::getItem($type, $damage, $count);
 		foreach($this->inventory as $s => $item){ //force check the inventory for non-full stacks of this item first
 			if($item->getID() === $type and $item->getMetadata() === $damage){
-				$add = min($item->getMaxStackSize() - $item->count, $count);
+				$add = min($toadd->getMaxStackSize() - $item->count, $count);
 				
 				if($add <= 0){
 					continue;
@@ -1221,7 +1228,7 @@ class Player{
 				if($count <= 0) return true;
 			}
 		}
-		$toadd = BlockAPI::getItem($type, $damage, $count);
+		
 		foreach($this->inventory as $s => $item){
 			if($item->getID() === AIR){
 				$add = min($toadd->getMaxStackSize(), $count);
@@ -1235,7 +1242,26 @@ class Player{
 			}
 		}
 		if($count <= 0) return true;
-		return false;
+		if(!$drop) return false;
+		
+		while($count > 0){
+			$stacksz = min($toadd->getMaxStackSize(), $count);
+			$count -= $stacksz;
+			
+			$f1 = 0.3;
+			$sX = -sin(($this->entity->yaw / 180) * M_PI) * cos(($this->entity->pitch / 180) * M_PI) * $f1;
+			$sZ = cos(($this->entity->yaw / 180) * M_PI) * cos(($this->entity->pitch / 180) * M_PI) * $f1;
+			$sY = -sin(($this->entity->pitch / 180) * M_PI) * $f1 + 0.1;
+			$f1 = 0.02;
+			$f3 = $this->entity->random->nextFloat() * M_PI * 2.0;
+			$f1 *= $this->entity->random->nextFloat();
+			$sX += cos($f3) * $f1;
+			$sY += ($this->entity->random->nextFloat() - $this->entity->random->nextFloat()) * 0.1;
+			$sZ += sin($f3) * $f1;
+			$this->server->api->entity->dropRawPos($this->level, $this->entity->x, $this->entity->y - 0.3 + $this->entity->height - 0.12, $this->entity->z, BlockAPI::getItem($type, $damage, $stacksz), $sX, $sY, $sZ);
+			if($addexpected) $this->addExpectedSetSlotPacket(-1, $type, $damage, $stacksz);
+		}
+		return true;
 	}
 
 	/**
@@ -2509,6 +2535,7 @@ class Player{
 				$heldItem = $this->getHeldItem();
 				$pmeta = ($packet->meta & 0xff);
 				$hmeta = ($heldItem->getMetadata() & 0xff); //in 0.8.1 useitempacket uses byte for meta
+				
 				if($heldItem->getID() != $packet->item || $hmeta != $pmeta){
 					$this->sendInventory();
 					if($heldItem->getID() == $packet->item && $heldItem->getMaxDurability() != false){ //id matches, meta is used as durability -> allow to perform whatever action the player wants to do
@@ -2856,11 +2883,28 @@ class Player{
 				$packet->eid = $this->eid;
 				$prevItem = $packet->item;
 				$newItem = $this->getHeldItem();
-				//TODO it is possible to drop non-held item in vanilla, but in 99% cases it wouldnt happen
+				
+				if(($n = $this->isExpectedSetSlot(-1, $prevItem))){
+					ConsoleAPI::debug("{$this->username}: Expected drop slot dropped");
+					$this->removeExpectedSetSlot($n);
+					return;
+				}
+				
 				if($newItem->getID() != $prevItem->getID() || $newItem->getMetadata() != $prevItem->getMetadata()){
+					
+					if(count($this->inventory) >= 36){
+						foreach($this->inventory as $slot => $item){
+							if($item->getID() == 0) goto inv_desync_on_drop;
+						}
+						
+						$this->addCraftingResult(-1, $prevItem->getID(), $prevItem->getMetadata(), $prevItem->count);
+						break;
+					}
+					inv_desync_on_drop:
+					
 					ConsoleAPI::debug("{$this->username} tried dropping item from non-held slot or inventory desynchronized.");
 					$this->sendInventory();
-					return;
+					break;
 				}
 				
 				if($newItem->count < $prevItem->count){
@@ -2872,22 +2916,6 @@ class Player{
 					$packet->item = BlockAPI::getItem($newItem->getID(), $newItem->getMetadata(), $prevItem->count);
 				}else{
 					$packet->item = $newItem;
-				}
-				$sendOnDrop = false;
-				
-				if($prevItem->getID() != $packet->item->getID() || $prevItem->getMetadata() != $packet->item->getMetadata()){
-					if(count($this->inventory) >= 36){
-						foreach($this->inventory as $slot => $item){
-							if($item->getID() == 0) goto inv_desync_on_drop;
-						}
-						
-						$this->addCraftingResult(-1, $prevItem->getID(), $prevItem->getMetadata(), $prevItem->count);
-						break;
-					}else{
-						inv_desync_on_drop:
-						ConsoleAPI::debug("Inventory desync on drop({$this->iusername})");
-						$sendOnDrop = true;
-					}
 				}
 				
 				$this->craftingItems = [];
