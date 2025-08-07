@@ -31,7 +31,7 @@ class Player{
 	public $loggedIn = false;
 	public $gamemode;
 	public $gmKickSoon = false;
-	public $lastBreak;
+	public $lastBreak, $connectionStartedAt;
 	public $windowCnt = 2;
 	public $windows = [];
 	public $blocked = true;
@@ -162,6 +162,7 @@ class Player{
 		$this->MTU = min($MTU, 1100);
 		$this->server = ServerAPI::request();
 		$this->lastBreak = microtime(true);
+		$this->connectionStartedAt = microtime(true);
 		$this->clientID = $clientID;
 		$this->CID = PocketMinecraftServer::clientID($ip, $port);
 		$this->ip = $ip;
@@ -1547,6 +1548,12 @@ class Player{
 			return false;
 		}
 		$time = microtime(true);
+		
+		if($this->loggedIn === false && ($time - $this->connectionStartedAt) >= 20){
+			$this->close("timeout");
+			return false;
+		}
+		
 		if($time > $this->timeout){
 			$this->close("timeout");
 			return false;
