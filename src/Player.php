@@ -1593,7 +1593,8 @@ class Player{
 			}else{
 				$pk->slots = [];
 				for($i = 0; $i < 9; ++$i){
-					[$id, $meta] = BlockAPI::$creative[$this->hotbar[$i]] ?? [0, 0];
+					if(!isset($this->hotbar[$i])) [$id, $meta] = [0, 0];
+					else [$id, $meta] = BlockAPI::$creative[$this->hotbar[$i]] ?? [0, 0];
 					$pk->slots[$i] = BlockAPI::getItem($id, $meta, 1);
 				}
 				$hotbar = [9, 10, 11, 12, 13, 14, 15, 16, 17];
