@@ -137,6 +137,16 @@ class ServerAPI{
 			"auto-save" => true,
 			"enable-mob-ai" => true,
 			"abort-reading-after-N-packets" => PocketMinecraftServer::$PACKET_READING_LIMIT
+		], comments: [
+			"level-type" => [
+				"Alowed types:",
+				"FLAT - flat world",
+				"DEFAULT - use one of the 4 pregenerated worlds from pocketmine",
+				"VANILLA - unfinished, attempts to generate vanilla 0.8.1 world. This geneeator is very slow."
+			],
+			"abort-reading-after-N-packets" => [
+				"Sets max amount of packets the server can read before forcing tick check."
+			]
 		]);
 		Entity::$allowFly = $this->getProperty("allow-flight", true);
 		if(!Entity::$allowFly){

@@ -2,7 +2,6 @@
 
 class MobController
 {
-	public static $ADVANCED = false;
 	public static $AUTOJUMP = false;
 	public static $landed = false;
 	public static $DANGEROUS_BLOCKS = [

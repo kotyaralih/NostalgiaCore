@@ -35,6 +35,9 @@ class Config{
 	 * @var array
 	 */
 	private $config;
+
+	private $comments;
+
 	/**
 	 * @var string
 	 */
@@ -54,8 +57,8 @@ class Config{
 	 * @param array $default
 	 * @param null|boolean $correct
 	 */
-	public function __construct($file, $type = CONFIG_DETECT, $default = [], &$correct = null){
-		$this->load($file, $type, $default);
+	public function __construct($file, $type = CONFIG_DETECT, $default = [], &$correct = null, $comments = []){
+		$this->load($file, $type, $default, comments:$comments);
 		$correct = $this->check();
 	}
 
@@ -66,13 +69,14 @@ class Config{
 	 *
 	 * @return boolean
 	 */
-	public function load($file, $type = CONFIG_DETECT, $default = []){
+	public function load($file, $type = CONFIG_DETECT, $default = [], $comments = []){
 		$this->correct = true;
 		$this->type = (int) $type;
 		$this->file = $file;
 		if(!is_array($default)){
 			$default = [];
 		}
+		$this->comments = $comments;
 		if(!file_exists($file)){
 			$this->config = $default;
 			$this->save();
@@ -113,9 +117,8 @@ class Config{
 				if(!is_array($this->config)){
 					$this->config = $default;
 				}
-				if($this->fillDefaults($default, $this->config) > 0){
-					$this->save();
-				}
+				$this->fillDefaults($default, $this->config);
+				$this->save();
 			}else{
 				return false;
 			}
@@ -158,6 +161,16 @@ class Config{
 	private function writeProperties(){
 		$content = "#Properties Config file\r\n#" . date("D M j H:i:s T Y") . "\r\n";
 		foreach($this->config as $k => $v){
+			//evil \r\n
+			if(isset($this->comments[$k])){
+				$com = $this->comments[$k];
+				$gen = "";
+				if(!is_array($com)) $gen .= "#$com\r\n";
+				else{
+					foreach($com as $lin) $gen .= "#$lin\r\n";
+				}
+				$content .= $gen;
+			}
 			if(is_bool($v) === true){
 				$v = $v === true ? "on" : "off";
 			}elseif(is_array($v)){

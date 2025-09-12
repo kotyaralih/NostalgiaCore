@@ -95,7 +95,6 @@ class PocketMinecraftServer{
 			"discord-bot-name" => "NostalgiaCore Logger",
 			"despawn-mobs" => true, 
 			"mob-despawn-ticks" => 18000,
-			"experimental-mob-ai" => false,	
 			"force-20-tps" => false,
 			"enable-mob-pushing" => Living::$entityPushing,
 			"keep-chunks-loaded" => self::$KEEP_CHUNKS_LOADED,
@@ -106,6 +105,42 @@ class PocketMinecraftServer{
 			"allow-dropping-single-items" => Player::$allowDroppingSingleItems,
 			"enable-light-updates" => self::$ENABLE_LIGHT_UPDATES,
 			"min-block-breaking-progress" => self::$BLOCK_BREAKING_PROGRESS,
+		], comments: [
+			"min-block-breaking-progress" => [
+				"Affects how strict block breaking speed check is.",
+				"0 - allow blocks to be mined instantly",
+				"0.8 - allow breaking blocks after 80% of vanilla block break time.",
+				"The value should be in range from 0 to 1."
+			],
+			"enable-light-updates" => [
+				"Enabling light updates may affects performance and will increase world generation time.",
+				"Disabling light updates will disable all light-related features(like light-based mob spawning)"
+			],
+			"allow-dropping-single-items" => [
+				"Allows players to drop any amount of items from stack in the slot.",
+				"While it is not possible using vanilla client, some custom clients(like Ninecraft) have this feature"
+			],
+			"disable-emojis-in-chat" => [
+				"Disallows players to send certain symbols in chat to prevent client lags"
+			],
+			"use-experimental-hotbar" => [
+				"Changes serverside hotbar behavior to be more like in 0.8 rather than 0.7(when disabled)",
+				"May cause more problems than old hotbar"
+			],
+			"enable-mob-pushing" => [
+				"Enables or disables serverside mob pushing",
+				"If enabled it may cause performance issues when there are a lot of mobs in a small enclosed area",
+				"If disabled it will cause small entity position desync(that should be fixed every time a server sends a new movement packet to the client)"
+			],
+			"force-20-tps" => [
+				"Forces server to run at 20 tps on some platforms where sleeping for small amount of time is not possible(hi windows & 16 tps)",
+			],
+			"discord-ru-smiles" => [
+				"Replaces cyrillic symbols Ы Ь Ъ Ё with emojis when sending a message using discord webhook(as it is done in some custom clients)"
+			],
+			"keep-chunks-loaded" => [
+				"If disabled chunks won't be loaded into memory until the player(or something else) loads them"
+			]
 		]);
 		self::$BLOCK_BREAKING_PROGRESS = $this->extraprops->get("min-block-breaking-progress");
 		Player::$disableEmojisInChat = $this->extraprops->get("disable-emojis-in-chat");
@@ -120,7 +155,6 @@ class PocketMinecraftServer{
 		self::$KEEP_CHUNKS_LOADED = $this->extraprops->get("keep-chunks-loaded");
 		self::$ENABLE_LIGHT_UPDATES = $this->extraprops->get("enable-light-updates");
 		PocketMinecraftServer::$SAVE_PLAYER_DATA = $this->extraprops->get("save-player-data");
-		MobController::$ADVANCED = $this->extraprops->get("experimental-mob-ai");
 		Explosion::$enableExplosions = $this->extraprops->get("enable-explosions");
 		NetherReactorBlock::$enableReactor = $this->extraprops->get("enable-nether-reactor");
 		if(self::$FORCE_20_TPS){
