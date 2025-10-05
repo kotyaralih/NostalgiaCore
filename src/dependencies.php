@@ -17,11 +17,6 @@ set_error_handler("error_handler", E_ALL);
 
 $errors = 0;
 
-if(version_compare("8.0.0", PHP_VERSION) > 0){
-	console("[ERROR] Use PHP >= 8.0.0", true, true, 0);
-	++$errors;
-}
-
 if(php_sapi_name() !== "cli"){
 	console("[ERROR] You must run NostalgiaCore using the CLI.", true, true, 0);
 	++$errors;
