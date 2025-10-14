@@ -1,7 +1,9 @@
 <?php
 
 class PocketMinecraftServer{
-
+	const TICK_LEGACY = 0;
+	const TICK_F20TPS = 1;
+	const TICK_NETWAIT = 2;
 	public $tCnt, $ticks;
 	public $extraprops, $serverID, $interface, $database, $version, $invisible, $tickMeasure, $preparedSQL, $seed, $gamemode, $name, $maxClients, $eidCnt, $custom, $description, $motd, $port, $saveEnabled;
 	/**
@@ -13,10 +15,12 @@ class PocketMinecraftServer{
 	 */
 	public $clients;
 	
-	private $serverip, $evCnt, $handCnt, $events, $eventsID, $handlers, $serverType, $lastTick, $memoryStats, $async = [], $asyncID = 0;
+	public $serverip, $evCnt, $handCnt, $events, $eventsID, $handlers, $serverType, $lastTick, $memoryStats, $async = [], $asyncID = 0;
+	
+	public static $TICKING_MODE = PocketMinecraftServer::TICK_LEGACY;
 	
 	public $doTick, $levelData, $tiles, $entities, $schedule, $scheduleCnt, $whitelist, $spawn, $difficulty, $stop, $asyncThread;
-	public static $FORCE_20_TPS = false, $KEEP_CHUNKS_LOADED = true, $PACKET_READING_LIMIT = 100;
+	public static $KEEP_CHUNKS_LOADED = true, $PACKET_READING_LIMIT = 100;
 	public static $BLOCK_BREAKING_PROGRESS = 0.8;
 	public static $ENABLE_LIGHT_UPDATES = true;
 	function __construct($name, $gamemode = SURVIVAL, $seed = false, $port = 19132, $serverip = "0.0.0.0"){
@@ -95,7 +99,6 @@ class PocketMinecraftServer{
 			"discord-bot-name" => "NostalgiaCore Logger",
 			"despawn-mobs" => true, 
 			"mob-despawn-ticks" => 18000,
-			"force-20-tps" => false,
 			"enable-mob-pushing" => Living::$entityPushing,
 			"keep-chunks-loaded" => self::$KEEP_CHUNKS_LOADED,
 			"use-experimental-hotbar" => Player::$experimentalHotbar,
@@ -132,9 +135,6 @@ class PocketMinecraftServer{
 				"If enabled it may cause performance issues when there are a lot of mobs in a small enclosed area",
 				"If disabled it will cause small entity position desync(that should be fixed every time a server sends a new movement packet to the client)"
 			],
-			"force-20-tps" => [
-				"Forces server to run at 20 tps on some platforms where sleeping for small amount of time is not possible(hi windows & 16 tps)",
-			],
 			"discord-ru-smiles" => [
 				"Replaces cyrillic symbols Ы Ь Ъ Ё with emojis when sending a message using discord webhook(as it is done in some custom clients)"
 			],
@@ -151,13 +151,13 @@ class PocketMinecraftServer{
 		Living::$despawnMobs = $this->extraprops->get("despawn-mobs");
 		Living::$despawnTimer = $this->extraprops->get("mob-despawn-ticks");
 		Living::$entityPushing = $this->extraprops->get("enable-mob-pushing");
-		self::$FORCE_20_TPS = $this->extraprops->get("force-20-tps");
+		
 		self::$KEEP_CHUNKS_LOADED = $this->extraprops->get("keep-chunks-loaded");
 		self::$ENABLE_LIGHT_UPDATES = $this->extraprops->get("enable-light-updates");
 		PocketMinecraftServer::$SAVE_PLAYER_DATA = $this->extraprops->get("save-player-data");
 		Explosion::$enableExplosions = $this->extraprops->get("enable-explosions");
 		NetherReactorBlock::$enableReactor = $this->extraprops->get("enable-nether-reactor");
-		if(self::$FORCE_20_TPS){
+		if(self::$TICKING_MODE == self::TICK_F20TPS){
 			ConsoleAPI::warn("Forcing 20 tps. This may result in higher CPU usage!");
 		}
 		if(self::$BLOCK_BREAKING_PROGRESS > 1){
@@ -540,7 +540,7 @@ class PocketMinecraftServer{
 	public function process()
 	{
 		$lastLoop = 0;
-		if(self::$FORCE_20_TPS){
+		if(self::$TICKING_MODE != self::TICK_LEGACY){
 			while($this->stop === false){
 				$packetcnt = 0;
 				while($packet = $this->interface->readPacket()){

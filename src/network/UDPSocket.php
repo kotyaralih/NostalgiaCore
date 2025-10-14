@@ -3,7 +3,6 @@
 class UDPSocket{
 
 	public $connected, $sock, $server, $port;
-	
 	function __construct($server, $port, $listen = false, $serverip = "0.0.0.0"){
 		$this->server = $server;
 		$this->port = $port;
@@ -41,6 +40,14 @@ class UDPSocket{
 	public function read(&$buf, &$source, &$port){
 		if($this->connected === false){
 			return false;
+		}
+		if(PocketMinecraftServer::$TICKING_MODE == PocketMinecraftServer::TICK_NETWAIT){
+			$read = [$this->sock];
+			$next = (ServerAPI::request()->lastTick + 0.05);
+			$waitTime = $next - microtime(true);
+			if($waitTime < 0) $waitTime = 0;
+			$c = socket_select($read, $_, $_, 0, (int)($waitTime*1000000));
+			if($c === false || $c <= 0) return false;
 		}
 		return @socket_recvfrom($this->sock, $buf, 65535, 0, $source, $port);
 	}

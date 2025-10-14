@@ -136,7 +136,8 @@ class ServerAPI{
 			"rcon.password" => substr(base64_encode(Utils::getRandomBytes(20, false)), 3, 10),
 			"auto-save" => true,
 			"enable-mob-ai" => true,
-			"abort-reading-after-N-packets" => PocketMinecraftServer::$PACKET_READING_LIMIT
+			"abort-reading-after-N-packets" => PocketMinecraftServer::$PACKET_READING_LIMIT,
+			"ticking-mode" => "legacy",
 		], comments: [
 			"level-type" => [
 				"Alowed types:",
@@ -146,6 +147,12 @@ class ServerAPI{
 			],
 			"abort-reading-after-N-packets" => [
 				"Sets max amount of packets the server can read before forcing tick check."
+			],
+			"ticking-mode" => [
+				"Sets ticking mode. Allowed modes:",
+				"legacy - sleep while waiting for the next tick. same ticking as in old PocketMine. The server won't use a lot of cpu, but tps may be not stable(causes 16 TPS on Windows)",
+				"nodelay - unused time is not used for anything.. May cause to use 100% of CPU.",
+				"netwait - uses unused time to wait for packets. Should always give max tps. Untested on windows."
 			]
 		]);
 		Entity::$allowFly = $this->getProperty("allow-flight", true);
@@ -156,6 +163,11 @@ class ServerAPI{
 		MobSpawner::$MOB_LIMIT = $this->getProperty("mobs-amount", 50);
 		Entity::$allowedAI = $this->getProperty("enable-mob-ai", true);
 		PocketMinecraftServer::$PACKET_READING_LIMIT = $this->getProperty("abort-reading-after-N-packets", PocketMinecraftServer::$PACKET_READING_LIMIT);
+		PocketMinecraftServer::$TICKING_MODE = match(strtolower($this->getProperty("ticking-mode"))){
+			default => PocketMinecraftServer::TICK_LEGACY,
+			"nodelay" => PocketMinecraftServer::TICK_F20TPS,
+			"netwait" => PocketMinecraftServer::TICK_NETWAIT
+		};
 		//Load advanced properties
 		define("DEBUG", $this->getProperty("debug", 1));
 		define("ADVANCED_CACHE", false);
