@@ -6,9 +6,9 @@ class AddItemEntityPacket extends RakNetDataPacket{
 	public $x;
 	public $y;
 	public $z;
-	public $yaw;
-	public $pitch;
-	public $roll;
+	public $speedX;
+	public $speedY;
+	public $speedZ;
 	
 	public function pid(){
 		return ProtocolInfo::ADD_ITEM_ENTITY_PACKET;
@@ -25,9 +25,9 @@ class AddItemEntityPacket extends RakNetDataPacket{
 		$this->putFloat($this->x);
 		$this->putFloat($this->y);
 		$this->putFloat($this->z);
-		$this->putByte($this->yaw);
-		$this->putByte($this->pitch);
-		$this->putByte($this->roll);
+		$this->putByte((int)($this->speedX * 128));
+		$this->putByte((int)($this->speedY * 128));
+		$this->putByte((int)($this->speedZ * 128));
 	}
 	public function eidsToLocal(Player $p){
 		if(!$this->localEids){
