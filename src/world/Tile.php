@@ -347,10 +347,6 @@ class Tile extends Position{
 				$nbt = new NBT();
 				$nbt->write(chr(NBT::TAG_COMPOUND) . "\x00\x00");
 
-				$nbt->write(chr(NBT::TAG_STRING));
-				$nbt->writeTAG_String("id");
-				$nbt->writeTAG_String($this->class);
-
 				$nbt->write(chr(NBT::TAG_INT));
 				$nbt->writeTAG_String("x");
 				$nbt->writeTAG_Int((int) $this->x);
@@ -388,23 +384,19 @@ class Tile extends Position{
 
 				$nbt->write(chr(NBT::TAG_STRING));
 				$nbt->writeTAG_String("Text1");
-				$nbt->writeTAG_String($this->data["Text1"]);
+				$nbt->writeTAG_String(mb_substr($this->data["Text1"], 0, 15));
 
 				$nbt->write(chr(NBT::TAG_STRING));
 				$nbt->writeTAG_String("Text2");
-				$nbt->writeTAG_String($this->data["Text2"]);
+				$nbt->writeTAG_String(mb_substr($this->data["Text2"], 0, 15));
 
 				$nbt->write(chr(NBT::TAG_STRING));
 				$nbt->writeTAG_String("Text3");
-				$nbt->writeTAG_String($this->data["Text3"]);
+				$nbt->writeTAG_String(mb_substr($this->data["Text3"], 0, 15));
 
 				$nbt->write(chr(NBT::TAG_STRING));
 				$nbt->writeTAG_String("Text4");
-				$nbt->writeTAG_String($this->data["Text4"]);
-
-				$nbt->write(chr(NBT::TAG_STRING));
-				$nbt->writeTAG_String("id");
-				$nbt->writeTAG_String($this->class);
+				$nbt->writeTAG_String(mb_substr($this->data["Text4"], 0, 15));
 
 				$nbt->write(chr(NBT::TAG_INT));
 				$nbt->writeTAG_String("x");
