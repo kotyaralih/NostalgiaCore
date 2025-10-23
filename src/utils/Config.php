@@ -185,7 +185,12 @@ class Config{
 	 * @param $content
 	 */
 	private function parseProperties($content){
-		if(preg_match_all('/([a-zA-Z0-9\-_\.]*)=([^\r\n]*)/u', $content, $matches) > 0){ //false or 0 matches
+		$content2 = "";
+		foreach(explode("\n", $content) as $cnt){ //regex is very evil and malicious
+			if((trim($cnt)[0] ?? "") == "#") continue;
+			$content2 .= $cnt . "\n";
+		}
+		if(preg_match_all("/([a-zA-Z0-9\-_\.]*)=([^\r\n]*)/u", $content2, $matches) > 0){ //false or 0 matches
 			foreach($matches[1] as $i => $k){
 				$v = trim($matches[2][$i]);
 				switch(strtolower($v)){
