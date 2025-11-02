@@ -721,12 +721,15 @@ class Level{
 			for($cZ = 0; $cZ < 16; ++$cZ){
 				$index = $this->level->getIndex($cX, $cZ);
 				if(!isset($this->level->chunks[$index]) || $this->level->chunks[$index] === false) continue;
+				$ch = &$this->level->chunks[$index];
 				for($c = 0; $c <= 20; ++$c){
 					$xyz = mt_rand(0, 0xffffffff) >> 2;
 					$x = $xyz & 0xf;
 					$z = ($xyz >> 8) & 0xf;
 					$y = ($xyz >> 16) & 0x7f;
-					$id = $this->level->fastGetBlockID($cX, $y >> 4, $cZ, $x, $y & 0xf, $z, $index);
+					$cy = $ch[$y >> 4];
+					if($cy === false) continue;
+					$id = ord($cy[($y & 0xf) + ($x << 5) + ($z << 9)]);
 					if(isset(self::$randomUpdateBlocks[$id])){
 						$cl = StaticBlock::$prealloc[$id];
 						$cl::onRandomTick($this, ($cX << 4) + $x, $y, $z + ($cZ << 4));
@@ -734,6 +737,7 @@ class Level{
 				}
 			}
 		}
+
 		$this->totalMobsAmount = 0;
 		$post = [];
 		
