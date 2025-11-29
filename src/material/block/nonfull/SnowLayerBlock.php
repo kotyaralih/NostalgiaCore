@@ -28,6 +28,12 @@ class SnowLayerBlock extends FlowableBlock{
 			$level->fastSetBlockUpdate($x, $y, $z, 0, 0, true);
 		}
 	}
+
+	public static function onRandomTick(Level $level, $x, $y, $z){
+		if($level->level->getBlockLight($x, $y, $z) > 11){
+			$level->fastSetBlockUpdate($x, $y, $z, 0, true);
+		}
+	}
 	
 	public function getDrops(Item $item, Player $player){
 		if($item->isShovel() !== false){
