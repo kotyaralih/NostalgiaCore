@@ -138,6 +138,7 @@ class ServerAPI{
 			"enable-mob-ai" => true,
 			"abort-reading-after-N-packets" => PocketMinecraftServer::$PACKET_READING_LIMIT,
 			"ticking-mode" => "legacy",
+			"mushroom-spread" => Block::$mushroomSpread
 		], comments: [
 			"level-type" => [
 				"Alowed types:",
@@ -178,8 +179,12 @@ class ServerAPI{
 				"	decoration(treecount=<N> grasscount=<M>) - sets amount of decorations",
 				"Preset example:",
 				"2;7,59x1,3x3,2;1;spawn(radius=10 block=89),decoration(treecount=80 grasscount=45)"
+			],
+			"mushroom-spread" => [
+				"Enable or disable mushroom spreading"
 			]
 		]);
+		Block::$mushroomSpread = $this->getProperty("mushroom-spread", Block::$mushroomSpread);
 		Entity::$allowFly = $this->getProperty("allow-flight", true);
 		if(!Entity::$allowFly){
 			ConsoleAPI::warn("Fly checking is enabled! Players may experience issues with kicking while not flying!");

@@ -45,7 +45,9 @@ class Level{
 		GRASS => true,
 		LEAVES => true,
 		SNOW_LAYER => true,
-		ICE => true
+		ICE => true,
+		RED_MUSHROOM => true,
+		BROWN_MUSHROOM => true
 	];
 	
 	public function __construct(PMFLevel $level, Config $entities, Config $tiles, Config $blockUpdates, $name){

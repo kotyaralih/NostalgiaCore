@@ -1,6 +1,8 @@
 <?php
 
 abstract class Block extends Position{
+	public static $mushroomSpread = true;
+	
 	public static $class = array(
 			AIR => "AirBlock",
 			STONE => "StoneBlock",
