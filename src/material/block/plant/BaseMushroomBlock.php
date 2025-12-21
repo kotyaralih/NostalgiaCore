@@ -16,7 +16,7 @@ class BaseMushroomBlock extends FlowableBlock{
 	}
 
 	public static function onRandomTick(Level $level, $x, $y, $z){
-		if(Block::$mushroomSpread/* && mt_rand(0, 24) == 0*/){
+		if(Block::$mushroomSpread && mt_rand(0, 24) == 0){
 			$maxcnt = 5;
 			for($xx = $x-4; $xx <= $x+4; ++$xx){
 				for($zz = $z-4; $zz <= $z+4; ++$zz){
