@@ -97,7 +97,7 @@ class Explosion{
 			$pk->radius = $this->size;
 			$pk->records = [];  //ExplodePacket doesnt seem to use the records provided by this packet, so no need to send more data
 			foreach ($this->level->players as $player){
-				$player->blockQueueDataPacket($pk);
+				$player->blockQueueDataPacket(clone $pk);
 			}
 			return;
 		}
@@ -214,7 +214,7 @@ class Explosion{
 		$pk->radius = $this->size;
 		$pk->records = [];  //ExplodePacket doesnt seem to use the records provided by this packet, so no need to send more data
 		foreach ($this->level->players as $player){
-			$player->blockQueueDataPacket($pk);
+			$player->blockQueueDataPacket(clone $pk);
 		}
 	}
 	

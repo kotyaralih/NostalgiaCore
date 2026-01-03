@@ -274,9 +274,10 @@ class Player{
 		$this->data->set("bed-position", $this->bedPosition);
 	}
 	
+	
 	/**
-	 * @param Vector3 $pos
-	 *
+	 * @param Vector3 $pos position of the <b>top block</b> of the bed
+	 * 
 	 * @return boolean
 	 */
 	public function sleepOn(Position $pos){
@@ -291,9 +292,14 @@ class Player{
 		$this->setBedPosition($pos);
 		$this->isSleeping = $pos;
 		$this->sleepingTime = 0;
-		$this->teleport(new Position($pos->x + 0.5, $pos->y + 1, $pos->z + 0.5, $this->level), false, false, false, false);
+		$meta = $this->level->level->getBlockDamage($pos->x, $pos->y, $pos->z);
+		$xoff = BedBlock::PLAYER_BED_OFFS_X[$meta & 3];
+		$zoff = BedBlock::PLAYER_BED_OFFS_Z[$meta & 3];
+		$this->teleport(new Position($pos->x + $xoff, $pos->y + 0.9375, $pos->z + $zoff, $this->level), false, false, false, false);
 		//TODO change player hitbox size after he starts sleeping
 		if($this->entity instanceof Entity){
+			$this->entity->forceUpdateMovement = true;
+			$this->entity->updateMovement();
 			$this->entity->updateMetadata();
 		}
 		
@@ -3468,8 +3474,8 @@ class Player{
 							$this->resendQueue[$count] =& $this->recoveryQueue[$count];
 							$this->lag[] = $time - $this->recoveryQueue[$count]->sendtime;
 							unset($this->recoveryQueue[$count]);
-						}else{
-							++$this->packetStats[1]; //lost and wont be recovered
+						}else{ //lost and wont be recovered
+							++$this->packetStats[1];
 						}
 					}
 					break;

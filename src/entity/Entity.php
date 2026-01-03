@@ -7,6 +7,7 @@ class Entity extends Position
 	const CLASS_TYPE = - 1;
 	const MIN_POSSIBLE_SPEED = 1/8000; //anything below will send 0 to player
 	
+	public $forceUpdateMovement = false;
 	public $searchForClosestPlayers = false;
 	public $modifySpeedY = false;
 	public $modifedSpeedY = 0.0;
@@ -1029,7 +1030,8 @@ class Entity extends Position
 			return false;
 		}
 		$now = microtime(true);
-		if($this->isStatic === false and ($this->lastX != $this->x or $this->lastY != $this->y or $this->lastZ != $this->z or $this->lastYaw != $this->yaw or $this->lastPitch != $this->pitch or $this->lastHeadYaw != $this->headYaw)){
+		if($this->isStatic === false && ($this->lastX != $this->x || $this->lastY != $this->y || $this->lastZ != $this->z || $this->lastYaw != $this->yaw || $this->lastPitch != $this->pitch || $this->lastHeadYaw != $this->headYaw || $this->forceUpdateMovement)){
+			$this->forceUpdateMovement = false;
 			if($this->class === ENTITY_PLAYER){
 				if($this->server->api->handle("entity.move", $this) === false){
 					if($this->class === ENTITY_PLAYER){
@@ -1043,7 +1045,7 @@ class Entity extends Position
 						$pk = new MovePlayerPacket();
 						$pk->eid = $this->eid;
 						$pk->x = $this->x;
-						$pk->y = $this->y;
+						$pk->y = $this->y - 1 - ($this->player->isSleeping ? 0.7375 : 0);
 						$pk->z = $this->z;
 						$pk->yaw = $this->yaw;
 						$pk->pitch = $this->pitch;

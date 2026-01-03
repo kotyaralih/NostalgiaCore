@@ -14,6 +14,8 @@ class BedBlock extends TransparentBlock{
 		[0, -1],
 		[1, 0]
 	];
+	const PLAYER_BED_OFFS_X = [0.5, 0.1, 0.5, 0.9];
+	const PLAYER_BED_OFFS_Z = [0.9, 0.5, 0.1, 0.5];
 	public function __construct($type = 0){
 		parent::__construct(BED_BLOCK, $type, "Bed Block");
 		$this->isActivable = true;
