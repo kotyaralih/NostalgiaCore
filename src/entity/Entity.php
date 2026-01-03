@@ -1045,7 +1045,7 @@ class Entity extends Position
 						$pk = new MovePlayerPacket();
 						$pk->eid = $this->eid;
 						$pk->x = $this->x;
-						$pk->y = $this->y - 1 - ($this->player->isSleeping ? 0.7375 : 0);
+						$pk->y = $this->y - ($this->player->isSleeping ? 1.7375 : 0);
 						$pk->z = $this->z;
 						$pk->yaw = $this->yaw;
 						$pk->pitch = $this->pitch;
