@@ -27,6 +27,9 @@ class LeavesBlock extends TransparentBlock{
 	public static function createIndex($x, $y, $z){
 		return "$x.$y.$z";
 	}
+	/**
+	 * @deprecated leaf decay was rewritten
+	 */
 	public static function findLog(Level $level, $x, $y, $z, array &$visited, $distance){ //port from newest pocketmine
 		$index = self::createIndex($x, $y, $z);
 		if(isset($visited[$index])){
@@ -49,37 +52,76 @@ class LeavesBlock extends TransparentBlock{
 		return ($visited[$index] = false);
 	}
 	
+	private static $treeBlocksNearby = null;
 	public static function onRandomTick(Level $level, $x, $y, $z){
 		$b = $level->level->getBlock($x, $y, $z);
 		$id = $b[0];
 		$meta = $b[1];
-		if(($meta & 0b00001100) === 0x08){
-			$meta &= 0x03;
-			$visited = array();
-			if(!self::findLog($level, $x, $y, $z, $visited, 0)){
-				//$this->level->setBlock($this, new AirBlock(), false, false, true);
-				$level->fastSetBlockUpdate($x, $y, $z, 0, 0);
+		//TODO MCPE uses 0x04 for detecting updates
+		if(($meta & 0b1100) == 0b1000){
+			if(self::$treeBlocksNearby == null) self::$treeBlocksNearby = array_fill(0, 32*32*32, 0);
+			for ($xx = - 4; $xx <= 4; $xx ++) {
+				for ($yy = - 4; $yy <= 4; $yy ++) {
+					for ($zz = - 4; $zz <= 4; $zz ++) {
+						$k3 = $level->level->getBlockID($x + $xx, $y + $yy, $z + $zz);
+						if ($k3 == TRUNK) {
+							self::$treeBlocksNearby[($xx + 16) * 1024 + ($yy + 16) * 32 + ($zz + 16)] = 0;
+						} else if ($k3 == LEAVES) {
+							self::$treeBlocksNearby[($xx + 16) * 1024 + ($yy + 16) * 32 + ($zz + 16)] = - 2;
+						} else {
+							self::$treeBlocksNearby[($xx + 16) * 1024 + ($yy + 16) * 32 + ($zz + 16)] = - 1;
+						}
+					}
+				}
+			}
+
+			for ($i2 = 1; $i2 <= 4; $i2 ++) {
+				for ($l2 = - 4; $l2 <= 4; $l2 ++) {
+					for ($j3 = - 4; $j3 <= 4; $j3 ++) {
+						for ($l3 = - 4; $l3 <= 4; $l3 ++) {
+							if (self::$treeBlocksNearby[($l2 + 16) * 1024 + ($j3 + 16) * 32 + ($l3 + 16)] != $i2 - 1) continue;
+							if (self::$treeBlocksNearby[(($l2 + 16) - 1) * 1024 + ($j3 + 16) * 32 + ($l3 + 16)] == - 2) {
+								self::$treeBlocksNearby[(($l2 + 16) - 1) * 1024 + ($j3 + 16) * 32 + ($l3 + 16)] = $i2;
+							}
+							if (self::$treeBlocksNearby[($l2 + 16 + 1) * 1024 + ($j3 + 16) * 32 + ($l3 + 16)] == - 2) {
+								self::$treeBlocksNearby[($l2 + 16 + 1) * 1024 + ($j3 + 16) * 32 + ($l3 + 16)] = $i2;
+							}
+							if (self::$treeBlocksNearby[($l2 + 16) * 1024 + (($j3 + 16) - 1) * 32 + ($l3 + 16)] == - 2) {
+								self::$treeBlocksNearby[($l2 + 16) * 1024 + (($j3 + 16) - 1) * 32 + ($l3 + 16)] = $i2;
+							}
+							if (self::$treeBlocksNearby[($l2 + 16) * 1024 + ($j3 + 16 + 1) * 32 + ($l3 + 16)] == - 2) {
+								self::$treeBlocksNearby[($l2 + 16) * 1024 + ($j3 + 16 + 1) * 32 + ($l3 + 16)] = $i2;
+							}
+							if (self::$treeBlocksNearby[($l2 + 16) * 1024 + ($j3 + 16) * 32 + (($l3 + 16) - 1)] == - 2) {
+								self::$treeBlocksNearby[($l2 + 16) * 1024 + ($j3 + 16) * 32 + (($l3 + 16) - 1)] = $i2;
+							}
+							if (self::$treeBlocksNearby[($l2 + 16) * 1024 + ($j3 + 16) * 32 + ($l3 + 16 + 1)] == - 2) {
+								self::$treeBlocksNearby[($l2 + 16) * 1024 + ($j3 + 16) * 32 + ($l3 + 16 + 1)] = $i2;
+							}
+						}
+					}
+				}
+			}
+			$j2 = self::$treeBlocksNearby[(32/2) * (32*32) + (32/2) * 32 + (32/2)];
+			if($j2 >= 0)
+			{
+				$level->level->setBlockDamage($x, $y, $z, $meta & 0xf7);
+			} else
+			{
 				if(mt_rand(1,20) === 1){ //Saplings
 					ServerAPI::request()->api->entity->drop(new Position($x, $y, $z, $level), BlockAPI::getItem(SAPLING, $meta & 0x03, 1));
 				}
 				if(($meta & 0x03) === LeavesBlock::OAK and mt_rand(1,200) === 1){ //Apples
 					ServerAPI::request()->api->entity->drop(new Position($x, $y, $z, $level), BlockAPI::getItem(APPLE, 0, 1));
 				}
-			}else{
-				$level->fastSetBlockUpdate($x, $y, $z, $id, $meta);
+				$level->fastSetBlockUpdate($x, $y, $z, 0, 0, true, false);
 			}
-		}
-	}
-	public static function neighborChanged(Level $level, $x, $y, $z, $nX, $nY, $nZ, $oldID){
-		[$id, $meta] = $level->level->getBlock($x, $y, $z);
-		if(($meta & 0b00001100) === 0){
-			$meta |= 0x08;
-			$level->fastSetBlockUpdate($x, $y, $z, $id, $meta); //TODO maybe use $level->level->setBlock directly, the client doesnt need to know thism info.
 		}
 	}
 	
 	public function place(Item $item, Player $player, Block $block, Block $target, $face, $fx, $fy, $fz){
-		$this->meta |= 0x04;
+		//TODO MCPE uses 0x08 for detecting was it placed by player or not
+		if($player instanceof Player && $player != PlayerNull::$INSTANCE) $this->meta |= 0x04;
 		$this->level->setBlock($this, $this, true, false, true);
 	}
 	

@@ -77,7 +77,7 @@ abstract class Projectile extends Entity{
 		$this->lastSpeedY = $this->speedY;
 		$this->lastSpeedZ = $this->speedZ;
 		$this->needsUpdate = true;
-		$this->handleWaterMovement(); //TODO: maybe just call parent::update(); ?
+		$this->handleWaterMovement();
 		if($this->fire > 0){
 			if(!$this->isImmuneToFire){
 				if(($this->fire % 20) == 0){

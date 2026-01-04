@@ -41,12 +41,12 @@ class WoodBlock extends SolidBlock{
 		for($xOff = -4; $xOff <= 4; ++$xOff){
 			for($yOff = -4; $yOff <= 4; ++$yOff){
 				for($zOff = -4; $zOff <= 4; ++$zOff){
-					$b = $player->level->level->getBlock($this->x + $xOff, $this->y + $yOff, $this->z + $zOff);
+					$b = $this->level->level->getBlock($this->x + $xOff, $this->y + $yOff, $this->z + $zOff);
 					$id = $b[0];
 					$meta = $b[1];
 					if($id === LEAVES){
-						if(($meta & 0x8) === 0){
-							$player->level->fastSetBlockUpdate($this->x + $xOff, $this->y + $yOff, $this->z + $zOff, $id, $meta | 8);
+						if(($meta & 8) == 0){//TODO MCPE uses 0x04 for detecting updates
+							$b = $this->level->level->setBlockDamage($this->x + $xOff, $this->y + $yOff, $this->z + $zOff, $meta | 8);
 						}
 					}
 				}
