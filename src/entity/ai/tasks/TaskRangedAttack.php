@@ -5,6 +5,7 @@ class TaskRangedAttack extends \TaskBase
 	public $server;
 	public $attackCounter = 0;
 	public $seenTicks = 0;
+	public $rangeSquared = 0;
 	public function __construct($speed, $range){
 		$this->speedMultiplier = $speed;
 		$this->rangeSquared = $range*$range;
@@ -14,7 +15,6 @@ class TaskRangedAttack extends \TaskBase
 	public function onStart(EntityAI $ai)
 	{
 		$this->selfCounter = 1;
-		$this->ticksNoSeen = 0;
 	}
 
 	public function onEnd(EntityAI $ai)

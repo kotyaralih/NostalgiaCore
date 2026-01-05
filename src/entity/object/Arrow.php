@@ -13,6 +13,7 @@ class Arrow extends Entity{
 	public $criticial = false;
 	public $groundTicks = 0;
 	public $shotByPlayer = false;
+	public $shotByEntity = false;
 	
 	function __construct(Level $level, $eid, $class, $type = 0, $data = []){
 		parent::__construct($level, $eid, $class, $type, $data);

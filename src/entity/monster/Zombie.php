@@ -32,7 +32,7 @@ class Zombie extends Monster{
 		}
 		
 		for($y = (int)$this->y; $y < 129; $y++){
-			$block = $this->level->level->getBlockID($this->x, $y, $this->z);
+			$block = $this->level->level->getBlockID(floor($this->x), $y, floor($this->z));
 			if(StaticBlock::getIsSolid($block)){
 				return false;
 			}

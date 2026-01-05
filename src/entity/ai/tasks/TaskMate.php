@@ -2,6 +2,7 @@
 
 class TaskMate extends TaskBase
 {
+	public $speedMultiplier;
 	public function __construct($speed){
 		$this->speedMultiplier = $speed;
 	}

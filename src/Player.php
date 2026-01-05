@@ -961,7 +961,7 @@ class Player{
 		}
 
 		$this->lastChunk = [$x, $z];
-		if($this->lastOrderX != ($this->entity->x >> 4) || $this->lastOrderZ != ($this->entity->z >> 4)){
+		if($this->lastOrderX != ((int)$this->entity->x >> 4) || $this->lastOrderZ != ((int)$this->entity->z >> 4)){
 			$this->orderChunks();
 		}
 		$this->server->schedule(MAX_CHUNK_RATE, [$this, "getNextChunk"], $world);
@@ -1940,7 +1940,6 @@ class Player{
 		}
 		
 		$this->entityMovementQueueLength += $len;
-		$this->entityMovementPacketsPerSecond += $packets;
 	}
 	
 	/**

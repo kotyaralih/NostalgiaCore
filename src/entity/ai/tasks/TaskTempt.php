@@ -2,6 +2,8 @@
 
 class TaskTempt extends TaskBase
 {
+	public $speedMultiplier;
+	public $targetDistance;
 	public function __construct($speed){
 		$this->speedMultiplier = $speed;
 		$this->targetDistance = 10*10;

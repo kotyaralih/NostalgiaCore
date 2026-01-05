@@ -71,8 +71,8 @@ class MobSpawner{
 				continue;
 			}
 			
-			$x = mt_rand($player->entity->x - 32, $player->entity->x + 32);
-			$z = mt_rand($player->entity->z - 32, $player->entity->z + 32);
+			$x = mt_rand(floor($player->entity->x - 32), ceil($player->entity->x + 32));
+			$z = mt_rand(floor($player->entity->z - 32), ceil($player->entity->z + 32));
 			$diffX = $x-$player->entity->x;
 			$diffZ = $z-$player->entity->z;
 			$dist = $diffX*$diffX + $diffZ*$diffZ;

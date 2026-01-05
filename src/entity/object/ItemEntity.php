@@ -200,7 +200,7 @@ class ItemEntity extends Entity{
 		$friction = 0.98;
 		if($this->onGround){
 			$friction = 0.588;
-			$v3 = $this->level->level->getBlockID($this->x, floor($this->boundingBox->minY) - 1, $this->z);
+			$v3 = $this->level->level->getBlockID(floor($this->x), floor($this->boundingBox->minY) - 1, floor($this->z));
 			if($v3 > 0) $friction = StaticBlock::getSlipperiness($v3);
 		}
 		

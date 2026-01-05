@@ -28,6 +28,7 @@ class XorShift128Random{
 	}
 	
 	public function setSeed($seed){
+		$seed = (int)$seed;
 		$this->x = 123456789 ^ $seed;
 		$this->y = 362436069 ^ ($seed << 17) | (($seed >> 15) & 0x7fffffff) & 0xffffffff;
 		$this->z = 521288629 ^ ($seed << 31) | (($seed >> 1 ) & 0x7fffffff) & 0xffffffff;

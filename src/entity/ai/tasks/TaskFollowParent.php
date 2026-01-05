@@ -2,6 +2,7 @@
 
 class TaskFollowParent extends TaskBase
 {
+	public $speedMultiplier;
 	public function __construct($speed){
 		$this->speedMultiplier = $speed;
 	}
