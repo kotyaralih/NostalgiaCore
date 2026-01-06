@@ -1757,7 +1757,7 @@ class Player{
 		$len = 1 + strlen($pk->buffer);
 		$MTU = $this->MTU - 24;
 		if($len > $MTU) return $this->blockQueueDataPacket_big($pk);
-		if(($this->blockUpdateQueueLength + $len) >= $MTU){
+		if(($this->blockUpdateQueueLength + $len+10) >= $MTU){
 			$this->sendBlockUpdateQueue();
 		}
 		
@@ -1801,7 +1801,7 @@ class Player{
 		$MTU = $this->MTU - 24;
 		if($len > $MTU) return $this->entityQueueDataPacket_big($pk);
 		
-		if(($this->entityDataQueueLength + $len) >= $MTU){
+		if(($this->entityDataQueueLength + $len+10) >= $MTU){
 			$this->sendEntityDataQueue();
 		}
 		
@@ -2051,7 +2051,7 @@ class Player{
 		$MTU = $this->MTU - 24;
 		if($len > $MTU) return $this->sendChatMessagePacket_big($packet);
 		
-		if(($this->chatMessagesQueueLength + $len) >= $MTU) $this->sendChatBuffer();
+		if(($this->chatMessagesQueueLength + $len+10) >= $MTU) $this->sendChatBuffer();
 		
 		$packet->reliability = RakNetInfo::RELIABILITY_RELIABLE_ORDERED;
 		$packet->messageIndex = $this->counter[3]++;
