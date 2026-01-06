@@ -37,7 +37,7 @@ class SaplingBlock extends FlowableBlock{
 	public function onActivate(Item $item, Player $player){
 		if($item->getID() === DYE and $item->getMetadata() === 0x0F){ //Bonemeal
 			TreeObject::growTree($this->level, $this, new Random(), $this->meta & 0x03);
-			$player->consumeSingleItem();
+			$player->consumeSingleItem(send:true);
 			return true;
 		}
 		return false;

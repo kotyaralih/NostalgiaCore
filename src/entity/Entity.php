@@ -1724,7 +1724,7 @@ class Entity extends Position
 			$pk->yaw = 0;
 			$pk->pitch = 0;
 			foreach($this->level->players as $player){
-				if($player->hasEntity($this)) $player->entityQueueDataPacket(clone $pk);
+				if($player->hasEntity($this) && $player != $this->player) $player->entityQueueDataPacket(clone $pk);
 			}
 		}else{
 			$pk = new EntityEventPacket;

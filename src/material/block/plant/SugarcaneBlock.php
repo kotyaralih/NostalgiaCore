@@ -31,7 +31,7 @@ class SugarcaneBlock extends FlowableBlock{
 				$this->level->fastSetBlockUpdateMeta($this->x, $this->y, $this->z, $this->meta, true);
 			}
 			
-			$player->consumeSingleItem();
+			$player->consumeSingleItem(send:true);
 			return true;
 		}
 		return false;

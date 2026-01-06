@@ -33,7 +33,7 @@ class DandelionBlock extends FlowableBlock{
 		if($item->getID() === DYE and $item->getMetadata() === 0x0F){
 			$random = new Random();
 			self::placeFlowers($this->level, new Vector3($this->x, $this->y, $this->z), $random, $random->nextRange(2, 5), 2);
-			$player->consumeSingleItem();
+			$player->consumeSingleItem(send:true);
 			return true;
 		}
 		return false;

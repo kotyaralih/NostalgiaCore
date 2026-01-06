@@ -104,7 +104,7 @@ class MelonStemBlock extends FlowableBlock{
 				$this->meta = 7;
 			}
 			$this->level->setBlock($this, $this, true, false, true);
-			$player->consumeSingleItem();
+			$player->consumeSingleItem(send:true);
 			return true;
 		}
 		return false;

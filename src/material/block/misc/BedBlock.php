@@ -84,22 +84,13 @@ class BedBlock extends TransparentBlock{
 			return true;
 		}
 		
-		$blockNorth = $this->getSide(2); //Gets the blocks around them
-		$blockSouth = $this->getSide(3);
-		$blockEast = $this->getSide(5);
-		$blockWest = $this->getSide(4);
 		if(($this->meta & 0x08) === 0x08){ //This is the Top part of bed	
 			$b = $this;
 		}else{ //Bottom Part of Bed
-			if($blockNorth->getID() === $this->id and ($blockNorth->meta & 0x08) === 0x08){
-				$b = $blockNorth;
-			}elseif($blockSouth->getID() === $this->id and ($blockSouth->meta & 0x08) === 0x08){
-				$b = $blockSouth;
-			}elseif($blockEast->getID() === $this->id and ($blockEast->meta & 0x08) === 0x08){
-				$b = $blockEast;
-			}elseif($blockWest->getID() === $this->id and ($blockWest->meta & 0x08) === 0x08){
-				$b = $blockWest;
-			}else{
+			$dir = ($this->meta & 3);
+			$o = BedBlock::HEAD_DIRECTION_OFFSETS[$dir];
+			$b = $this->level->getBlockWithoutVector($this->x + $o[0], $this->y, $this->z + $o[1]);
+			if($b->getID() != BED_BLOCK){
 				$player->sendChat("This bed is incomplete");
 				return true;
 			}
