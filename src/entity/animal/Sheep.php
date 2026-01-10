@@ -24,6 +24,19 @@ class Sheep extends Animal{
 		$this->ai->addTask(new TaskFollowParent(1.0));
 	}
 	
+	public function spawnChild($mate)
+	{
+		$child = parent::spawnChild($mate);
+		if($child instanceof Sheep){
+			if($mate instanceof Sheep){
+				$child->setColor(mt_rand(0, 1) == 0 ? $this->getColor() : $mate->getColor());
+			}else{
+				$child->setColor($this->getColor());
+			}
+		}
+		return $child;
+	}
+	
 	public function createSaveData(){
 		$data = parent::createSaveData();
 		$data["Color"] = @$this->data["Color"];

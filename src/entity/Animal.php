@@ -61,9 +61,9 @@ abstract class Animal extends Creature implements Ageable, Breedable{
 		return $this->getAge() < 0;
 	}
 	
-	public function breed(){
-		if($this->server->dhandle("entity.animal.breed", ["parent" => $this]) !== false){
-			$c = $this->spawnChild();
+	public function breed($mate){
+		if($this->server->dhandle("entity.animal.breed", ["parent" => $this, "parent2" => $mate]) !== false){
+			$c = $this->spawnChild($mate);
 			$c->parent = $this; //TODO save eid to avoid memory leaks?
 			$this->server->api->entity->spawnToAll($c);
 			return $c;
@@ -108,7 +108,7 @@ abstract class Animal extends Creature implements Ageable, Breedable{
 		$this->age = $i;
 	}
 	
-	public function spawnChild()
+	public function spawnChild($mate)
 	{
 		return $this->server->api->entity->add($this->level, $this->class, $this->type, [
 			"x" => $this->x + lcg_value() * mt_rand(-1, 1),
