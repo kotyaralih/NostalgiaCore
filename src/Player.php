@@ -2316,7 +2316,7 @@ class Player{
 				$this->evid[] = $this->server->event("player.pickup", [$this, "eventHandler"]);
 				$this->evid[] = $this->server->event("tile.container.slot", [$this, "eventHandler"]);
 				$this->evid[] = $this->server->event("tile.update", [$this, "eventHandler"]);
-				$this->server->addHandler("player.invisible", [$this, "invisibilityHandler"]);
+				$this->evid[] = $this->server->event("player.invisible", [$this, "invisibilityHandler"]);
 				$this->lastMeasure = microtime(true);
 				$this->server->schedule(50, [$this, "measureLag"], [], true);
 				
@@ -3521,7 +3521,7 @@ class Player{
 			}
 		}
 	}
-
+	
 	/**
 	 * @return string
 	 */
@@ -3562,7 +3562,6 @@ class Player{
 	 * @deprecated 16x16x16 chunk sending was removed
 	 */
 	public static $smallChunks = false;
-
 }
 
 class PlayerNull extends Player{
