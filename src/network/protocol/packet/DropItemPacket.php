@@ -2,7 +2,7 @@
 
 class DropItemPacket extends RakNetDataPacket{
 	public $eid;
-	public $unknown;
+	public $randomly;
 	public $item;
 	
 	public function pid(){
@@ -11,7 +11,7 @@ class DropItemPacket extends RakNetDataPacket{
 	
 	public function decode(){
 		$this->eid = $this->getInt();
-		$this->unknown = $this->getByte();
+		$this->randomly = $this->getByte();
 		$this->item = $this->getSlot();
 	}
 	

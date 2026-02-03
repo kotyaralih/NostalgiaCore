@@ -2935,7 +2935,8 @@ class Player{
 				$this->toCraft = [];
 				$this->craftingType = CraftingRecipes::TYPE_INVENTORY;
 				$data["eid"] = $packet->eid;
-				$data["unknown"] = $packet->unknown;
+				$data["unknown"] = $packet->randomly;
+				$data["randomly"] = $packet->randomly;
 				$data["item"] = $packet->item;
 				$data["player"] = $this;
 				if($this->blocked === false and $this->server->handle("player.drop", $data) !== false){
