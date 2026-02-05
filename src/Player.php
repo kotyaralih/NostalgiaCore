@@ -4,7 +4,36 @@ class Player{
 	const CHATMESSAGE_ORDER_CHANNEL = 1;
 	const BLOCKUPDATE_ORDER_CHANNEL = 2;
 	const ENTITY_ORDER_CHANNEL = 3;
-	
+	public static $blacklistedUsernames = [
+		"rcon" => true,
+		"console" => true,
+		"server" => true,
+		//windows my beloved
+		"con" => true,
+		"prn" => true,
+		"aux" => true,
+		"nul" => true,
+		"com1" => true,
+		"com2" => true,
+		"com3" => true,
+		"com4" => true,
+		"com5" => true,
+		"com6" => true,
+		"com7" => true,
+		"com8" => true,
+		"com9" => true,
+		"com0" => true,
+		"lpt1" => true,
+		"lpt2" => true,
+		"lpt3" => true,
+		"lpt4" => true,
+		"lpt5" => true,
+		"lpt6" => true,
+		"lpt7" => true,
+		"lpt8" => true,
+		"lpt9" => true,
+		"lpt0" => true
+	];
 	public static $experimentalHotbar = false;
 	public static $allowDroppingSingleItems = true;
 	public static $disableEmojisInChat = true;
@@ -2159,7 +2188,7 @@ class Player{
 					$this->close("Incorrect protocol #" . $packet->protocol1, false);
 					return;
 				}
-				if(preg_match('#[^a-zA-Z0-9_]#', $this->username) > 0 || $this->username === "" || $this->iusername === "rcon" || $this->iusername === "console" || $this->iusername === "server" || strlen($this->iusername) > 16){
+				if(preg_match('#[^a-zA-Z0-9_]#', $this->username) > 0 || $this->username === "" || isset(Player::$blacklistedUsernames[$this->iusername]) || strlen($this->iusername) > 16){
 					$this->close("Bad username", false);
 					return;
 				}
