@@ -23,6 +23,11 @@ class LadderBlock extends TransparentBlock{
 		
 		return parent::getAABB($level, $x, $y, $z);
 	}
+	
+	public static function getCollisionBoundingBoxes(Level $level, $x, $y, $z, Entity $entity){
+		return [static::getAABB($level, $x, $y, $z)];
+	}
+	
 	public function __construct($meta = 0){
 		parent::__construct(LADDER, $meta, "Ladder");
 		$this->isSolid = false;
