@@ -2306,7 +2306,7 @@ class Player{
 				$this->server->query("UPDATE players SET EID = " . $this->eid . " WHERE CID = " . $this->CID . ";");
 
 				$this->addEntity($this->entity);
-				
+
 				$pk = new StartGamePacket;
 				$pk->seed = $this->level->getSeed();
 				$pk->x = $this->data->get("position")["x"];
@@ -2321,6 +2321,12 @@ class Player{
 				$this->entity->z = $pk->z;
 				$this->dataPacket($pk);
 				
+				//should cache it for client(unless the queue was full and startgamepacket was sent without settime
+				//and client receives time before startgame - TODO maybe make it ordered?)
+				$pk = new SetTimePacket;
+				$pk->time = $this->level->getTime();
+				$pk->started = !$this->level->isTimeStopped();
+				$this->dataPacket($pk);
 				
 				if(($level = $this->server->api->level->get($this->data->get("spawn")["level"])) !== false){
 					$this->spawnPosition = new Position($this->data->get("spawn")["x"], $this->data->get("spawn")["y"], $this->data->get("spawn")["z"], $level);
