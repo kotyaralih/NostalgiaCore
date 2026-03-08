@@ -35,6 +35,8 @@ class ContainerSetContentPacket extends RakNetDataPacket{
 			foreach($this->hotbar as $slot){
 				$this->putInt($slot);
 			}
+		}else{
+			$this->putShort(0);
 		}
 	}
 
