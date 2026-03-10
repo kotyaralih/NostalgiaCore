@@ -15,11 +15,10 @@ class ContainerSetContentPacket extends RakNetDataPacket{
 		for($s = 0; $s < $count and !$this->feof(); ++$s){
 			$this->slots[$s] = $this->getSlot();
 		}
-		if($this->windowid === 0){
-			$count = $this->getShort();
-			for($s = 0; $s < $count and !$this->feof(); ++$s){
-				$this->hotbar[$s] = $this->getInt();
-			}
+		
+		$count = $this->getShort();
+		for($s = 0; $s < $count and !$this->feof(); ++$s){
+			$this->hotbar[$s] = $this->getInt();
 		}
 	}
 	
