@@ -732,7 +732,7 @@ class Level{
 					$y = ($xyz >> 16) & 0x7f;
 					$cy = $ch[$y >> 4];
 					if($cy === false) continue;
-					$id = ord($cy[($y & 0xf) + ($x << 5) + ($z << 9)]);
+					$id = ord($cy[($y & 0xf) + $x*40 + $z*640]);
 					if(isset(self::$randomUpdateBlocks[$id])){
 						$cl = StaticBlock::$prealloc[$id];
 						$cl::onRandomTick($this, ($cX << 4) + $x, $y, $z + ($cZ << 4));
@@ -1010,7 +1010,7 @@ class Level{
 		for($j = 0; $j < 256; ++$j){
 			$ordered .= $flag;
 			foreach($raw as $mini){
-				$ordered .= substr($mini, $j << 5, 24); //16 + 8
+				$ordered .= substr($mini, $j*40, 24); //16 + 8
 			}
 		}
 		return $ordered;
