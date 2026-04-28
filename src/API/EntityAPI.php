@@ -7,13 +7,9 @@ class EntityAPI{
 	public $entities;
 	private $server;
 	private $eCnt = 1;
-	private $serverSpawnAnimals, $serverSpawnMobs;
 	function __construct(){
 		$this->entities = [];
 		$this->server = ServerAPI::request();
-		
-		$this->serverSpawnAnimals = $this->server->api->getProperty("spawn-animals");
-		$this->serverSpawnMobs = $this->server->api->getProperty("spawn-mobs");
 	}
 	
 	public function init(){

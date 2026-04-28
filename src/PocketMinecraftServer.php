@@ -19,7 +19,8 @@ class PocketMinecraftServer{
 	
 	public static $TICKING_MODE = PocketMinecraftServer::TICK_LEGACY;
 	
-	public $doTick, $levelData, $tiles, $entities, $schedule, $scheduleCnt, $whitelist, $spawn, $difficulty, $stop, $asyncThread;
+	public $doTick, $levelData, $tiles, $entities, $schedule, $scheduleCnt, $whitelist, $spawn, $stop, $asyncThread;
+	public $difficulty;
 	public static $KEEP_CHUNKS_LOADED = true, $PACKET_READING_LIMIT = 100;
 	public static $BLOCK_BREAKING_PROGRESS = 0.8;
 	public static $ENABLE_LIGHT_UPDATES = true;

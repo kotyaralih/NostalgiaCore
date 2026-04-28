@@ -7,6 +7,10 @@ class Level{
 	 */
 	public $entities;
 	/**
+	 * @var Config
+	 */
+	public $levelProperties;
+	/**
 	 * This is an array of entities in this world. 
 	 * @var Entity[]
 	 */
@@ -27,7 +31,7 @@ class Level{
 	public $queuedBlockUpdates = [];
 	
 	public $forceDisableBlockQueue = false;
-	
+
 	public static $randomUpdateBlocks = [
 		FIRE => true,
 		FARMLAND => true,
@@ -73,6 +77,35 @@ class Level{
 		$this->randInt2 = 0x3C6EF35F;
 	}
 
+	/**
+	 * Gets level property.
+	 * 
+	 * @param string $name - property name
+	 * @param mixed $fail=false - return value if the property doesn't exist
+	 * @return string|mixed
+	 */
+	public function getProperty(string $name, $fail = false){
+		return $this->levelProperties->exists($name) ? $this->levelProperties->get($name) : $this->server->api->level->getDefaultProperty($name, $fail);
+	}
+	
+	/**
+	 * Sets level property
+	 * 
+	 * @param string $name - property name
+	 * @param mixed $value - new property value
+	 * 
+	 * @return boolean true if sucess, false if failed
+	 */
+	public function setProperty(string $name, $value){
+		$c = $this->server->api->dhandle("level.property.change", ["level" => $this, "name" => $name, "value" => $value]);
+		if($c === false) return false;
+		
+		$this->levelProperties->set($name, $value);
+		$this->levelProperties->save();
+		
+		return true;
+	}
+	
 	public function close(){
 		if(isset($this->level)){
 			$this->save(true, true, true, true);

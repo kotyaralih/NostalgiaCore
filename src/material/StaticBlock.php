@@ -1,6 +1,7 @@
 <?php
 /**
- * Small class to hopefully optimize entities a bit
+ * A class that allows to get block properties without having to create a block instance.
+ * Should be used whenever is possible.
  */
 class StaticBlock
 {
@@ -9,6 +10,8 @@ class StaticBlock
 	
 	private static $NULL_BOUNDS;
 	public static $prealloc = [];
+	
+	//default pmmp block props
 	public static $isSolid = [];
 	public static $isTransparent = [];
 	public static $isFlowable = [];
@@ -17,6 +20,8 @@ class StaticBlock
 	public static $hasPhysics = [];
 	public static $isLiquid = [];
 	public static $isFullBlock = [];
+	
+	
 	public static $material = [];
 	public static $hardness = [];
 	public static $destroyTime = [];
