@@ -518,6 +518,16 @@ class Level{
 		}
 		return $ret;
 	}
+	
+	public function isSolidBlockingTile($x, $y, $z){
+		$id = $this->level->getBlockID($x, $y, $z);
+		if($id != 0 && StaticBlock::getMaterial($id)->isSolidBlocking()){
+			return StaticBlock::getIsCubeShaped($id);
+		}else{
+			return false;
+		}
+	}
+	
 	public function fastSetBlockUpdateMeta($x, $y, $z, $meta, $updateBlock = false){
 		$this->level->setBlockDamage($x, $y, $z, $meta);
 		$id = $this->level->getBlockID($x, $y, $z);
