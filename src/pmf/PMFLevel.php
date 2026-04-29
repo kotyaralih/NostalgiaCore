@@ -774,9 +774,9 @@ class PMFLevel extends PMF{
 		}elseif($this->chunks[$index][$Y] === false){
 			$this->fillMiniChunk($X, $Z, $Y);
 		}
-		$aX = $x - ($X << 4);
-		$aZ = $z - ($Z << 4);
-		$aY = $y - ($Y << 4);
+		$aX = $x & 0xf;
+		$aZ = $z & 0xf;
+		$aY = $y & 0xf;
 		$bindex = (int) ($aY + $aX*40 + $aZ*640);
 		$mindex = (int) (($aY >> 1) + 16 + $aX*40 + $aZ*640);
 		$old_b = ord($this->chunks[$index][$Y][$bindex]);
